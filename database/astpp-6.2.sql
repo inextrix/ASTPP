@@ -73,3 +73,5 @@ UPDATE account_unverified SET password = '!' WHERE password <> '!' AND password 
 -- F5 (functional): the country row for +372 (ISO EE, capital Tallinn) was labelled ERITREA, so
 -- Estonia was missing from every country drop-down and Eritrea appeared twice.
 UPDATE countrycode SET country = 'ESTONIA' WHERE id = 61 AND iso = 'EE' AND countrycode = 372 AND country = 'ERITREA';
+-- Set footer version to 6.2
+UPDATE `system` SET `value` = '6.2' WHERE `name` = 'version';
