@@ -79,7 +79,7 @@ function sip_device_routing(xml,destination_number,destinationinfo,callerid_arra
 			routing_voicemail_number = destination_number
 			Logger.info("[PBX_SIP_ROUTING] SIP Call Forwarding Disable")
 			local sip_call_string = '';
-			sip_call_string = "user/"..destination_number.."@"..params:getHeader("variable_sip_to_host")..":"..params:getHeader("variable_sip_to_port")
+			sip_call_string = "user/"..destination_number.."@"..params:getHeader("variable_sip_to_host")..(params:getHeader("variable_sip_to_port") and ":"..params:getHeader("variable_sip_to_port") or "")
 			table.insert(xml, [[<action application="set" data="hangup_after_bridge=true"/>]]);
 			table.insert(xml, [[<action application="bridge" data="{sip_invite_params=user=LOCAL,ignore_early_media=true,sip_h_P-call_type='custom_forward',sip_h_P-Accountcode=]]..userinfo['id']..[[}[leg_timeout=]]..config['leg_timeout']..[[ ] ]]..sip_call_string..[["/>]]);
 
@@ -92,7 +92,7 @@ function sip_device_routing(xml,destination_number,destinationinfo,callerid_arra
 		table.insert(xml, [[<action application="set" data="not_register_flag=]]..sip_routing_arr['not_register_flag']..[["/>]]);
 		table.insert(xml, [[<action application="set" data="not_register_destination=]]..sip_routing_arr['not_register_destination']..[["/>]]);
 		table.insert(xml, [[<action application="set" data="variable_sip_to_host=]]..params:getHeader("variable_sip_to_host")..[["/>]]);
-		table.insert(xml, [[<action application="set" data="variable_sip_to_port=]]..params:getHeader("variable_sip_to_port")..[["/>]]);
+		table.insert(xml, [[<action application="set" data="variable_sip_to_port=]]..(params:getHeader("variable_sip_to_port") or "")..[["/>]]);
 		table.insert(xml, [[<action application="set" data="leg_timeout=]]..config['leg_timeout']..[["/>]]);
 		table.insert(xml, [[<action application="set" data="userinfo_id=]]..userinfo['id']..[["/>]]);
 		table.insert(xml, [[<action application="set" data="sip_destination_number=]]..sip_destination_number..[["/>]]);
