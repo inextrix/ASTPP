@@ -71,7 +71,7 @@ if (isset ( $_SERVER ["CONTENT_TYPE"] ) && $_SERVER ["CONTENT_TYPE"] == "applica
 	// error_log(print_r($data,true));
 	$logger->log ( print_r ( $data, true ) );
 
-	if (isset($data ['variables']['module_name'])){
+	if (isset($data ['variables']['module_name']) && preg_match('/^[A-Za-z0-9_]+$/', $data ['variables']['module_name'])){ // module name only, no path
 		$logger->log("Looking for custom module file to include : " . "lib/addons/astpp.".$data ['variables']['module_name'].".php");
 		if (file_exists("lib/addons/astpp.".$data ['variables']['module_name'].".php")){
 			include_once("lib/addons/astpp.".$data ['variables']['module_name'].".php");			

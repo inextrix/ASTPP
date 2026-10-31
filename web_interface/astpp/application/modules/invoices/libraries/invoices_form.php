@@ -873,7 +873,10 @@ class invoices_form extends common
                 'accounts',
                 'build_concat_dropdown',
                 '',
-                ''
+                // the dropdown listed all accounts of all tenants; a reseller only sees itself
+                array(
+                    'id' => (int) $account_info['id']
+                )
             );
         } else {
 
@@ -1259,7 +1262,6 @@ class invoices_form extends common
                     'id' => 'uploadFile',
                     'type' => 'file',
                     'style' => 'margin-top:20px;',
-                    'onchange' => 'ValidateFileUpload_logo();'
                 ),
                 'class' => 'btn btn-primary btn-file float-right',
                 'tOOL TIP',
@@ -1279,7 +1281,6 @@ class invoices_form extends common
                     'id' => 'uploadFav',
                     'type' => 'file',
                     'style' => 'margin-top:20px;',
-                    'onchange' => 'ValidateFileUpload();'
                 ),
                 'class' => '',
                 'tOOL TIP',

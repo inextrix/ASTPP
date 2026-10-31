@@ -89,10 +89,12 @@ class email_lib {
 		}
 	}
 	
+	// the SMS settings are in group "notifications" (group "sms" does not exist; usually
+	// get_email_settings() had loaded them already)
 	function get_sms_settings(){
 
 		$where = array (
-				'group_title' => 'sms'
+				'group_title' => 'notifications'
 		);
 		$query = $this->CI->db_model->getSelect ( "*", "system", $where );
 		$query = $query->result_array ();
@@ -100,6 +102,14 @@ class email_lib {
 			$tempvar = strtolower ( $val ['name'] );
 			$this->$tempvar = $val ['value'];
 		}
+	}
+	// the SMS settings loaded by get_sms_settings(), for astpp_sms_configured() (index.php)
+	private function sms_settings() {
+		$settings = array ();
+		foreach ( array ( 'sms_notications', 'sms_api_key', 'sms_secret_key' ) as $name ) {
+			$settings [$name] = isset ( $this->$name ) ? $this->$name : '';
+		}
+		return $settings;
 	}
 	function push_alert_settings(){
 		$where = array (
@@ -203,7 +213,7 @@ class email_lib {
 			$this->message  = str_replace ( '#USERNAME#', $templateinfo ['username'], $this->message );
 			$this->message  = str_replace ( '#PIN#', $templateinfo ['pin'], $this->message );
 			$this->message  = str_replace ( '#BALANCE#', $templateinfo ['balance'], $this->message );
-			$this->message  = str_replace ( '#PASSWORD#', $templateinfo ['password'], $this->message );
+			$this->message  = str_replace ( '#PASSWORD#', $this->CI->common->password_mail_hint (), $this->message ); // never the stored value
 			$this->subject  = str_replace ( "#NAME#", $templateinfo ['first_name'] . " " . $templateinfo ['last_name'], $this->subject );
 			$this->subject  = str_replace ( "#COMPANY_NAME#", $this->company_name, $this->subject );
 			switch ($template_type) {
@@ -316,7 +326,10 @@ class email_lib {
 				$this->set_email_paramenters ( $details );
 			}
 
-			if (!$this->sms_notications) {
+			// only when SMS notifications are enabled and configured and the mail has a number and a
+			// text; this also sent with empty settings, with the seeded placeholder keys and without
+			// recipient ("!" on an unset or empty value is true)
+			if (astpp_sms_configured ( $this->sms_settings () ) && trim ( ( string ) $this->to_number ) !== '' && trim ( ( string ) $this->sms_body ) !== '') {
 				$url = 'https://rest.nexmo.com/sms/json?' . http_build_query([
    			    	'api_key'    => $this->sms_api_key,
    			    	'api_secret' => $this->sms_secret_key,
@@ -326,6 +339,7 @@ class email_lib {
    				 ]);
 				$ch = curl_init($url);
 				curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+				curl_setopt($ch, CURLOPT_TIMEOUT, 15); // runs in the minute cron (broadcast_email)
 				$response = curl_exec($ch);
 			}
 		}
@@ -428,18 +442,18 @@ class email_lib {
 			}
 		}
 	}
+	// no caller; same check as send_notifications_sms()
 	function send_sms() {
 		$this->get_sms_settings();
-		if (!$this->sms_notications) {
+		if (astpp_sms_configured ( $this->sms_settings () )) {
 			$accountinfo = $this->CI->session->userdata ( 'accountinfo' );
 			$country_code = $this->CI->common->get_field_name('countrycode','countrycode',array ("id" => $accountinfo['country_id']));
 			$contact_no=isset($accountinfo['telephone_1'])?$accountinfo['telephone_1']:$accountinfo['telephone_2'];
-			$url="https://rest.nexmo.com/sms/json?api_key=".$this->sms_api_key."&api_secret=".$this->sms_secret_key."&from=NEXMO&to=".$country_code."".$contact_no."&text=".$this->sms_content."";
+			// parameters URL-encoded, TLS verification no longer disabled
+			$url = 'https://rest.nexmo.com/sms/json?' . http_build_query(array('api_key' => $this->sms_api_key, 'api_secret' => $this->sms_secret_key, 'from' => 'NEXMO', 'to' => $country_code . $contact_no, 'text' => $this->sms_content));
             $ch = curl_init();
-			curl_setopt($ch, CURLOPT_URL, $url); 
-			curl_setopt($ch, CURLOPT_VERBOSE, 1); 
-			curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE); 
-			curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, FALSE); 
+			curl_setopt($ch, CURLOPT_URL, $url);
+			curl_setopt($ch, CURLOPT_TIMEOUT, 15);
 			curl_setopt($ch, CURLOPT_POST, 1); 
 			curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1); 
             $result = curl_exec($ch);

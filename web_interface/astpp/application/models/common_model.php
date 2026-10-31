@@ -347,6 +347,12 @@ class Common_model extends CI_Model {
 	}
 	function get_list_taxes() {
 		$this->db->select ( 'id,taxes_description' );
+		// resellers saw the taxes of all resellers; like the tax dropdowns only the admin's and their own
+		$logintype = $this->session->userdata ( 'logintype' );
+		if ($logintype == 1 || $logintype == 5) {
+			$accountinfo = $this->session->userdata ( 'accountinfo' );
+			$this->db->where_in ( 'reseller_id', array ( 0, ( int ) $accountinfo ['id'] ) );
+		}
 		$query = $this->db->get ( "taxes" );
 		$taxesList = array ();
 		if ($query->num_rows () > 0) {

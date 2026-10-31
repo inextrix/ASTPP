@@ -97,7 +97,7 @@ $(document).ready(function(){
       alert('please select any recharge amount');
       return false;
     } else {
-      window.location.href = "<?php echo base_url()."pages/proceed_payment/"; ?>"+id1;  
+      window.location.href = csrf_url("<?php echo base_url()."pages/proceed_payment/"; ?>"+id1); // CSRF token  
     }
   });
 

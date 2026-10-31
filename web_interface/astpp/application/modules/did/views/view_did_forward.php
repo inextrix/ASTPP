@@ -64,6 +64,10 @@
 </form>
 </div>
 </section>
+<?php
+// customers/providers cannot use the did module; they load the list from the portal
+$local_change_url = ($this->session->userdata('logintype') == 0 || $this->session->userdata('logintype') == 3) ? 'user/user_did_local_change/' : 'did/did_local_change/';
+?>
 <script type="text/javascript">
 
    $( document ).ready(function() {
@@ -73,7 +77,7 @@
      if(call_type == 0 || call_type == 5){ 
       $.ajax({
          type: "POST",
-         url: "<?= base_url()?>did/did_local_change/"+call_type+"/"+did_id+"/"+extensions,
+         url: "<?= base_url() . $local_change_url ?>"+call_type+"/"+did_id+"/"+extensions,
          data:'',
          success:function(response) {
           $("#extensions_id").replaceWith(response); 
@@ -91,7 +95,7 @@
          if (call_type_code == 0 || call_type_code == 5) {
             $.ajax({
                type: "POST",
-               url: "<?= base_url() ?>did/did_local_change/"+call_type_code+"/"+did_id,
+               url: "<?= base_url() . $local_change_url ?>"+call_type_code+"/"+did_id,
                data:'',
                success:function(response) {
                   $(".extensions_set").replaceWith(response);  

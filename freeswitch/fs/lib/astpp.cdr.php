@@ -104,14 +104,14 @@ function process_cdr($data, $db, $logger, $decimal_points, $config) {
 		
 	if($actual_duration > 0 || $dataVariable['hangup_cause'] == 'NORMAL_CLEARING' || $dataVariable['hangup_cause'] == 'SUCCESS' || $dataVariable['hangup_cause']  == 'ALLOTTED_TIMEOUT' || $dataVariable['hangup_cause'] == 'USER_BUSY' || $dataVariable['hangup_cause']  == 'INTERWORKING'){
 		if($dataVariable['force_trunk_flag'] > 0 ){
-			$route_query = "update routes SET call_count = call_count-1 where id =".$dataVariable['force_trunk_flag'];
+			$route_query = "update routes SET call_count = call_count-1 where id =".(int)$dataVariable['force_trunk_flag'];
 			$logger->log("GET Update routes count decrase  : " . $route_query);
 			$route_user = $db->run($route_query);
 		}else{
 			if($dataVariable['rate_flag'] == 3){
 				$rate_group=$origination_rate[$accountid]['RATEGROUP'];
 				$logger->log("*********************** Harsh_rategroup in CDRs: **".$rate_group."***********");
-				$query = "update pricelists SET call_count = call_count-1 where id =".$rate_group;
+				$query = "update pricelists SET call_count = call_count-1 where id =".(int)$rate_group;
 				$logger->log("GET Update pricelist count decrase  : " . $query);
 				$rate_user = $db->run($query);
 			}
@@ -120,12 +120,12 @@ function process_cdr($data, $db, $logger, $decimal_points, $config) {
 		$trunk_id= $termination_rate['TRUNK'];
 		$logger->log("*********************** Harsh_trunk in CDRs: **".$rate_group."***********");
 		if($dataVariable['force_trunk_flag'] > 0){
-			$trunk_query = "update routing SET call_count = call_count-1 where trunk_id=".$trunk_id." and routes_id =".$dataVariable['force_trunk_flag'];
+			$trunk_query = "update routing SET call_count = call_count-1 where trunk_id=".(int)$trunk_id." and routes_id =".(int)$dataVariable['force_trunk_flag'];
 		}else{
 			//~ if($dataVariable['rate_flag'] == 3){
-				$trunk_query = "update routing SET call_count = call_count-1 where trunk_id=".$trunk_id." and pricelist_id =".$rate_group;
+				$trunk_query = "update routing SET call_count = call_count-1 where trunk_id=".(int)$trunk_id." and pricelist_id =".(int)$rate_group;
 			//~ }else{
-				//~ $trunk_query = "update routing SET call_count = call_count-1 where trunk_id=".$trunk_id." and pricelist_id =".$rate_group;
+				//~ $trunk_query = "update routing SET call_count = call_count-1 where trunk_id=".(int)$trunk_id." and pricelist_id =".(int)$rate_group;
 			//~ }
 		}
 		$logger->log("GET Update routing count decrase  : " . $trunk_query);
@@ -360,9 +360,47 @@ function insert_extra_receiver_entry($dataVariable, $origination_rate, $terminat
 	return true;
 }
 
+// Escape every value that get_cdr_string()/get_reseller_cdr_string() put into quoted SQL
+// literals. Caller ID name/number, dialled number, SIP hosts etc. are set by the caller.
+// Keys that are urldecode()d later are decoded here first and protected again, so the
+// later urldecode() cannot re-introduce quotes.
+function astpp_cdr_escape($data, $db) {
+	$urldecoded_keys = array (
+			'effective_caller_id_name',
+			'effective_caller_id_number',
+			'original_caller_id_name',
+			'original_caller_id_number',
+			'callstart',
+			'end_stamp'
+	);
+	if (! is_array ( $data ))
+		return $data;
+	foreach ( $data as $key => $value ) {
+		if (is_array ( $value )) {
+			$data [$key] = astpp_cdr_escape ( $value, $db );
+		} elseif (is_string ( $value )) {
+			if (in_array ( $key, $urldecoded_keys, true )) {
+				$data [$key] = str_replace ( array (
+						'%',
+						'+'
+				), array (
+						'%25',
+						'%2B'
+				), $db->esc ( urldecode ( $value ) ) );
+			} else {
+				$data [$key] = $db->esc ( $value );
+			}
+		}
+	}
+	return $data;
+}
+
 // Generate CDR string for insert query for customer.
 function get_cdr_string($dataVariable, $accountid, $account_type, $actual_duration, $termination_rate, $origination_rate, $provider_cost, $parentid, $debit, $cost, $logger, $db) {
-	
+	$dataVariable = astpp_cdr_escape ( $dataVariable, $db );
+	$termination_rate = astpp_cdr_escape ( $termination_rate, $db );
+	$origination_rate = astpp_cdr_escape ( $origination_rate, $db );
+
 	$get_current_time = gmdate("Y-m-d H:i:s"); // progress_media_stamp
 	$get_current_microseconds = round(microtime(true)/1000); // progress_mediamsec
 	
@@ -384,6 +422,10 @@ function get_cdr_string($dataVariable, $accountid, $account_type, $actual_durati
 
 // Generate CDR string for insert query for reseller
 function get_reseller_cdr_string($dataVariable, $accountid, $account_type, $actual_duration, $termination_rate, $origination_rate, $provider_cost, $parentid, $debit, $cost,$logger,$db,$trunk_id='') {
+	$dataVariable = astpp_cdr_escape ( $dataVariable, $db );
+	$termination_rate = astpp_cdr_escape ( $termination_rate, $db );
+	$origination_rate = astpp_cdr_escape ( $origination_rate, $db );
+	$trunk_id = ( int ) $trunk_id;
 	$dataVariable ['calltype'] = ($dataVariable ['calltype'] == 'DID-LOCAL' || $dataVariable ['calltype'] == 'SIP-DID' || $dataVariable ['calltype'] == 'OTHER') ? "DID" : $dataVariable ['calltype'];
 	// $callerIdNumber = isset($dataVariable['effective_caller_id_number']) && !empty($dataVariable['effective_caller_id_number'])? $dataVariable['effective_caller_id_number'] :$dataVariable['caller_id'];
 	// ASTPPCOM-592 Ashish start
@@ -452,7 +494,7 @@ function normalize_origination_rate($dataVariable,$logger='') {
 //Checking table existance
 function get_q850code($dataVariable, $db) {
         
-        $query = "SELECT code FROM q850code WHERE cause='" . ($dataVariable ['hangup_cause']) . "'";    	
+        $query = "SELECT code FROM q850code WHERE cause='" . $db->esc ( $dataVariable ['hangup_cause'] ) . "'";    	
         $q850code = $db->run ( $query );    	
     	$q850code [0]['code'] = ($q850code [0]['code']=='')?'31':$q850code [0]['code'];
         return $dataVariable ['hangup_cause'] .' ['. $q850code [0]['code'].']';
@@ -500,16 +542,27 @@ function package_calculation($destination_number, $package_id, $duration, $call_
 	$package_array = array ();
 	$logger->log ( "Package call_direction is  : " . $call_direction." AND receiver_accid is :::".$dataVariable ['receiver_accid']);
 	if($call_direction == 'inbound' && isset($dataVariable ['receiver_accid']) && $dataVariable ['receiver_accid'] > 0){
-		$accountid = $dataVariable ['receiver_accid'];
+		$accountid = ( int ) $dataVariable ['receiver_accid'];
 		$logger->log ( "Package call_direction is  : " . $call_direction." AND Account ID is :::".$accountid );
 	}
 	$custom_destination = number_loop ( $destination_number, "patterns", $db );
 	
-	$query = "SELECT *,P.id as package_id,P.product_id as product_id FROM packages_view  as P inner join package_patterns as PKGPTR on P.product_id = PKGPTR.product_id WHERE " . $custom_destination . " AND accountid = " . $accountid . " ORDER BY LENGTH(PKGPTR.patterns) DESC";
+	// equal pattern lengths in order of the package id, as in the Lua dialplan (MariaDB returned
+	// equal packages in varying order, so the counted package changed from call to call)
+	$query = "SELECT *,P.id as package_id,P.product_id as product_id FROM packages_view  as P inner join package_patterns as PKGPTR on P.product_id = PKGPTR.product_id WHERE " . $custom_destination . " AND accountid = " . $accountid . " ORDER BY LENGTH(PKGPTR.patterns) DESC, P.id, PKGPTR.id";
 	$logger->log ( "Package query  : " . $query );
 	$package_info_arr = $db->run ( $query );
+	// The packages covering the destination form one pool. Seconds a package cannot take any more
+	// are counted on the next one (they were dropped, while the dialplan allows a call as long as
+	// the minutes left in all packages). package_id = first package used.
+	$seconds_left = $duration;
+	$seen_packages = array ();
 	if (!empty($package_info_arr)) {
 		foreach($package_info_arr as $package_info){
+			if ($seconds_left <= 0 || isset ( $seen_packages [$package_info ['package_id']] )) {
+				continue;
+			}
+			$seen_packages [$package_info ['package_id']] = true;
 			// Ashish ASTPPCOM-823
 			$account_data = get_accounts ( $package_info["accountid"], $logger, $db );
 			// Ashish 823 End
@@ -524,7 +577,7 @@ function package_calculation($destination_number, $package_id, $duration, $call_
 					// Ashish ASTPPCOM-823
 					$Insert_Query = "INSERT INTO counters (product_id,package_id,accountid,type) VALUES (" . $package_info ['product_id'] . "," . $package_info ['package_id'] . "," . $accountid . "," . $account_data['type'] . ")";
 					// Ashish 823 End
-					$logger->log ( "Insert Counters  : " . $Insert_query );
+					$logger->log ( "Insert Counters  : " . $Insert_Query );
 					$db->run ( $Insert_Query );
 					$counter_info = get_counters ( $accountid, $package_info ['package_id'], $db, $logger );
 				}
@@ -534,8 +587,9 @@ function package_calculation($destination_number, $package_id, $duration, $call_
 					$logger->log ( "available_seconds  : " . $available_seconds."\n" );
 					$logger->log ( "free_minutes  : " . $package_info ['free_minutes']."\n" );
 					$logger->log ( "used_seconds  : " . $counter_info ['used_seconds']."\n" );
-					$logger->log ( "duration  : " . $duration."\n" );
-					$free_seconds = ($available_seconds >= $duration) ? $duration : $available_seconds;
+					$logger->log ( "duration  : " . $duration." (not yet counted: " . $seconds_left . ")\n" );
+					$free_seconds = ($available_seconds >= $seconds_left) ? $seconds_left : $available_seconds;
+					$seconds_left = $seconds_left - $free_seconds;
 	//				$duration = ($available_seconds >= $duration) ? $duration : $available_seconds;
 					$final_min = $counter_info ['used_seconds'] + $free_seconds;
 					$final_min =  ceil($final_min/60)*60;
@@ -543,9 +597,10 @@ function package_calculation($destination_number, $package_id, $duration, $call_
 					$update_query = "UPDATE counters SET used_seconds = " . ($final_min) . " WHERE id = " . $counter_info ['id'];
 					$logger->log ( "Update Counters  : " . $update_query );
 					$db->run ( $update_query );
-					$package_array ['package_id'] = $package_info ['package_id'];
-					$package_array ['calltype'] = "FREE";
-					break;
+					if (empty ( $package_array )) {
+						$package_array ['package_id'] = $package_info ['package_id'];
+						$package_array ['calltype'] = "FREE";
+					}
 				}
 			}
 		}
@@ -586,7 +641,7 @@ function number_loop($destination, $field, $db) {
 	$max_len_prefix = strlen ( $destination );
 	$number_prefix = '(';
 	while ( $max_len_prefix > 0 ) {
-		$number_prefix .= "$field='^" . substr ( $destination, 0, $max_len_prefix ) . ".*' OR ";
+		$number_prefix .= "$field='^" . $db->esc ( substr ( $destination, 0, $max_len_prefix ) ) . ".*' OR ";
 		$max_len_prefix --;
 	}
 	$number_prefix .= "$field='^defaultprefix.*')"; // echo $number_prefix;exit;

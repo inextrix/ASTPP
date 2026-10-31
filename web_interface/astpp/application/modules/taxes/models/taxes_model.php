@@ -76,19 +76,25 @@ class Taxes_model extends CI_Model
         $this->db->delete('taxes_to_accounts', array(
             'taxes_id' => $id
         ));
-        $tax_val = common_model::$global_config['system_config']['tax_type'];
-        $tax_option = explode(",", $tax_val);
-        $i = $j = $k = 0;
-        foreach ($tax_option as $key => $value) {
-            if ($i == 0) {
-                $j = $value;
+        // "Update system set value=REPLACE(value,'<id>','')" ran without WHERE on every setting
+        // (IP addresses, ports, ...) and put the unescaped id into SQL. Remove the id from the
+        // tax_type lists only.
+        $tax_rows = $this->db->get_where('system', array(
+            'name' => 'tax_type'
+        ))->result_array();
+        foreach ($tax_rows as $tax_row) {
+            $remaining = array();
+            foreach (explode(",", $tax_row['value']) as $value) {
+                $value = trim($value);
+                if ($value !== '' && $value !== (string) $id) {
+                    $remaining[] = $value;
+                }
             }
-            $i = $value;
-            $k ++;
+            $this->db->where('id', $tax_row['id']);
+            $this->db->update('system', array(
+                'value' => implode(',', $remaining)
+            ));
         }
-        $str = $i == $value && $j == $value && $k == 1 ? $id : ($id == $value ? ',' . $id : $id . ',');
-        $query = "Update system set value=REPLACE(value,'$str','')";
-        $this->db->query($query);
         return $this->db->delete("taxes", array(
             'id' => $id
         ));

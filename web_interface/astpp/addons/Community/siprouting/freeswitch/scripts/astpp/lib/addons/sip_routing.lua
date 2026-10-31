@@ -1,6 +1,6 @@
 function sip_routing_info(sip_id)  
 	local rotuting_arr;
-	local query = "SELECT * from sip_device_routing WHERE sip_device_id = "..sip_id.." limit 1";
+	local query = db_sql("SELECT * from sip_device_routing WHERE sip_device_id = ?i limit 1", sip_id);
 	Logger.debug("[PBX_SIP_ROUTING] [GET_ROUTING_INFO] Query :" .. query)
 	assert (dbh:query(query, function(u)
 		rotuting_arr = u
@@ -11,7 +11,7 @@ end
 function get_record_info(customer_userinfo)
 	local record = {}
     if(didinfo ~= nil)then
-    local query  = "SELECT sip_device_routing.is_recording FROM sip_devices AS sip_devices, accounts AS accounts ,sip_device_routing AS sip_device_routing  WHERE sip_devices.accountid = accounts.id AND sip_devices.id = sip_device_routing.sip_device_id AND sip_devices.username = \"" ..didinfo['extensions'] .."\" AND accounts.status = 0 ";    
+    local query  = db_sql("SELECT sip_device_routing.is_recording FROM sip_devices AS sip_devices, accounts AS accounts ,sip_device_routing AS sip_device_routing  WHERE sip_devices.accountid = accounts.id AND sip_devices.id = sip_device_routing.sip_device_id AND sip_devices.username = ?s AND accounts.status = 0 ", didinfo['extensions']);
 		Logger.debug("[GET get_record_info] Query :" .. query)	
 		assert (dbh:query(query, function(u)
 			record = u
@@ -23,7 +23,7 @@ end
 
 function check_local_call(destination_number)
     -- local query = "SELECT sip_devices.id as sip_id,sip_devices.username as username,accounts.number as accountcode,sip_devices.accountid as accountid,accounts.did_cid_translation as did_cid_translation,sip_devices.codec as sip_codec FROM "..TBL_SIP_DEVICES.." as sip_devices,"..TBL_USERS.." as  accounts ,domains WHERE accounts.id=domains.accountid AND accounts.status=0 AND accounts.deleted=0 AND accounts.id=sip_devices.accountid AND sip_devices.username=\"" ..destination_number .."\"  AND domains.domain=\"" ..user_domain .."\" limit 1";
-	local query = "SELECT sip_devices.id as sip_id,sip_devices.username as username,accounts.number as accountcode,sip_devices.accountid as accountid,accounts.did_cid_translation as did_cid_translation,sip_devices.codec as sip_codec FROM "..TBL_SIP_DEVICES.." as sip_devices,"..TBL_USERS.." as  accounts WHERE accounts.status=0 AND accounts.deleted=0 AND accounts.id=sip_devices.accountid AND sip_devices.username=\"" ..destination_number .."\" limit 1";
+	local query = db_sql("SELECT sip_devices.id as sip_id,sip_devices.username as username,accounts.number as accountcode,sip_devices.accountid as accountid,accounts.did_cid_translation as did_cid_translation,sip_devices.codec as sip_codec FROM "..TBL_SIP_DEVICES.." as sip_devices,"..TBL_USERS.." as  accounts WHERE accounts.status=0 AND accounts.deleted=0 AND accounts.id=sip_devices.accountid AND sip_devices.username = ?s limit 1", destination_number);
    
     Logger.debug("[CHECK_LOCAL_CALL] Query :" .. query)
     assert (dbh:query(query, function(u)
@@ -79,7 +79,7 @@ function sip_device_routing(xml,destination_number,destinationinfo,callerid_arra
 			routing_voicemail_number = destination_number
 			Logger.info("[PBX_SIP_ROUTING] SIP Call Forwarding Disable")
 			local sip_call_string = '';
-			sip_call_string = "user/"..destination_number.."@"..params:getHeader("variable_sip_to_host")..":"..params:getHeader("variable_sip_to_port")
+			sip_call_string = "user/"..destination_number.."@"..params:getHeader("variable_sip_to_host")..(params:getHeader("variable_sip_to_port") and ":"..params:getHeader("variable_sip_to_port") or "")
 			table.insert(xml, [[<action application="set" data="hangup_after_bridge=true"/>]]);
 			table.insert(xml, [[<action application="bridge" data="{sip_invite_params=user=LOCAL,ignore_early_media=true,sip_h_P-call_type='custom_forward',sip_h_P-Accountcode=]]..userinfo['id']..[[}[leg_timeout=]]..config['leg_timeout']..[[ ] ]]..sip_call_string..[["/>]]);
 
@@ -92,7 +92,7 @@ function sip_device_routing(xml,destination_number,destinationinfo,callerid_arra
 		table.insert(xml, [[<action application="set" data="not_register_flag=]]..sip_routing_arr['not_register_flag']..[["/>]]);
 		table.insert(xml, [[<action application="set" data="not_register_destination=]]..sip_routing_arr['not_register_destination']..[["/>]]);
 		table.insert(xml, [[<action application="set" data="variable_sip_to_host=]]..params:getHeader("variable_sip_to_host")..[["/>]]);
-		table.insert(xml, [[<action application="set" data="variable_sip_to_port=]]..params:getHeader("variable_sip_to_port")..[["/>]]);
+		table.insert(xml, [[<action application="set" data="variable_sip_to_port=]]..(params:getHeader("variable_sip_to_port") or "")..[["/>]]);
 		table.insert(xml, [[<action application="set" data="leg_timeout=]]..config['leg_timeout']..[["/>]]);
 		table.insert(xml, [[<action application="set" data="userinfo_id=]]..userinfo['id']..[["/>]]);
 		table.insert(xml, [[<action application="set" data="sip_destination_number=]]..sip_destination_number..[["/>]]);

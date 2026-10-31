@@ -156,7 +156,7 @@ class Account_import extends MX_Controller
         $tax_id = Common_model::$global_config['system_config']['tax_type'];
         $this->load->library("astpp/signup_lib");
         $default_fields = '';
-        $default_fields = (unserialize($add_array['post_array']));
+        $default_fields = unserialize($add_array['post_array'], array('allowed_classes' => false));
         $current_date = gmdate("Y-m-d H:i:s");
         $config_array = $this->config->item('Customers-mapper-fields');
         $custom_config_array = array_merge($config_array['general_info'], $config_array['settings']);
@@ -165,6 +165,11 @@ class Account_import extends MX_Controller
         $full_path = $this->config->item('rates-file-path');
         $customer_file_name = $this->session->userdata('import_customer_mapper_csv');
         $csv_tmp_data = $this->common->csv_to_array($full_path . $customer_file_name);
+        // no uploaded file in this session
+        if (! is_array($csv_tmp_data)) {
+            $this->session->set_flashdata('astpp_notification', gettext('Please upload a CSV file first.'));
+            redirect(base_url() . "account_import/customer_import_mapper/");
+        }
         $i = 0;
         $this->db->select("id,name");
         $pricelist_result = $this->db->get_where('pricelists', array(
@@ -260,10 +265,17 @@ class Account_import extends MX_Controller
                     $invalid_flag = TRUE;
                 }
                 if ($invalid_flag == FALSE) {
-
                     $new_array['password'] = ! empty($add_array["password-select"]) && ! empty($csv_data[$add_array["password-select"]]) ? $csv_data[$add_array["password-select"]] : (! empty($add_array['password']) ? $add_array['password'] : $this->common->generate_password());
+                    // a password from the file or the form must pass the portal password rule,
+                    // otherwise the row counts as invalid (like a duplicate number)
+                    $this->load->library('astpp/password_policy');
+                    if ($this->password_policy->check($new_array['password'], array($new_array['number'], isset($new_array['email']) ? $new_array['email'] : '')) !== '') {
+                        $invalid_flag = TRUE;
+                    }
+                }
+                if ($invalid_flag == FALSE) {
                     $current_password = $new_array['password'];
-                    $new_array['password'] = $this->common->encode($current_password);
+                    $new_array['password'] = $this->common->password_store($current_password); // hash
                     $new_array['first_name'] = ! empty($add_array["first_name-select"]) && ! empty($csv_data[$add_array["first_name-select"]]) ? $csv_data[$add_array["first_name-select"]] : (! empty($add_array['first_name']) ? $add_array['first_name'] : $new_array['number']);
 
                     $new_array['last_name'] = ! empty($add_array["last_name-select"]) && ! empty($csv_data[$add_array["last_name-select"]]) ? $csv_data[$add_array["last_name-select"]] : $add_array['last_name'];
@@ -379,7 +391,9 @@ class Account_import extends MX_Controller
                         }
                         $sip_username_array[$username] = $username;
                         $params_array = array(
-                            'password' => ! empty($add_array["sip_password-select"]) && isset($csv_data[$add_array["sip_password-select"]]) && ! empty($csv_data[$add_array["sip_password-select"]]) ? $csv_data[$add_array["sip_password-select"]] : ($add_array['sip_password'] == 'number' ? $new_array['number'] : ($add_array['sip_password'] == "password" ? $current_password : ($add_array['sip_password'] == "random" ? $this->common->find_uniq_rendno('10', '', '') : ''))),
+                            // "Random": generate_password() like the SIP device forms (this was a
+                            // 10-digit number, which the form rule chk_password_expression rejects)
+                            'password' => ! empty($add_array["sip_password-select"]) && isset($csv_data[$add_array["sip_password-select"]]) && ! empty($csv_data[$add_array["sip_password-select"]]) ? $csv_data[$add_array["sip_password-select"]] : ($add_array['sip_password'] == 'number' ? $new_array['number'] : (($add_array['sip_password'] == "random" || $add_array['sip_password'] == "password") ? $this->common->generate_password() : '')),
                             "vm-enabled" => "false",
                             "vm-password" => "",
                             "vm-mailto" => "",
@@ -616,9 +630,8 @@ class Account_import extends MX_Controller
                             $custom_array[$value] = str_replace('col-md-5', 'col-md-12', str_replace('form-control', '', form_dropdown($params_arr, $this->_sip_user_option(), '')));
                         }
                         if ($value == "sip_password") {
-                            $custom_array[$value] = str_replace('col-md-5', 'col-md-12', str_replace('form-control', '', form_dropdown($params_arr, array_merge($this->_sip_user_option(), array(
-                                "password" => "Same as Password"
-                            )), '')));
+                            // no "same as password" any more - the portal password must not be readable in sip_devices (old value "password" = random)
+                            $custom_array[$value] = str_replace('col-md-5', 'col-md-12', str_replace('form-control', '', form_dropdown($params_arr, $this->_sip_user_option(), '')));
                         }
                     }
                 } elseif ($value == "number") {

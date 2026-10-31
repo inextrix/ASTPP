@@ -238,6 +238,9 @@ class invoice {
 	}
 
 	function update_balance($amount, $accountid, $payment_type,$invoice_type) {
+		// amount and id are concatenated into SQL - numbers only (decimal(20,5))
+		$amount = sprintf('%.5F', (float) $amount);
+		$accountid = (int) $accountid;
 		if($invoice_type == 'credit'){
 			  $query = "update accounts set balance =  IF(posttoexternal=1,balance-" . $amount . ",balance+" . $amount . ") where id ='" . $accountid . "'"; 
 			return $this->CI->db->query ( $query );

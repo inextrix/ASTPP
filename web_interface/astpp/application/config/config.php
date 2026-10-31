@@ -239,6 +239,22 @@ $config ['private_key'] = $astpp_config ['PRIVATE_KEY'];
  */
 $config ['encryption_key'] = $astpp_config ['ENCRYPTION_KEY'];
 
+// Further keys (login token, AES helpers). They must differ per installation: use the values
+// from astpp-config.conf if set, otherwise derive them from the installation keys above.
+$astpp_key_names = array (
+		'token_key' => 'PRIVATE_KEY',
+		'iv_key' => 'ENCRYPTION_KEY',
+		'api_decipher_auth_token' => 'PRIVATE_KEY'
+);
+foreach ( $astpp_key_names as $astpp_key_name => $astpp_key_base ) {
+	if (isset ( $astpp_config [$astpp_key_name] ) && $astpp_config [$astpp_key_name] != '' && $astpp_config [$astpp_key_name] [0] != '<') {
+		$config [$astpp_key_name] = $astpp_config [$astpp_key_name];
+	} else {
+		$config [$astpp_key_name] = hash_hmac ( 'sha256', $astpp_key_name, $astpp_config [$astpp_key_base] );
+	}
+}
+unset ( $astpp_key_names, $astpp_key_name, $astpp_key_base );
+
 /*
  * |--------------------------------------------------------------------------
  * | Session Variables
@@ -306,6 +322,8 @@ $config ['global_xss_filtering'] = TRUE;
  * | 'csrf_cookie_name' = The cookie name
  * | 'csrf_expire' = The number in seconds the token should expire.
  */
+// The CodeIgniter 2 filter stays off (it needs the token in every hand-built form and AJAX
+// call); CSRF protection is done in hooks/csrf_guard.php (token per session, Origin check).
 $config ['csrf_protection'] = FALSE;
 $config ['csrf_token_name'] = 'csrf_test_name';
 $config ['csrf_cookie_name'] = 'csrf_cookie_name';
@@ -447,5 +465,7 @@ $config ['local_number-rates-field'] = array (
 );
 
 
-$config['recordings_path'] = FCPATH."playlist/example/media/recordings/";
+// Read by PHP directly from the FreeSWITCH directory. It was a symlink inside the web root
+// (playlist/example/media/recordings), so every recording was served without login.
+$config['recordings_path'] = "/var/lib/freeswitch/recordings/";
 

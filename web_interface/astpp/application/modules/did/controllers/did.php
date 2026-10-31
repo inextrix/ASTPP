@@ -316,7 +316,17 @@ class DID extends MX_Controller
             $did_id = $this->common->get_field_name("id", "dids", array(
                 "product_id" => $productid
             ));
-            $did_result = $this->did_lib->did_billing_process($this->session->userdata, $accountinfo['id'], $did_id, '', $add_array);
+            // purchase price from the parent's offer, own selling price and setup fee only as plain
+            // amounts - checked before anything is booked
+            $offer = $this->order->parent_offer($productid, $accountinfo);
+            $price = isset($add_array['price']) ? order::amount($add_array['price']) : ($offer === null ? false : (float) $offer['price']);
+            $setup_fee = isset($add_array['setup_fee']) ? order::amount($add_array['setup_fee']) : ($offer === null ? false : (float) $offer['setup_fee']);
+            if ($offer === null || $price === false || $setup_fee === false) {
+                $this->session->set_flashdata('astpp_notification', gettext('Invalid price or setup fee!'));
+                redirect(base_url() . 'did/did_available_list/');
+            }
+            // the balance check uses the purchase price, not the selling price from the form
+            $did_result = $this->did_lib->did_billing_process($this->session->userdata, $accountinfo['id'], $did_id);
             if ($did_result[0] == "SUCCESS") {
                 $product_info = $this->db_model->getSelect("*", " products", array(
                     'id' => $productid,
@@ -328,26 +338,22 @@ class DID extends MX_Controller
                     $add_array['billing_days'] = $product_info['billing_days'];
                     $add_array['commission'] = $product_info['commission'];
                     $add_array['free_minutes'] = isset($product_info['free_minutes']) ? $product_info['free_minutes'] : 0;
-                    if (($accountinfo['reseller_id'] > 0 || $accountinfo['type'] == 1) && $accountinfo['is_distributor'] == 0) {
-                        $add_array['buy_cost'] = $this->common_model->add_calculate_currency($add_array['product_buy_cost'], "", '', false, false);
-                    } else {
-                        $add_array['buy_cost'] = $product_info['buy_cost'];
-                    }
+                    $add_array['buy_cost'] = $offer['price'];
 
                     if ($accountinfo['is_distributor'] == 0) {
-                        $add_array['price'] = isset($add_array['price']) ? $this->common_model->add_calculate_currency($add_array['price'], "", '', false, false) : $this->common_model->add_calculate_currency($product_info['price'], "", '', false, false);
-                        $add_array['setup_fee'] = isset($add_array['setup_fee']) ? $this->common_model->add_calculate_currency($add_array['setup_fee'], "", '', false, false) : $this->common_model->add_calculate_currency($product_info['setup_fee'], "", '', false, false);
+                        $add_array['price'] = isset($add_array['price']) ? $this->common_model->add_calculate_currency($price, "", '', false, false) : $price;
+                        $add_array['setup_fee'] = isset($add_array['setup_fee']) ? $this->common_model->add_calculate_currency($setup_fee, "", '', false, false) : $setup_fee;
                     } else {
-                        $add_array['price'] = $product_info['price'];
-                        $add_array['setup_fee'] = $product_info['setup_fee'];
+                        $add_array['price'] = $offer['price'];
+                        $add_array['setup_fee'] = $offer['setup_fee'];
                     }
 
                     $query = "INSERT INTO reseller_products (product_id, account_id, reseller_id, buy_cost,commission, setup_fee, price, free_minutes, billing_type, billing_days, status, is_optin,is_owner,optin_date)
-		VALUES($productid," . $accountinfo['id'] . "," . $accountinfo['reseller_id'] . "," . $add_array['buy_cost'] . "," . $add_array['commission'] . "," . $add_array['setup_fee'] . "," . $add_array['price'] . "," . $add_array['free_minutes'] . "," . $add_array['billing_type'] . "," . $add_array['billing_days'] . ", 0, 0, 1, '" . gmdate('Y-m-d H:i:s') . "') ON DUPLICATE KEY UPDATE product_id = VALUES(product_id), account_id = VALUES(account_id), reseller_id = VALUES(reseller_id),buy_cost = VALUES(buy_cost),commission = VALUES(commission), setup_fee = VALUES(setup_fee), price = VALUES(price), free_minutes = VALUES(free_minutes), billing_type = VALUES(billing_type), billing_days = VALUES(billing_days), status = VALUES(status), is_optin = VALUES(is_optin), is_owner = VALUES(is_owner), optin_date = VALUES(optin_date)";
+		VALUES(" . (int)$productid . "," . (int)$accountinfo['id'] . "," . (int)$accountinfo['reseller_id'] . "," . (float)$add_array['buy_cost'] . "," . (float)$add_array['commission'] . "," . (float)$add_array['setup_fee'] . "," . (float)$add_array['price'] . "," . (int)$add_array['free_minutes'] . "," . (int)$add_array['billing_type'] . "," . (int)$add_array['billing_days'] . ", 0, 0, 1, '" . gmdate('Y-m-d H:i:s') . "') ON DUPLICATE KEY UPDATE product_id = VALUES(product_id), account_id = VALUES(account_id), reseller_id = VALUES(reseller_id),buy_cost = VALUES(buy_cost),commission = VALUES(commission), setup_fee = VALUES(setup_fee), price = VALUES(price), free_minutes = VALUES(free_minutes), billing_type = VALUES(billing_type), billing_days = VALUES(billing_days), status = VALUES(status), is_optin = VALUES(is_optin), is_owner = VALUES(is_owner), optin_date = VALUES(optin_date)";
                     $query = $this->db->query($query);
-                    $add_array['is_parent_billing'] = 'false';
                     $add_array['payment_by'] = "Account Balance";
-                    $order_id = $this->order->confirm_order($add_array, $accountinfo['id'], $accountinfo);
+                    // only the reseller buys here, the chain above is not charged again
+                    $order_id = $this->order->confirm_order($add_array, $accountinfo['id'], $accountinfo, array('parent_billing' => false));
 
                     if ($order_id != '') {
                         $this->db->where("product_id", $productid);
@@ -406,7 +412,6 @@ class DID extends MX_Controller
         $add_array = $this->input->post();
         if (! empty($add_array) && $add_array['accountid'] > 0) {
             $accountinfo = $this->session->userdata("accountinfo");
-            $add_array['is_parent_billing'] = 'false';
             $add_array['payment_by'] = 0;
             $account_info = $this->db_model->getSelect("*", "accounts", array(
                 "id" => $add_array["accountid"],
@@ -416,21 +421,10 @@ class DID extends MX_Controller
             if ($account_info->num_rows > 0) {
                 $accountdata = $account_info->result_array()[0];
                 $balance = $accountdata['posttoexternal'] == 1 ? $accountdata['credit_limit'] - ($accountdata['balance']) : $accountdata['balance'];
-                if ($this->session->userdata('logintype') == 1 || $this->session->userdata('logintype') == 5) {
-                    $where = array(
-                        'product_id' => $add_array['product_id']
-                    );
-                    $product_info = (array) $this->db->get_where("reseller_products", $where)->result_array()[0];
-                } else {
-                    $where = array(
-                        'id' => $add_array['product_id']
-                    );
-                    $product_info = (array) $this->db->get_where("products", $where)->result_array()[0];
-                }
-                if (! empty($product_info)) {
-                    $total_amt = $product_info['price'] + $product_info['setup_fee'];
-
-                    $total_amt = $this->common->convert_to_currency('', '', $total_amt);
+                // balance check with the price confirm_order() charges (offer of the customer's
+                // reseller); this took the first reseller_products row of any reseller
+                $total_amt = $this->order->unit_price($add_array['product_id'], $add_array['accountid']);
+                if ($total_amt !== false) {
                     $did_id = $this->common->get_field_name("id","dids",array("product_id"=>$add_array['product_id']));
                     $this->load->library('did_lib');
                     $accountdata['logintype'] = $accountdata['type'];
@@ -440,7 +434,8 @@ class DID extends MX_Controller
                         $add_array['payment_by'] = "Account Balance";
                         $add_array['charge_type'] = "DID";
                         $add_array['is_update_balance'] = "true";
-                        $order_id = $this->order->confirm_order($add_array, $add_array['accountid'], $accountinfo);
+                        // the DID belongs to the seller already: only the customer is charged
+                        $order_id = $this->order->confirm_order($add_array, $add_array['accountid'], $accountinfo, array('parent_billing' => false));
                         if ($order_id > 0) {
                             $this->db->where("product_id", $add_array['product_id']);
                             $this->db->update("dids", array(
@@ -452,6 +447,8 @@ class DID extends MX_Controller
                         $this->session->set_flashdata('astpp_notification', gettext('Insufficient Balance !'));
                         redirect(base_url() . 'did/did_list/');
                     }
+                } else {
+                    $this->session->set_flashdata('astpp_notification', gettext('Product Not Found!'));
                 }
             } else {
                 $this->session->set_flashdata('astpp_notification', gettext('Account Not Found!'));

@@ -75,16 +75,23 @@ class Login extends MX_Controller
         if ($this->session->userdata('user_login') == FALSE) {
             if (! empty ( $_POST ) && isset($_POST ['username']) && isset($_POST ['password']) && trim ( $_POST ['username'] ) != '' && trim ( $_POST ['password'] ) != '') {
                 $actual_password = $_POST['password'];
-                $_POST['password'] = $this->common->encode($_POST['password']);
-                $user_valid = $this->Auth_model->verify_login($_POST['username'], $_POST['password']);
+                // verify_login() checks the typed password against the stored hash
+                // and returns the id of the account it matched
+                $user_valid = $this->Auth_model->verify_login($_POST['username'], $actual_password);
+                $_POST['password'] = '';
 
-                if ($user_valid == 1) {
+                if ($user_valid > 0) {
                     $this->session->set_userdata('user_login', TRUE);
-                    $where = "(number = '" . $this->db->escape_str($_POST['username']) . "' OR email = '" . $this->db->escape_str($_POST['username']) . "') and deleted = 0";
+                    $where = array(
+                        'id' => $user_valid,
+                        'deleted' => 0
+                    );
 
                     $result = $this->db_model->getSelect("*", "accounts", $where);
                     $result = $result->result_array();
                     $result = $result[0];
+                    // the row goes into the session (accountinfo, token) - without the password value
+                    $result['password'] = '';
 
                     $user_multi_level = 0;
                     $addon_status = $this->db_model->countQuery("*", "addons", array(
@@ -140,7 +147,10 @@ class Login extends MX_Controller
                         if ($result['status'] == 1) {
                             $this->session->set_flashdata('astpp_danger_alert', gettext("Your account has been deactive please contact to your administrator"));
                         } else {
-                            if (($actual_password == 'admin') or (!$this->form_validation->chk_password_expression($actual_password,false))) {
+                            // existing passwords stay valid; one that would not pass the
+                            // portal password rule today only gets the warning
+                            $this->load->library('astpp/password_policy');
+                            if (($actual_password == 'admin') or ($this->password_policy->check($actual_password, array($result['number'], $result['email'])) !== '')) {
                                 if ($logintype == - 1 || $logintype == 2 || $logintype == 4)
                                     $url = "/accounts/admin_edit/" . $result['id'];
                                 elseif ($logintype == 0 || $logintype == 3 || $logintype == 1)
@@ -360,141 +370,16 @@ class Login extends MX_Controller
         redirect(base_url());
     }
 
+    /*
+     * This URL credited the amount from the POST field "custom" for any request that named a
+     * pending top-up (no question to PayPal, also with PayPal switched off). PayPal payments are
+     * booked only by the verified IPN in pages/paypal_response; this old notify/return URL books
+     * nothing.
+     */
     function paypal_response()
     {
-        if (count($_POST) > 0) {
-            $response_arr = $_POST;
-
-            $logger = (array) $this->db->get_where("system", array(
-                "name" => "log_path",
-                "group_title" => "global"
-            ))->first_row();
-            $logger_path = $logger['value'];
-            $fp = fopen($logger_path . "astpp_payment.log", "a+");
-            $date = date("Y-m-d H:i:s");
-            fwrite($fp, "====================" . $date . "===============================\n");
-            foreach ($response_arr as $key => $value) {
-                fwrite($fp, $key . ":::>" . $value . "\n");
-            }
-
-            $payment_transaction = (array) $this->db->get_where("payment_transaction", array(
-                "transaction_details" => $response_arr['item_number'],
-                "amount" => "0",
-                "actual_amount" => "0",
-                "user_currency" => ""
-            ))->first_row();
-            $accountid = $payment_transaction['accountid'];
-
-            $this->db->where(array(
-                "transaction_details" => $response_arr['item_number']
-            ));
-            $this->db->delete("payment_transaction");
-
-            $balance_amt = $actual_amount = $response_arr["custom"];
-
-            $paypal_fee = (array) $this->db->get_where("system", array(
-                "name" => "paypal_fee",
-                "group_title" => "paypal"
-            ))->first_row();
-            $paypal_fee = $paypal_fee['value'];
-            $paypalfee = ($paypal_fee == 0) ? '0' : $response_arr["mc_gross"];
-
-            if (($response_arr["payment_status"] == "Pending" || $response_arr["payment_status"] == "Complete" || $response_arr["payment_status"] == "Completed") && $accountid != '') {
-
-                $paypal_tax = (array) $this->db->get_where("system", array(
-                    "name" => "paypal_tax",
-                    "group_title" => "paypal"
-                ))->first_row();
-                $paypal_tax = $paypal_tax['value'];
-
-                $account_data = (array) $this->db->get_where("accounts", array(
-                    "id" => $accountid
-                ))->first_row();
-
-                $currency = (array) $this->db->get_where('currency', array(
-                    "id" => $account_data["currency_id"]
-                ))->first_row();
-                $date = date('Y-m-d H:i:s');
-
-                $payment_trans_array = array(
-                    "accountid" => $accountid,
-                    "amount" => $response_arr["payment_gross"],
-                    "tax" => "1",
-                    "payment_method" => "Paypal",
-                    "actual_amount" => $actual_amount,
-                    "paypal_fee" => $paypalfee,
-                    "user_currency" => $currency["currency"],
-                    "currency_rate" => $currency["currencyrate"],
-                    "transaction_details" => json_encode($response_arr),
-                    "date" => $date
-                );
-                $paymentid = $this->db->insert('payment_transaction', $payment_trans_array);
-                $parent_id = $account_data['reseller_id'] > 0 ? $account_data['reseller_id'] : '-1';
-                $payment_arr = array(
-                    "accountid" => $accountid,
-                    "payment_mode" => "1",
-                    "credit" => $balance_amt,
-                    "type" => "PAYPAL",
-                    "payment_by" => $parent_id,
-                    "notes" => "Payment Made by Paypal on date:-" . $date,
-                    "paypalid" => $paymentid,
-                    "txn_id" => $response_arr["txn_id"],
-                    'payment_date' => gmdate('Y-m-d H:i:s', strtotime($response_arr['payment_date']))
-                );
-                $this->db->insert('payments', $payment_arr);
-                $this->db->select('invoiceid');
-                $this->db->order_by('id', 'desc');
-                $this->db->limit(1);
-                $last_invoice_result = (array) $this->db->get('invoices')->first_row();
-                $last_invoice_ID = isset($last_invoice_result['invoiceid']) && $last_invoice_result['invoiceid'] > 0 ? $last_invoice_result['invoiceid'] : 1;
-                $reseller_id = $account_data['reseller_id'] > 0 ? $account_data['reseller_id'] : 0;
-                $where = "accountid IN ('" . $reseller_id . "','1')";
-                $this->db->where($where);
-                $this->db->select('*');
-                $this->db->order_by('accountid', 'desc');
-                $this->db->limit(1);
-                $invoiceconf = $this->db->get('invoice_conf');
-                $invoiceconf = (array) $invoiceconf->first_row();
-                $invoice_prefix = $invoiceconf['invoice_prefix'];
-
-                $due_date = gmdate("Y-m-d H:i:s", strtotime(gmdate("Y-m-d H:i:s") . " +" . $invoiceconf['interval'] . " days"));
-                $invoice_id = $this->generate_receipt($account_data['id'], $balance_amt, $account_data, $last_invoice_ID + 1, $invoice_prefix, $due_date);
-                $details_insert = array(
-                    'created_date' => $date,
-                    'credit' => $balance_amt,
-                    'debit' => '-',
-                    'accountid' => $account_data["id"],
-                    'reseller_id' => $account_data['reseller_id'],
-                    'invoiceid' => $invoice_id,
-                    'description' => "Payment Made by Paypal on date:-" . $date,
-                    'item_type' => 'PAYMENT',
-                    'before_balance' => $account_data['balance'],
-                    'after_balance' => $account_data['balance'] + $balance_amt
-                );
-                $this->db->insert("invoice_details", $details_insert);
-                $this->db_model->update_balance($balance_amt, $account_data["id"], "credit");
-                $this->session->set_flashdata('astpp_errormsg', 'Payment done successfully!');
-                redirect(base_url() . 'user/user/');
-            } else {
-                $response_arr['astpp_status'] = "Invalid request. No transaction id found in database.";
-
-                $payment_trans_array = array(
-                    "accountid" => ($accountid) ? $accountid : 0,
-                    "amount" => $response_arr["payment_gross"],
-                    "tax" => "1",
-                    "payment_method" => "Paypal",
-                    "actual_amount" => $actual_amount,
-                    "paypal_fee" => $paypalfee,
-                    "user_currency" => ($currency["currency"]) ? $currency["currency"] : '',
-                    "currency_rate" => ($currency["currencyrate"]) ? $currency["currencyrate"] : '',
-                    "transaction_details" => json_encode($response_arr),
-                    "date" => $date
-                );
-                $paymentid = $this->db->insert('payment_transaction', $payment_trans_array);
-                $this->session->set_flashdata('astpp_notification', gettext('Payment transaction invalid. Please contact Administrator.'));
-            }
-        }
-        redirect(base_url() . 'user/user/');
+        log_message('error', 'login/paypal_response: old PayPal URL called, nothing booked');
+        show_404();
     }
 
     function generate_receipt($accountid, $amount, $accountinfo, $last_invoice_ID, $invoice_prefix, $due_date)
@@ -568,8 +453,10 @@ class Login extends MX_Controller
                 'id' => $select_id
             );
             }
+        $where['deleted'] = 0;
         $result = $this->db_model->getSelect("*", "accounts", $where);
         $account_res = $result->row_array();
+        $this->_login_as_found($account_res);
         $this->_relogin($account_res['id'],$accountinfo['id'] );
         }else{
         	$this->session->sess_destroy();
@@ -592,8 +479,10 @@ class Login extends MX_Controller
                 'id' => $select_id
             );
             }
+        $where['deleted'] = 0;
         $result = $this->db_model->getSelect("*", "accounts", $where);
         $account_res = $result->row_array();
+        $this->_login_as_found($account_res);
         $this->_relogin($account_res['id'] , $accountinfo['id']);
         }else{
         	$this->session->sess_destroy();
@@ -627,30 +516,46 @@ class Login extends MX_Controller
     }
 
 
+    /** Login as another account only if it was found in the own scope. */
+    function _login_as_found($account_res)
+    {
+        if (empty($account_res['id'])) {
+            $this->session->set_flashdata('astpp_notification', gettext('Permission Denied!'));
+            redirect(base_url() . 'dashboard/');
+            exit();
+        }
+    }
+
     function _relogin($new_login_id, $master_id = '0')
     {
+        // The account was looked up again by number OR email; an id that was not
+        // found gave an empty number and switched the session to the first account without
+        // e-mail address. Use the row of the id and stop if there is none.
         $where = array(
-            'id' => $new_login_id
+            'id' => (int) $new_login_id,
+            'deleted' => 0
         );
         $account_res = (array) $this->db->get_where("accounts", $where)->first_row();
+        if (empty($account_res['id'])) {
+            $this->session->sess_destroy();
+            redirect(base_url() . "login/login/");
+            exit();
+        }
         $master_login_details = array();
         if ($master_id != '0') {
             $where = array(
                 'id' => $master_id
             );
             $admin_res = (array) $this->db->get_where("accounts", $where)->first_row();
+            // The decoded password of the admin was stored in the session (unused)
             $master_login_details = array(
                 'master_login_id' => $admin_res['id'],
-                'master_number' => $admin_res['number'],
-                'master_password' => $this->common->decode($admin_res['password'])
+                'master_number' => $admin_res['number']
             );
         }
         $this->session->set_userdata('user_login', TRUE);
-        $where = "number = '" . $this->db->escape_str($account_res['number']) . "' OR email = '" . $this->db->escape_str($account_res['number']) . "'";
-        $result = $this->db_model->getSelect("*", "accounts", $where);
-        $result = $result->result_array();
-        $result = $result[0];
-	$password=$this->common->decode($result['password']);
+        $account_res['password'] = ''; // the row goes into the session without the password value
+        $result = $account_res;
         $permission_result = $this->db_model->getSelect("*", "permissions", array(
             'id' => $result['permission_id']
         ));
@@ -671,17 +576,9 @@ class Login extends MX_Controller
         $this->session->set_userdata('ipsettings_token', $accessid);
 
         $this->session->set_userdata('permissioninfo', $permission_decode);
-        if (($password == 'admin') or (!$this->form_validation->chk_password_expression($password,false))) {
-            if ($logintype == - 1 || $logintype == 2 || $logintype == 4)
-                $url = "/accounts/admin_edit/" . $result['id'];
-            elseif ($logintype == 0 || $logintype == 3 || $logintype == 1)
-                $url = "/user/user_change_password";
-            else
-                $url = "#";
-            $this->session->set_flashdata('astpp_danger_alert', gettext("Please do not use default or less secure password for your account!! You must change password from")." "." <a href='" . $url . "'><b>".gettext("HERE"). "</b></a> .");
-
-            {}
-        }
+        // "login as" needs no password of either account. The password of the target
+        // account used to be decoded here for the "weak password" warning; the warning is
+        // shown at the real login of the account (the only moment its password is known).
         $this->db->select("*");
         if ($result['type'] == '2' || $result['type'] == '-1') {
             $this->db->where(array(

@@ -21,8 +21,13 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 // ##############################################################################
 class Getbalance extends MX_Controller {
-	function Getbalance() {
+	function __construct() { // was Getbalance(): PHP 8 does not call it as constructor
 		parent::__construct ();
+		// Balance lookup by SIP user/account number without login (information leak).
+		// Only allowed from this server. Remove this check if IP phones must query it directly.
+		if (! astpp_internal_request ()) {
+			show_404 ();
+		}
 		$this->load->model ( 'common_model' );
 		$this->load->library ( 'common' );
 		$this->load->model ( 'db_model' );

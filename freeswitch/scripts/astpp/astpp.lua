@@ -71,6 +71,61 @@ if (not params) then
 	end
 end
 
+-- Values taken from SIP signalling (dialed number, caller id, From user, custom P- headers)
+-- are set by the caller and end up in the generated dialplan XML. SQL values are escaped by
+-- db_sql() (lib/astpp.db.lua); this filter stays as a second layer.
+-- Wrap params:getHeader() so every script only sees sanitized values, and ignore the
+-- voice broadcast / accountcode override headers unless the call was originated by this
+-- server itself (voice broadcast, callback).
+do
+	local real_params = params
+	local number_headers = {
+		["Caller-Destination-Number"] = true,
+		["Caller-Caller-ID-Number"] = true,
+		["variable_effective_caller_id_number"] = true,
+		["variable_sip_from_user"] = true,
+		["variable_sip_h_P-cb_destination"] = true,
+		["variable_sip_h_P-Accountcode"] = true,
+		["variable_sip_h_P-Voice_broadcast_type"] = true,
+		["Hunt-Username"] = true,
+	}
+	local name_headers = {
+		["Caller-Caller-ID-Name"] = true,
+		["variable_effective_caller_id_name"] = true,
+	}
+	local local_only_headers = {
+		["variable_sip_h_P-Voice_broadcast"] = true,
+		["variable_sip_h_P-Voice_broadcast_type"] = true,
+		["variable_sip_h_P-cb_destination"] = true,
+		["variable_sip_h_P-Accountcode"] = true,
+	}
+	local function raw_header(name)
+		return real_params:getHeader(name)
+	end
+	local net_addr = raw_header("Hunt-Network-Addr") or raw_header("variable_sip_network_ip") or ""
+	local local_addr = raw_header("variable_sip_local_network_addr") or ""
+	local is_local_origin = (net_addr == "127.0.0.1" or net_addr == "::1" or (net_addr ~= "" and net_addr == local_addr))
+
+	params = {}
+	function params:getHeader(name)
+		local value = raw_header(name)
+		if value == nil then return nil end
+		if local_only_headers[name] and not is_local_origin then
+			return nil
+		end
+		if number_headers[name] then
+			return (string.gsub(value, "[^%w%+%*#%-%._@]", ""))
+		end
+		if name_headers[name] then
+			return (string.gsub(value, "[%c'\"\\`;<>&]", ""))
+		end
+		return value
+	end
+	function params:serialize(...)
+		return real_params:serialize(...)
+	end
+end
+
 if (config['debug']==2) then
     -- print all params 
     if (params:serialize() ~= nil) then

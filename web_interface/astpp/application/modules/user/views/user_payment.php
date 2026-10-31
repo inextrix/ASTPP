@@ -102,7 +102,8 @@ return false;
 											
 											
 											
-											<form name="payment_form" id="payment_form" action="<?=$paypal_url?>" method="POST" onSubmit="return form_submit();">
+											<?php /* the form goes to this server, which stores the payment and then sends the browser to PayPal */ ?>
+											<form name="payment_form" id="payment_form" action="<?= base_url()?>user/user_payment/CHECKOUT/" method="POST" onSubmit="return form_submit();">
 												  
 												  <div class="col-md-12 form-group">
 														<label class="p-0 control-label"><?php echo gettext('Net Payable Amount in')?> <?= $to_currency?>:</label>
@@ -110,20 +111,6 @@ return false;
 												  </div>
 												  
 												  <div> 
-													  <input type="hidden" readonly name="cmd" value="_xclick">
-													  <input type="hidden" readonly  name="business" value="<?=$paypal_email_id?>">
-													  <input type="hidden" readonly name="item_name" value="Billing Store">
-													  <input type="hidden" readonly name="item_number" value="<?=$item_number?>"> 
-													  <input type="hidden" readonly name="LC" value="US">
-													  <input type="hidden" readonly name="country" value="USA">
-													  <input type="hidden" readonly name="quantity" value="1"> 
-													  <input type="hidden" readonly name="rm" value="2">
-													  <input type="hidden" readonly name="no_shipping" value="1">
-													  <input type="hidden" readonly name="PHPSESSID" value="<?=session_id(); ?>">
-													  <input type="hidden" readonly name="currency_code" value="<?=$to_currency?>">
-													  <input type="hidden" readonly name="notify_url" value="<?= base_url()?>login/paypal_response/">
-													  <input type="hidden" readonly name="return" value="<?= base_url()?>login/paypal_response/">
-													  <input type="hidden" readonly name="cancel_return" value="<?= base_url()?>/user/user_payment/">
 													  <input type="hidden" readonly name="custom" id='custom' value="">
 												  </div>
 										 

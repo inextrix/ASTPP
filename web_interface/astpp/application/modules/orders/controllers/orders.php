@@ -230,8 +230,15 @@ class Orders extends MX_Controller
                 if ($customer_data->num_rows > 0) {
                     $customer_data = $customer_data->result_array()[0];
                 }
-		$quantity = (isset($ProductData['quantity']) && $ProductData['quantity'] > 1)?$ProductData['quantity']:1;
-                $total_amt = (($ProductData['price'] + $ProductData['setup_fee']) * $quantity);
+                // $ProductData holds the admin's product row merged over the POST data; the balance
+                // check uses what confirm_order() books for this customer (seller's offer)
+                $quantity = order::quantity(isset($ProductData['quantity']) ? $ProductData['quantity'] : '');
+                $unit_price = $this->order->unit_price($ProductData['product_id'], $account_id);
+                if ($quantity === false || $unit_price === false) {
+                    $this->session->set_flashdata('astpp_notification', gettext('Invalid price, quantity or product!'));
+                    redirect(base_url() . 'orders/orders_add/');
+                }
+                $total_amt = $unit_price * $quantity;
                 $account_balance = $customer_data['posttoexternal'] == 1 ? $customer_data['credit_limit'] - ($customer_data['balance']) : $customer_data['balance'];
                 if ($account_balance >= $total_amt) {
                     $ProductData['invoice_type'] = ($ProductData['category'] == 3) ? "credit" : "debit";
@@ -556,10 +563,24 @@ class Orders extends MX_Controller
             exit();
         } else {
             if (! empty($update_array)) {
-                if ($update_array['creation'] != '') {
-                    $order_id = $this->common->get_field_name("id", "orders", array(
-                        "order_id" => $update_array['order_id']
+                // The date picker allows today up to the end of the paid period only; any date was
+                // taken (also as gmdate() format string), so a later date kept the package active
+                // (packages_view) after billing had stopped (is_terminated = 1).
+                $order_id = $this->common->get_field_name("id", "orders", array(
+                    "order_id" => $update_array['order_id']
+                ));
+                $next_billing = (string) $this->common->get_field_name("next_billing_date", "order_items", array(
+                    "order_id" => $order_id
+                ));
+                $date = trim((string) $update_array['creation']);
+                $parsed = DateTime::createFromFormat('!Y-m-d', $date, new DateTimeZone('UTC'));
+                if (! $parsed || $parsed->format('Y-m-d') !== $date || $date < gmdate('Y-m-d') || ($next_billing !== '' && $date > substr($next_billing, 0, 10))) {
+                    echo json_encode(array(
+                        'creation_error' => gettext('Please select a date between today and the next billing date.')
                     ));
+                    exit();
+                }
+                if ($update_array['creation'] != '') {
                     $order_update_array = array(
                         "is_terminated" => 1,
                         "termination_date" => gmdate("" . $update_array['creation'] . " H:i:s"),

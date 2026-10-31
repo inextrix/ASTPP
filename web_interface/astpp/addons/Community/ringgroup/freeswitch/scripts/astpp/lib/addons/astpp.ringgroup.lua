@@ -3,7 +3,7 @@ function custom_inbound_7(xml,didinfo,userinfo,config,xml_did_rates,callerid_arr
 end
 
 function check_local_call(destination_number)
-	local query = "SELECT sip_devices.id as sip_id,sip_devices.username as username,accounts.number as accountcode,sip_devices.accountid as accountid,accounts.did_cid_translation as did_cid_translation,sip_devices.codec as sip_codec FROM "..TBL_SIP_DEVICES.." as sip_devices,"..TBL_USERS.." as  accounts WHERE accounts.status=0 AND accounts.deleted=0 AND accounts.id=sip_devices.accountid AND sip_devices.username=\"" ..destination_number .."\" limit 1";
+	local query = db_sql("SELECT sip_devices.id as sip_id,sip_devices.username as username,accounts.number as accountcode,sip_devices.accountid as accountid,accounts.did_cid_translation as did_cid_translation,sip_devices.codec as sip_codec FROM "..TBL_SIP_DEVICES.." as sip_devices,"..TBL_USERS.." as  accounts WHERE accounts.status=0 AND accounts.deleted=0 AND accounts.id=sip_devices.accountid AND sip_devices.username = ?s limit 1", destination_number);
    
     Logger.debug("[CHECK_LOCAL_CALL] Query :" .. query)
     assert (dbh:query(query, function(u)
@@ -18,7 +18,7 @@ end
 
 function get_ringgroup(rgroupid)
 	local ringgroup_arr;
-	local query = "SELECT id as ringgroup_id,name as ringgroup_name,strategy as ringgroup_strategy,destinations as ringgroup_destinations,description as ringgroup_description from pbx_ringgroup WHERE id = "..rgroupid.." and status = 0 LIMIT 1";
+	local query = db_sql("SELECT id as ringgroup_id,name as ringgroup_name,strategy as ringgroup_strategy,destinations as ringgroup_destinations,description as ringgroup_description from pbx_ringgroup WHERE id = ?i and status = 0 LIMIT 1", rgroupid);
 	Logger.debug("[Functions] [GET RING GROUP INFO] Query :" .. query)
 	assert (dbh:query(query, function(u)
 		ringgroup_arr = u

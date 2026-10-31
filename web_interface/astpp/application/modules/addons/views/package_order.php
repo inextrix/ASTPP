@@ -7,9 +7,9 @@
 <?php startblock('content') ?>
 <div class="sidebar collapse">
 	<ul class="sidemenu">
-		<li><a href="http://192.168.1.22:8073/addons/addons_refill"><?php echo gettext("Refill"); ?></a></li>
+		<li><a href="<?php echo base_url(); ?>addons/addons_refill"><?php echo gettext("Refill"); ?></a></li>
 		<li class="active"><a
-			href="http://192.168.1.22:8073/addons/addons_packages"><?php echo gettext("Packages"); ?></a></li>
+			href="<?php echo base_url(); ?>addons/addons_packages"><?php echo gettext("Packages"); ?></a></li>
 		<li><a href=""><?php echo gettext("Subscription"); ?></a></li>
 		<li><a href=""><?php echo gettext("DIDs"); ?></a></li>
 		<li><a href=""><?php echo gettext("Other"); ?></a></li>

@@ -120,7 +120,8 @@ if ($user_data['success']) {
     echo "<div class=\"col-md-12 margin-t-10 padding-r-32 padding-l-32\" style=\"color: #232222;\">".gettext("Here is your login information")." :</div>";
 
     echo "<div class=\"col-md-12 margin-t-10 padding-r-32 padding-l-32\" style=\"color: #232222;\">".gettext("Username")." : " . $user_data['number'] . "</div>";
-    echo "<div <div class=\"col-md-12 margin-t-10 margin-b-10 padding-r-32 padding-l-32\" style=\"color: #232222;\">".gettext("Password")." : " . $this->common->decode($user_data['password']) . "</div>";
+    // the password is not readable (view not used by any controller)
+    echo "<div class=\"col-md-12 margin-t-10 margin-b-10 padding-r-32 padding-l-32\" style=\"color: #232222;\">".gettext("Password")." : " . htmlspecialchars($this->common->password_mail_hint(), ENT_QUOTES, 'UTF-8') . "</div>";
     echo "<br><br>";
 } else {
     echo "<div class=\"col-md-12 margin-t-10 margin-b-20 padding-r-32 padding-l-32\" style=\"color: #232222;\">".gettext("Link is Expire Please Try Again")."</div><br>";

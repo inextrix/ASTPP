@@ -75,6 +75,9 @@ $route ['logout'] = "login/logout/";
 $route ['signup/send_otp'] = "signup/send_otp";
 $route ['signup/check_otp'] = "signup/check_otp";
 $route ['signup/resend_otp'] = "signup/resend_otp";
+// password reset with code and new password
+$route ['signup/reset_password'] = "signup/reset_password";
+$route ['signup/successpassword'] = "signup/successpassword";
 
 $route ['relogin/(:any)/(:any)'] = "login/relogin/$1/$2";
 //Make menu dynamic

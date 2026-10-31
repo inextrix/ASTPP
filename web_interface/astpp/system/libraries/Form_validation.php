@@ -1510,39 +1510,29 @@ class CI_Form_validation {
 		/* ASTPP  3.0
          * For Old Password checking
          */
-		public function password_check($str,$table){
+		/*
+		 * The stored password is a hash (or an old Blowfish value), compared with
+		 * common::password_matches(). The account is the one of the session.
+		 */
+		private function password_account_value($table){
+		  $account = $this->CI->session->userdata('accountinfo');
 		  $this->CI->db->select('password');
-		  $this->CI->db->where('id',$_POST['id']);
+		  $this->CI->db->where('id', (is_array($account) && isset($account['id'])) ? (int) $account['id'] : 0);
 		  $result=$this->CI->db->get($table);
 		  if($result->num_rows() > 0 ){
 			  $result=(array)$result->first_row();
-			  $password=$this->CI->common->decode($result['password']);
-			  if($password && $password == $str){
-				  return true;
-			  }else{
-				  return false;
-			  }
-		  }else{
-			  return false;
+			  return (string) $result['password'];
 		  }
+		  return null;
+		}
+		public function password_check($str,$table){
+		  $stored = $this->password_account_value($table);
+		  return $stored !== null && $this->CI->common->password_matches($str, $stored);
 		}
 		public function password_check_old($str,$table){
-
-		  $this->CI->db->select('password');
-		  $this->CI->db->where('id',$_POST['id']);
-		  $result=$this->CI->db->get($table);
-
-		  if($result->num_rows() > 0 ){
-			  $result=(array)$result->first_row();
-			  $password=$this->CI->common->decode($result['password']);
-			  if($password == $_POST ['new_password']) {
-				  return false;
-			  }else {
-				  return true;
-			  }
-		  }else{
-			  return true;
-		  }
+		  // the new password must differ from the current one
+		  $stored = $this->password_account_value($table);
+		  return $stored === null || ! $this->CI->common->password_matches($this->CI->input->post('new_password'), $stored);
 		}
 
 		public function phn_number($str)
@@ -1560,10 +1550,10 @@ class CI_Form_validation {
 
     		if( $password_type == '0' ) {
     			if(1 !== preg_match('/^(?=.*\d)(?=.*[A-Za-z])[0-9A-Za-z!@#$%^&*()+]{8,}$/', $str)) {
-				if (strpos($str, ';') || strpos($str, '=') || strpos($str, '?') || strpos($str, ',') || strpos($str, '&')  || strpos($str, ':') || strpos($str, '[') || strpos($str, ']')  || strpos($str, '+') || strpos($str, '/') || strpos($str, "'") !== false) {
+				// every violation is an error (this returned NULL - "valid" for CodeIgniter - unless
+				// the password contained one of the characters ;=?,&:[]+/')
             		$this->CI->form_validation->set_message('chk_password_expression', gettext("%s must be at least 8 characters and must contain at least one lower case letter, one upper case letter and one digit and any special characters must have included NOTE (?;=,&:\[]+/) not allowed in special characters"));
                 	return FALSE;
-				}
 			    } else {
 		        
 		        	return TRUE;
@@ -1583,6 +1573,45 @@ class CI_Form_validation {
 
 		    	}
     		}
+		}
+		/*
+		 * Rule for portal passwords, see
+		 * application/libraries/astpp/password_policy.php. Empty passes: in the edit forms empty
+		 * keeps the stored password, "required" catches it where a password is needed.
+		 * portal_password        account number and e-mail address from the POST and of the
+		 *                        stored account of POST id (account forms);
+		 * portal_password[session] the account of the session (change password).
+		 */
+		public function portal_password($str, $source = '') {
+			$str = (string) $str;
+			if ($str === '') {
+				return TRUE;
+			}
+			$personal = array();
+			$id = 0;
+			if ($source === 'session') {
+				$account = $this->CI->session->userdata('accountinfo');
+				$id = (is_array($account) && isset($account['id'])) ? (int) $account['id'] : 0;
+			} else {
+				foreach (array('number', 'email') as $field) {
+					$personal[] = (string) $this->CI->input->post($field);
+				}
+				$id = (int) $this->CI->input->post('id');
+			}
+			if ($id > 0) {
+				$row = $this->CI->db->select('number, email')->get_where('accounts', array('id' => $id))->row_array();
+				if (! empty($row)) {
+					$personal[] = $row['number'];
+					$personal[] = $row['email'];
+				}
+			}
+			$this->CI->load->library('astpp/password_policy');
+			$error = $this->CI->password_policy->check($str, $personal);
+			if ($error === '') {
+				return TRUE;
+			}
+			$this->set_message('portal_password', $this->CI->password_policy->message($error, '%s'));
+			return FALSE;
 		}
 		public function alpha_dash_numeric_space($str){
 			return ( ! preg_match("/^[._A-Za-z0-9\s]+$/", $str)) ? FALSE : TRUE;

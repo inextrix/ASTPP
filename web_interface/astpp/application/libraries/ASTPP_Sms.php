@@ -60,7 +60,7 @@
 		if ($template_name == 'send_sms_otp' || $template_name == 'otp_add_user' ) {
 
 			$numberlength = 6;
-			$uniq_rendno  = rand(pow(10, $numberlength - 1), pow(10, $numberlength) - 1);
+			$uniq_rendno  = random_int((int) pow(10, $numberlength - 1), (int) pow(10, $numberlength) - 1);
 			$template     = str_replace("#OTP#",$uniq_rendno,$template ['sms_template']);
 			$body         = $template;
 

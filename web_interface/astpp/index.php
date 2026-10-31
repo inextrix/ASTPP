@@ -17,7 +17,7 @@
  * NOTE: If you change these, also change the error_reporting() code below
  *
  */
-ini_set('display_errors','on');
+ini_set('display_errors','off'); // errors go to the PHP error log, never to the browser
 ini_set ( "date.timezone", "UTC" );
 define ( 'ENVIRONMENT', 'production' );
 /*
@@ -207,6 +207,91 @@ if (is_dir ( $application_folder )) {
 	}
 	
 	define ( 'APPPATH', BASEPATH . $application_folder . '/' );
+}
+
+/*
+ * TRUE for CLI/cron runs and for HTTP requests the server makes to itself.
+ * The jobs in `cron_settings` call the cron controllers via "wget {BASE_URL}...",
+ * so these controllers must stay reachable over HTTP, but only from this host.
+ */
+function astpp_internal_request() {
+	if (defined ( 'CRON' ) || php_sapi_name () === 'cli') {
+		return TRUE;
+	}
+	$remote = isset ( $_SERVER ['REMOTE_ADDR'] ) ? ( string ) $_SERVER ['REMOTE_ADDR'] : '';
+	if (strpos ( $remote, '127.' ) === 0 || $remote === '::1') {
+		return TRUE;
+	}
+	return ($remote !== '' && isset ( $_SERVER ['SERVER_ADDR'] ) && $remote === ( string ) $_SERVER ['SERVER_ADDR']);
+}
+
+/*
+ * Start a cron task (key of $config['argv'] in config/cron.php, e.g. "BroadcastEmail") in the
+ * background, right after mails were queued or the base currency changed. Replaces
+ * "cd <dir>/cron && screen -d -m php cron.php <task>": "php" is the system default CLI, which
+ * need not be the PHP version of the web server, one caller used a development path, and screen
+ * is not needed for a detached process. The minute cron runs the same tasks, so a failed start
+ * only delays them.
+ */
+function astpp_cron_background($task) {
+	if (! preg_match ( '/^[A-Za-z]+$/', ( string ) $task )) {
+		return;
+	}
+	// CLI of the same PHP version as the web server (PHP_BINARY is php-fpm under the web server)
+	$php = PHP_BINDIR . '/php' . PHP_MAJOR_VERSION . '.' . PHP_MINOR_VERSION;
+	if (! is_executable ( $php )) {
+		$php = 'php';
+	}
+	exec ( 'cd ' . escapeshellarg ( FCPATH . 'cron' ) . ' && ' . escapeshellarg ( $php ) . ' cron.php ' . $task . ' >/dev/null 2>&1 &' );
+}
+
+/*
+ * May an SMS notification go out? $settings = name => value of the system settings group
+ * "notifications" (Configuration -> Notifications, part "SMS"): sms_notications "0" means
+ * enabled (ASTPP convention; anything else or missing = off), plus the operator's own
+ * sms_api_key / sms_secret_key. The installation seeds the placeholders "EnterAPIKey" /
+ * "EnterSecretKey"; like empty values they count as "not configured", so no request with them
+ * goes to the SMS provider.
+ */
+function astpp_sms_configured($settings) {
+	$enabled = isset ( $settings ['sms_notications'] ) ? trim ( ( string ) $settings ['sms_notications'] ) : '';
+	if ($enabled !== '0') {
+		return FALSE;
+	}
+	foreach ( array ('sms_api_key', 'sms_secret_key') as $name ) {
+		$value = isset ( $settings [$name] ) ? trim ( ( string ) $settings [$name] ) : '';
+		if ($value === '' || in_array ( strtolower ( $value ), array ('enterapikey', 'entersecretkey'), TRUE )) {
+			return FALSE;
+		}
+	}
+	return TRUE;
+}
+
+/*
+ * Request parameters that ASTPP concatenates into SQL in many places (bulk actions of
+ * the grids and the left panel quick search):
+ *  - selected_ids:       "'1','2','3'" -> only quoted integers survive
+ *  - left_panel_search:  quotes, backslash, backtick and semicolon removed
+ */
+if (isset ( $_POST ['selected_ids'] )) {
+	$astpp_ids = array ();
+	foreach ( explode ( ',', ( string ) $_POST ['selected_ids'] ) as $astpp_id ) {
+		$astpp_id = trim ( $astpp_id, " '\"" );
+		if ($astpp_id !== '' && ctype_digit ( $astpp_id )) {
+			$astpp_ids [] = "'" . $astpp_id . "'";
+		}
+	}
+	$_POST ['selected_ids'] = empty ( $astpp_ids ) ? "'0'" : implode ( ',', $astpp_ids );
+	unset ( $astpp_ids, $astpp_id );
+}
+if (isset ( $_POST ['left_panel_search'] )) {
+	$_POST ['left_panel_search'] = str_replace ( array (
+			"'",
+			'"',
+			chr ( 92 ), // backslash
+			'`',
+			';' 
+	), '', ( string ) $_POST ['left_panel_search'] );
 }
 
 /*

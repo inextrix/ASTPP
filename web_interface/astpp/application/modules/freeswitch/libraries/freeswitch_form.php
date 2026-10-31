@@ -120,7 +120,7 @@ class Freeswitch_form extends common
         $val = $id > 0 ? 'sip_devices.username.' . $id : 'sip_devices.username';
         $uname_user = $this->CI->common->find_uniq_rendno('10', '', '');
         $digits = 5;
-        $random_password = rand(pow(10, $digits - 1), pow(10, $digits) - 1);
+        $random_password = random_int((int) pow(10, $digits - 1), (int) pow(10, $digits) - 1);
         $password = $this->CI->common->generate_password();
         if ($id > 0) {
             $password_field = array(
@@ -2710,7 +2710,7 @@ class Freeswitch_form extends common
         $val = $id > 0 ? 'sip_devices.username.' . $id : 'sip_devices.username';
         $uname_user = $this->CI->common->find_uniq_rendno('10', '', '');
         $digits = 5;
-        $random_password = rand(pow(10, $digits - 1), pow(10, $digits) - 1);
+        $random_password = random_int((int) pow(10, $digits - 1), (int) pow(10, $digits) - 1);
         $password = $this->CI->common->generate_password();
         if ($id > 0) {
             $password_field = array(

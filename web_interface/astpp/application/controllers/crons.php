@@ -26,6 +26,10 @@ class Crons extends MX_Controller {
     public $CurrentDate = "";
 	function __construct() {
 		parent::__construct ();
+		// Cron controller: only reachable from this server (CLI, or wget from cron_settings)
+		if (! astpp_internal_request ()) {
+			show_404 ();
+		}
 	        $this->load->model("db_model");
 	        $this->CurrentDate = gmdate("Y-m-d H:i:s");
 	}

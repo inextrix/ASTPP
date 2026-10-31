@@ -226,7 +226,7 @@ class Format {
 	
 	// Encode as Serialized array
 	private function _from_serialize($string) {
-		return unserialize ( trim ( $string ) );
+		return unserialize ( trim ( $string ), array ( 'allowed_classes' => false ) );
 	}
 }
 

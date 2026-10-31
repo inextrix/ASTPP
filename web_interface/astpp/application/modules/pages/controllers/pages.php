@@ -48,7 +48,7 @@ function services($category= '') {
 				if(empty($post['country_id'])){
 					$temp_where = '(`reseller_products`.`is_optin` = 0 OR `reseller_products`.`is_owner` = 0)';
 				}else{
-					$temp_where = '((`reseller_products`.`country_id` = '.$post['country_id'].' ) AND (`reseller_products`.`is_optin` = 0 OR `reseller_products`.`is_owner` = 0))';
+					$temp_where = '((`reseller_products`.`country_id` = '.(int)$post['country_id'].' ) AND (`reseller_products`.`is_optin` = 0 OR `reseller_products`.`is_owner` = 0))';
 				}
 				$this->db->where($temp_where);
 				$productdata = $this->db_model->getJionQuery('products', 'products.id,products.name,products.product_category,products.country_id,products.buy_cost,products.commission,reseller_products.setup_fee,reseller_products.price,reseller_products.billing_type,reseller_products.billing_days,reseller_products.free_minutes,products.status,products.last_modified_date,reseller_products.product_id', array('reseller_products.status'=>0,'products.can_purchase'=>0,'products.is_deleted'=>0,'products.product_category'=>$category,'reseller_products.account_id'=>$accountinfo['reseller_id']), 'reseller_products','products.id=reseller_products.product_id', 'inner','','','desc','products.id');
@@ -232,7 +232,13 @@ function services($category= '') {
 	
 		if(!isset($productinfo['error'])){	
 			$payment_method = isset($_POST['pay_from_account']) ? $_POST['pay_from_account'] : '';
-			$quantity = (isset($_POST['product_quantity']) && $_POST['product_quantity'] > 0 ) ? $_POST['product_quantity'] : 1;
+			// whole pieces only (0.001 or 1e9 were accepted and charged price x quantity)
+			$quantity = order::quantity(isset($_POST['product_quantity']) ? $_POST['product_quantity'] : '');
+			if ($quantity === false) {
+				$this->session->set_flashdata ( 'astpp_notification',  gettext('Invalid quantity!'));
+				redirect ( base_url () . 'pages/services/'.$productinfo['product_category'].'' );
+				exit;
+			}
 			$product_info = array();
 			if($payment_method == "account_balance" && $productinfo['product_category'] != 3){  		
 				$product_info['is_parent_billing'] = true;
@@ -282,6 +288,15 @@ function services($category= '') {
 					redirect ( base_url () . 'pages/services/'.$productinfo['product_category'].'' );
 			        }
 			}else{
+				// PayPal only while it is active for the receiving account (a pending order was created
+				// also with PayPal switched off)
+				$this->load->library('astpp/paypal');
+				$paypal_owner = (array) $this->db->get_where("accounts",array("id"=>$account_info['id']))->first_row();
+				if ($this->paypal->for_account($paypal_owner) === null) {
+					$this->session->set_flashdata ( 'astpp_notification',  gettext('PayPal is not available.' ));
+					redirect ( base_url () . 'pages/services/'.$productinfo['product_category'].'' );
+					exit;
+				}
 				$productinfo['product_id'] = $productid;
 				$productinfo['payment_by'] = "Paypal";
 				$productinfo['quantity'] = $quantity;
@@ -334,68 +349,27 @@ function services($category= '') {
     }
 
     // Jaimin ASTPPCOM-737
+    // Amount (incl. taxes and PayPal fee), currency and receiver are stored in paypal_payments;
+    // the form only carries the token of that row as item_number.
     function oerder_request_form($oreder_req_result,$product_info,$accountid){
 		$accountinfo=(array)$this->db->get_where("accounts",array("id"=>$accountid))->first_row();
-		$accountinfo = ((isset($accountinfo)) && $accountinfo != '')?$accountinfo:$this->session->userdata ( "accountinfo" );
-		$system_config = common_model::$global_config ['system_config'];
-		$reseller_id = ($accountinfo['reseller_id'] > 0) ? $accountinfo['reseller_id']: 0;
-		$paypal_info= $this->db_model->getSelect("*","system",array("sub_group"=>'Paypal',"reseller_id"=>$reseller_id));
-
-		if($reseller_id > 0 ){ 	 
-			if($paypal_info->num_rows() > 0){
-					
-					$paypal_mode =  $this->common->get_field_name("value","system",array("sub_group"=>'Paypal',"reseller_id"=>$reseller_id,"name"=>"paypal_mode"));	
-					if ($paypal_mode == 0) {
-						$paypal_url = $this->common->get_field_name("value","system",array("sub_group"=>'Paypal',"reseller_id"=>$reseller_id,"name"=>"paypal_id"));
-						$data ["paypal_url"] =(isset($paypal_url)&&$paypal_url)?$paypal_url:$system_config ["paypal_url"];
-						$data ["paypal_email_id"] = $this->common->get_field_name("value","system",array("sub_group"=>'Paypal',"reseller_id"=>$reseller_id,"name"=>"paypal_id"));
-					} else {
-						$data ["paypal_url"] = $system_config ["paypal_sandbox_url"];
-						$data ["paypal_email_id"] = $system_config ["paypal_sandbox_id"];
-					}
-			}else{
-				
-				if ($system_config ["paypal_mode"] == 0) {
-					$data ["paypal_url"] = $system_config ["paypal_url"];
-					$data ["paypal_email_id"] = $system_config ["paypal_id"];
-				} else {
-					$data ["paypal_url"] = $system_config ["paypal_sandbox_url"];
-					$data ["paypal_email_id"] = $system_config ["paypal_sandbox_id"];
-				}	
-			}
-		}else{
-			
-			if ($system_config ["paypal_mode"] == 0) {
-				$data ["paypal_url"] = $system_config ["paypal_url"];
-				$data ["paypal_email_id"] = $system_config ["paypal_id"];
-			} else {
-				$data ["paypal_url"] = $system_config ["paypal_sandbox_url"];
-				$data ["paypal_email_id"] = $system_config ["paypal_sandbox_id"];
-			}
-			
+		$this->load->library('astpp/paypal');
+		$settings = $this->paypal->for_account($accountinfo);
+		$amt = ($product_info['price'] + $product_info['setup_fee']) * $product_info['quantity'];
+		$amount_with_tax = $this->common_model->calculate_taxes($accountinfo,$amt);
+		$total = ($amount_with_tax != '') ? $amount_with_tax['amount_with_tax'] : $amt;
+		$row = null;
+		if ($settings !== null) {
+			$total = $total + ($total * $settings['fee'] / 100);
+			$row = $this->paypal->create($accountinfo, 'order', $oreder_req_result, $total, $amt, $settings);
 		}
-		$data ["from_currency"] = $this->common->get_field_name ( 'currency', 'currency', $accountinfo ["currency_id"] );
-		$data ["paypal_tax"] = $system_config ["paypal_tax"];
-		$data ["to_currency"] = Common_model::$global_config ['system_config'] ['base_currency'];
-		$data['order_id'] = base64_encode($oreder_req_result);
-		$data['account_id'] = $accountid;
-		$data['product_info'] = $product_info;
-		$data['amt'] = $data['product_info']['price'] + $data['product_info']['setup_fee'];
-		$data['amt'] = ($data['amt'] * $data['product_info']['quantity']);
-		$amount_with_tax = $this->common_model->calculate_taxes($accountinfo,$data['amt']);
-		$data['total_amt']   = ($amount_with_tax != '')?$amount_with_tax['amount_with_tax']:$data['amt'];
-		$paypal_fee_status = $this->common->get_field_name('value','system',array("name" => "paypal_fee"));
-		if($paypal_fee_status == 0){
-			$paypal_fee_status = $this->common->get_field_name('value','system',array("name" => "paypal_tax"));
-			$paypal_tax_rate = $data['total_amt'] *  $paypal_fee_status / 100;
-			$data['total_amt'] = $data['total_amt'] + $paypal_tax_rate;
+		if ($row === null) {
+			$this->session->set_flashdata ( 'astpp_notification',  gettext('PayPal is not available.' ));
+			redirect ( base_url () . 'pages/services/' );
+			exit;
 		}
-		$session_data=($this->session->userdata);
-		if(!isset($session_data['logintype'])){
-			$data ['return'] = base_url().'pages/success/';
-			$data ['cancel_return'] = base_url().'pages/success/';
-		}
-       		$this->load->view( 'paypal_redirect',$data);   
+		$data = $this->paypal->form_data($row, $settings, isset($product_info['name']) ? $product_info['name'] : 'Product');
+		$this->load->view( 'paypal_redirect',$data);
     }
 // END
 
@@ -443,137 +417,131 @@ function services($category= '') {
     	}
     }
 
-  function paypal_response() {
-/*$_POST =  array(
-    'payer_email' => 'hard_patel09@yahoo.com',
-    'payer_id' => 'B329Y9JFAJUMJ',
-    'payer_status' => 'UNVERIFIED',
-    'first_name' => 'Rodney',
-    'last_name' => 'Carmichael',
-    'txn_id' => '2ED81057F0116122H',
-    'mc_currency' => 'USD',
-    'mc_gross' =>  39.27,
-    'protection_eligibility' => 'INELIGIBLE',
-    'payment_gross' => 39.27,
-    'payment_status' =>' Pending',
-    'pending_reason' => 'unilateral',
-    'payment_type' => 'instant',
-    'item_name' => 'Emial',
-    'item_number' => 'Mw==',
-    'quantity' => 1,
-    'txn_type' => 'web_accept',
-    'payment_date' =>'2019-02-01T09:29:50Z',
-    'business' => 'youra@paypal.com',
-    'notify_version' => 'UNVERSIONED',
-    'custom' => 297,
-    'verify_sign' => 'Aj8.yGaDEEvG5R4uDtSEL7b94tWUA0Yl8A2qA2R24.wefCGLe.z7sLgv'
-
- );*/
-
-
-		if (count ( $_POST ) > 0) {
-			$response_arr = $_POST;	
-
-			
-
-		 	$response_arr['item_number'] = base64_decode($response_arr['item_number']); 
-			$this->db->where("orders.order_date >=",date("Y-m-d H:i:s",strtotime("-30 minutes")));
-			$orderarr = $this->order->get_order_details($response_arr['item_number']);
-			$product_name = $this->common->get_field_name("name","products",array("id"=>$orderarr['product_id']));
-			if(!empty($orderarr)){ 
-				$orderarr['transaction_id'] = $response_arr['txn_id'];
-				$orderarr['name'] = $product_name;
-				$where = array ('id' => $orderarr['accountid']);
-				$account_info = ( array ) $this->db->get_where( "accounts", $where )->result_array()[0];
-
-				$tax_calculation=$this->common_model->calculate_taxes($account_info,$orderarr['price']);
-
-				$where = array ('id' => $account_info['currency_id']);
-				$currency_info = ( array ) $this->db->get_where( "currency", $where )->result_array()[0];
-
-				if ((trim($response_arr ["payment_status"]) === "Pending" || trim($response_arr ["payment_status"]) === "Complete" || trim($response_arr ["payment_status"]) === "Completed") ) {
-					$orderarr['payment_by'] = "Paypal";
-					$orderarr['charge_type'] = $this->common->get_field_name("code","category",array("id"=>$orderarr['product_category']));
-
-					if($orderarr['parent_order_id'] > 0){
-						$temp_arr['description'] = "Payment has been received from customer ".$account_info['first_name']." ( ".$account_info['number']." )";
-						$temp_arr['payment_by'] = "Paypal";
-						$temp_arr['transaction_id'] = $response_arr['txn_id'];
-						$temp_arr['name'] = $product_name;
-						$temp_arr['charge_type']=$orderarr['charge_type'];
-						$this->order->update_order_status($orderarr,$orderarr['parent_order_id'],$temp_arr,'PAID',$account_info);	
-					}
-					$orderarr['invoice_type'] = ($orderarr['product_category'] == 3) ? "credit":"debit";
-					$orderarr['payment_by'] = "Paypal";
-					$price='';
-					$setupfee='';
-					$price=($orderarr['price'])/($orderarr['quantity']);
-					$setupfee=($orderarr['setup_fee'])/($orderarr['quantity']);
-					$orderarr['price']=$orderarr['price']+$orderarr['setup_fee'];
-					$orderarr['description'] = ($orderarr['product_category'] == 3) ? "Refill Done success":" (".$orderarr['name'].") has been added.";
-
-					$invoiceid =$this->payment->add_payments_transcation($orderarr,$account_info,$currency_info);			
-					if($invoiceid != ''){
-						if($orderarr['product_category'] != 3 && $account_info['posttoexternal'] == 0){
-							$orderarr['INV_DIRECT_PAY'] = "true";
-							$orderarr['invoiceid'] = $invoiceid;
-							$orderarr['is_update_balance'] = "true";
-							$orderarr['payment_by'] = "Paypal";
-							$orderarr['description'] =  "Refill Done success";
-							$invoiceid =$this->payment->add_payments_transcation($orderarr,$account_info,$currency_info);
-						}
-						$this->db_model->update ( "orders",array("payment_status"=>"PAID"),array("id"=>$orderarr['id']));
-						$orderarr['name']=$orderarr['name'];
-						$orderarr['category_name']=$this->common->get_field_name("name","category",array("id"=>$orderarr['product_category']));
-						$orderarr['price']=$price;
-						$orderarr['next_billing_date']=($orderarr['billing_days'] == 0)?gmdate('Y-m-d 23:59:59', strtotime('+10 years')):gmdate("Y-m-d 23:59:59",strtotime("+".$orderarr['billing_days']." days"));
-						$final_array = array_merge($account_info,$orderarr);
-						$final_array['total_price']=($price+$setupfee)*($orderarr['quantity']);
-						$final_array['price']=($price+$setupfee);
-						$this->common->mail_to_users ('product_purchase', $final_array );
-					}
-			   	}else{
-
-					$payment_trans_array = array (
-						"accountid" => $account_info['id'],
-						"reseller_id"=>$account_info ['reseller_id'],
-						"amount" => $response_arr ["payment_gross"],
-						"tax" => "0",
-						"payment_method" => "Paypal",
-						"actual_amount" => $response_arr ["payment_gross"],
-						"payment_fee" => $response_arr ["mc_gross"],
-						"user_currency" =>$currency_info['currency'],
-						"currency_rate" =>$currency_info['currencyrate'],
-						"transaction_details" => json_encode ( $response_arr ),
-						"date" => gmdate("Y-m-d H:i:s")
-					);
-					$paymentid = $this->db->insert ( 'payment_transaction', $payment_trans_array );
-						
-				}
-				if(isset($orderarr['product_category']) && $orderarr['product_category'] == 3)
-				{
-					 $this->session->set_flashdata ( 'astpp_errormsg',  gettext('Refill Done successfully!' ));
-					redirect ( base_url () . 'products/products_topuplist/' );
-				}else{
-					 $this->session->set_flashdata ( 'astpp_errormsg',  gettext('Product purchased successfully!' ));
-
-					redirect ( base_url () . 'pages/services/'.$orderarr["product_category"].' ' );
-				}
-		
-			}else{
-				
-				
-					 $this->session->set_flashdata ( 'astpp_notification',  gettext('Something went worng!') );
-					redirect ( base_url () . 'pages/services/'.$orderarr["product_category"].' ' );
-
-			}
-
-		
-			
+	/*
+	 * PayPal IPN (notify_url of every PayPal form). Payments used to be booked from the POST data
+	 * alone (also the browser return, also with PayPal switched off). Now:
+	 *  - no active PayPal account at all: 404, nothing is read or written;
+	 *  - only POST; the notification is verified with PayPal and against the pending payment
+	 *    (paypal::ipn: amount, currency, receiver, status Completed, txn_id once) before booking;
+	 *  - the browser comes back to pages/paypal_return, which books nothing.
+	 */
+	function paypal_response() {
+		if ($this->db->get_where('system', array('name' => 'paypal_status', 'value' => '0'))->num_rows() === 0
+			|| $this->input->server('REQUEST_METHOD') !== 'POST') {
+			show_404();
 		}
-    }
-	
+		$this->load->library('astpp/paypal');
+		$result = $this->paypal->ipn(file_get_contents('php://input'));
+		if (is_string($result)) {
+			log_message('error', 'PayPal IPN not booked: ' . $result);
+			echo 'IGNORED';
+			exit();
+		}
+		$this->book_paypal($result['row'], $result['ipn']);
+		log_message('error', 'PayPal IPN booked: payment ' . (int) $result['row']['id'] . ', account ' . (int) $result['row']['accountid'] . ', ' . $result['row']['kind']);
+		echo 'OK';
+		exit();
+	}
 
+	/** Browser return from PayPal: message only, the IPN books the payment. */
+	function paypal_return() {
+		$this->session->set_flashdata ( 'astpp_errormsg',  gettext('Thank you. The payment is booked as soon as PayPal confirms it.' ));
+		$type = (string) $this->session->userdata('userlevel_logintype');
+		redirect ( base_url () . (($type === '0' || $type === '3') ? 'user/user/' : 'dashboard/') );
+	}
+
+	/** Book a verified and claimed PayPal payment (paypal_payments row). */
+	private function book_paypal($row, $ipn) {
+		$account_info = (array) $this->db->get_where('accounts', array('id' => $row['accountid']))->row_array();
+		$currency_info = (array) $this->db->get_where('currency', array('id' => $account_info['currency_id']))->row_array();
+		$txn_id = $row['txn_id'];
+		$orderarr = ($row['kind'] === 'order') ? $this->order->get_order_details($row['ref_id']) : false;
+		if ($row['kind'] === 'invoice') {
+			$payment_array = array(
+				"is_apply_tax" => "false",
+				'payment_by' => "Paypal",
+				'price' => $row['credit'],
+				"payment_fee" => $row['amount'] - $row['credit'],
+				"invoiceid" => $row['ref_id'],
+				"order_item_id" => 0,
+				"charge_type" => "INVPAY",
+				"product_category" => 0,
+				"transaction_id" => $txn_id,
+				"description" => "Invoice payment via PayPal",
+				'invoice_type' => "debit",
+				'INV_DIRECT_PAY' => "true",
+				'name' => "Invoice Payment",
+				'is_update_balance' => "true"
+			);
+			$this->payment->add_payments_transcation($payment_array, $account_info, $currency_info);
+			return;
+		}
+		if ($row['kind'] === 'topup' || empty($orderarr)) {
+			// top-up, or an order that is no longer pending (PaymentStatus marks it FAIL after
+			// 30 minutes): the customer has paid, so the amount is credited to the balance
+			$payment_info = array(
+				"price" => $row['credit'],
+				"payment_by" => "Paypal",
+				"payment_fee" => $row['amount'] - $row['credit'],
+				"invoice_type" => "credit",
+				"product_category" => 3,
+				"description" => ($row['kind'] === 'topup') ? "Refill via PayPal" : "Refill via PayPal (order " . (int) $row['ref_id'] . " was no longer pending)",
+				"order_item_id" => 0,
+				"charge_type" => "REFILL",
+				"is_apply_tax" => "false",
+				"transaction_id" => $txn_id
+			);
+			$this->payment->add_payments_transcation($payment_info, $account_info, $currency_info);
+			return;
+		}
+		// product order: charges of the reseller chain, invoice and payment as before, then the
+		// pending order items of the chain become active
+		$product_name = $this->common->get_field_name("name","products",array("id"=>$orderarr['product_id']));
+		$orderarr['transaction_id'] = $txn_id;
+		$orderarr['name'] = $product_name;
+		$orderarr['payment_by'] = "Paypal";
+		$orderarr['charge_type'] = $this->common->get_field_name("code","category",array("id"=>$orderarr['product_category']));
+		$chain = array((int) $orderarr['id']);
+		for ($p = (int) $orderarr['parent_order_id']; $p > 0 && count($chain) < 20 && ! in_array($p, $chain, true); ) {
+			$chain[] = $p;
+			$p = (int) $this->common->get_field_name("parent_order_id","orders",array("id"=>$p));
+		}
+		if($orderarr['parent_order_id'] > 0){
+			$temp_arr['description'] = "Payment has been received from customer ".$account_info['first_name']." ( ".$account_info['number']." )";
+			$temp_arr['payment_by'] = "Paypal";
+			$temp_arr['transaction_id'] = $txn_id;
+			$temp_arr['name'] = $product_name;
+			$temp_arr['charge_type']=$orderarr['charge_type'];
+			$this->order->update_order_status($orderarr,$orderarr['parent_order_id'],$temp_arr,'PAID',$account_info);
+		}
+		$orderarr['invoice_type'] = ($orderarr['product_category'] == 3) ? "credit":"debit";
+		$quantity = ($orderarr['quantity'] > 0) ? $orderarr['quantity'] : 1;
+		$price=$orderarr['price']/$quantity;
+		$setupfee=$orderarr['setup_fee']/$quantity;
+		$orderarr['price']=$orderarr['price']+$orderarr['setup_fee'];
+		$orderarr['description'] = ($orderarr['product_category'] == 3) ? "Refill Done success":" (".$orderarr['name'].") has been added.";
+		$invoiceid =$this->payment->add_payments_transcation($orderarr,$account_info,$currency_info);
+		if($invoiceid != ''){
+			if($orderarr['product_category'] != 3 && $account_info['posttoexternal'] == 0){
+				$orderarr['INV_DIRECT_PAY'] = "true";
+				$orderarr['invoiceid'] = $invoiceid;
+				$orderarr['is_update_balance'] = "true";
+				$orderarr['payment_by'] = "Paypal";
+				$orderarr['description'] =  "Refill Done success";
+				$this->payment->add_payments_transcation($orderarr,$account_info,$currency_info);
+			}
+		}
+		$this->db_model->update ( "orders",array("payment_status"=>"PAID"),array("id"=>$orderarr['id']));
+		$this->db->where_in('order_id', $chain);
+		$this->db->update('order_items', array('is_terminated' => 0, 'termination_date' => '0000-00-00 00:00:00', 'termination_note' => ''));
+		$orderarr['category_name']=$this->common->get_field_name("name","category",array("id"=>$orderarr['product_category']));
+		$orderarr['price']=$price;
+		$orderarr['next_billing_date']=($orderarr['billing_days'] == 0)?gmdate('Y-m-d 23:59:59', strtotime('+10 years')):gmdate("Y-m-d 23:59:59",strtotime("+".$orderarr['billing_days']." days"));
+		$final_array = array_merge($account_info,$orderarr);
+		$final_array['total_price']=($price+$setupfee)*($orderarr['quantity']);
+		$final_array['price']=($price+$setupfee);
+		$this->common->mail_to_users ('product_purchase', $final_array );
+	}
 
 	function payment_proceed($id){ 
 		$post_values = $this->input->post();
@@ -644,76 +612,14 @@ function services($category= '') {
 		$data['accountid']=$accountinfo['id'];
 		$this->load->view ( 'view_add_refill_coupon',$data);
 	}
-	function user_refill_coupon_number($refill_coupon_no,$accountid) {
-		$accountinfo = $this->session->userdata ( 'token' );
-		$accountinfo = ((isset($accountinfo)) && $accountinfo != '')?$accountinfo:$this->session->userdata ( "accountinfo" );
-		if($accountinfo['reseller_id'] > 0){
-			$this->db->where ( 'reseller_id', $accountinfo['reseller_id']);
-			$this->db->where ( 'number', $refill_coupon_no );
-			$this->db->select ( '*' );
-			$refill_coupon_result = $this->db->get ( 'refill_coupon' );
-
-		}else{
-			$this->db->where ( 'number', $refill_coupon_no );
-			$this->db->select ( '*' );
-			$refill_coupon_result = $this->db->get ( 'refill_coupon' );
-		}
-		if ($refill_coupon_result->num_rows () > 0) {
-			$refill_coupon_result = $refill_coupon_result->result_array ();
-			
-			$refill_coupon_result = $refill_coupon_result [0];
-			if ($refill_coupon_result ['status'] == 1) {
-				echo json_encode ( 1 );
-			} elseif ($refill_coupon_result ['status'] == 2) {
-				echo json_encode ( 2 );
-			} else {
-				
-				$date = gmdate ( 'Y-m-d H:i:s' );
-				$customer_id=$accountid;
-				$this->db->where ( 'id', $customer_id );
-				$accountinfo = $this->db->get ( 'accounts' );
-				$accountinfo=$accountinfo->row_array ();
-				$balance =$this->common->get_field_name("balance","accounts",array("id"=>$customer_id));
-				$new_balance = ($accountinfo ["posttoexternal"] == 1) ? ($balance - $refill_coupon_result['amount']) : ($balance +  $refill_coupon_result['amount']);
-				
-				$this->db->where ( 'number', $refill_coupon_no );
-				$refill_coupon_data = array (
-						'status' => 2,
-						"account_id" => $customer_id,
-						'firstused' => $date 
-				);
-				$this->db->update ( 'refill_coupon', $refill_coupon_data );
-				/*$tax_calculation=$this->common_model->calculate_taxes($accountinfo,$refill_coupon_result['amount']);
-				if(isset($tax_calculation['tax']) && !empty($tax_calculation['tax'])){
-					$amount = $refill_coupon_result['amount'] - $tax_calculation['total_tax'];
-				}else{
-					$amount = $refill_coupon_result['amount'];
-				}*/
-				$payment_info=array(
-						"price"=>$refill_coupon_result['amount'],
-						"payment_by"=>"Voucher",
-						"payment_fee"=>0,
-						"invoice_type"=>"credit",
-						"product_category"=>3,
-						"description"=>"Refill done using voucher'('".$refill_coupon_no." ')'",
-						"order_item_id"=>0,
-						"charge_type"=>"Voucher",
-						"is_apply_tax"=>"true"
-
-				);
-				$where = array ('id' => $accountinfo['currency_id']);
-				$currency_info = ( array ) $this->db->get_where( "currency", $where )->result_array()[0];
-				
-				$invoiceid=$this->payment->add_payments_transcation($payment_info,$accountinfo,$currency_info);
-				$where = array ('id' => $accountinfo['currency_id']);
-				$currency_info = ( array ) $this->db->get_where( "currency", $where )->result_array()[0];
-				echo json_encode ( 10 );
-				$this->session->set_flashdata ( 'astpp_errormsg',  gettext('Refill Coupon amount is Added Successfully' ));
-				
-				
-			}
-		} else {
-			echo json_encode ( 3 );
+	function user_refill_coupon_number($refill_coupon_no,$accountid = '') {
+		// only active coupons of the own seller, only once (payment::redeem_coupon()); always the
+		// logged-in account (the account id in the URL is ignored, it is kept for the existing links)
+		$accountinfo = $this->session->userdata ( "accountinfo" );
+		$result = $this->payment->redeem_coupon($refill_coupon_no, isset($accountinfo['id']) ? $accountinfo['id'] : 0);
+		echo json_encode ( $result );
+		if ($result == 10) {
+			$this->session->set_flashdata ( 'astpp_errormsg',  gettext('Refill Coupon amount is Added Successfully' ));
 		}
 	}
 

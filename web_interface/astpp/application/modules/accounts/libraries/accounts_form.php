@@ -75,7 +75,7 @@ class Accounts_form extends common
         if ($pin_generate == 0) {
             $numberlength = common_model::$global_config['system_config']['pinlength'];
             $numberlength = ($numberlength < 6) ? 6 : common_model::$global_config['system_config']['pinlength'];
-            $pin_number = rand(pow(10, $numberlength - 1), pow(10, $numberlength) - 1);
+            $pin_number = random_int((int) pow(10, $numberlength - 1), (int) pow(10, $numberlength) - 1);
         }
         $account_val = 'accounts.number';
         $cps = Common_model::$global_config['system_config']['cps'];
@@ -292,10 +292,12 @@ class Accounts_form extends common
                     'id' => 'password_show',
                     'onmouseover' => 'seetext(password_show)',
                     'onmouseout' => 'hidepassword(password_show)',
+                    'placeholder' => gettext('unchanged'),
+                    'autocomplete' => 'new-password',
                     'size' => '20',
                     'class' => "text field medium"
                 ),
-                'required|notMatch[number]|chk_password_expression',
+                'portal_password', // empty keeps the stored password; rule in libraries/astpp/password_policy.php
                 'tOOL TIP',
                 ''
             );
@@ -461,7 +463,7 @@ class Accounts_form extends common
                     'onmouseover' => 'seetext(password)',
                     'onmouseout' => 'hidepassword(password)'
                 ),
-                'required|chk_password_expression',
+                'required|portal_password',
                 'tOOL TIP',
                 '',
                 '<i style="cursor:pointer; font-size: 17px; position:absolute; right:20px; bottom: 7px;" title="Reset Password" class="change_pass align-self-end text-success fa fa-refresh" ></i>'
@@ -1694,10 +1696,12 @@ class Accounts_form extends common
                     'id' => 'password_show',
                     'onmouseover' => 'seetext(password_show)',
                     'onmouseout' => 'hidepassword(password_show)',
+                    'placeholder' => gettext('unchanged'),
+                    'autocomplete' => 'new-password',
                     'size' => '20',
                     'class' => "text field medium"
                 ),
-                'required|notMatch[number]|chk_password_expression',
+                'portal_password', // empty keeps the stored password; rule in libraries/astpp/password_policy.php
                 'tOOL TIP',
                 ''
             );
@@ -1839,7 +1843,7 @@ class Accounts_form extends common
                     'onmouseover' => 'seetext(password)',
                     'onmouseout' => 'hidepassword(password)'
                 ),
-                'required|chk_password_expression',
+                'required|portal_password',
                 'tOOL TIP',
                 '',
                 '<i style="cursor:pointer; font-size: 17px; position:absolute; right:20px; bottom: 7px;" title="Reset Password" class="change_pass align-self-end text-success fa fa-refresh" ></i>'
@@ -2358,10 +2362,12 @@ class Accounts_form extends common
                     'id' => 'password_show',
                     'onmouseover' => 'seetext(password_show)',
                     'onmouseout' => 'hidepassword(password_show)',
+                    'placeholder' => gettext('unchanged'),
+                    'autocomplete' => 'new-password',
                     'size' => '20',
                     'class' => "text field medium"
                 ),
-                'required|notMatch[number]|chk_password_expression',
+                'portal_password', // empty keeps the stored password; rule in libraries/astpp/password_policy.php
                 'tOOL TIP',
                 ''
             );
@@ -2551,7 +2557,7 @@ class Accounts_form extends common
                     'onmouseover' => 'seetext(password)',
                     'onmouseout' => 'hidepassword(password)'
                 ),
-                'required|chk_password_expression',
+                'required|portal_password',
                 'tOOL TIP',
                 '',
                 '<i style="cursor:pointer; font-size: 17px; position:absolute; right:20px; bottom: 7px;" title="Reset Password" class="change_pass align-self-end text-success fa fa-refresh" ></i>'

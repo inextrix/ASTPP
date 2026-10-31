@@ -254,7 +254,7 @@ class User extends MX_Controller
             if ($this->form_validation->run() == FALSE) {
                 $data['validation_errors'] = validation_errors();
             } else {
-                $add_array['password'] = $this->common->encode($add_array['password']);
+                $this->common->password_from_form($add_array); // hash, empty keeps the password
                 unset($add_array['number']);
                 $this->accounts->accounts_model->edit_account($add_array, $add_array['id']);
                 $accountinfo = $this->session->userdata('accountinfo');
@@ -280,7 +280,7 @@ class User extends MX_Controller
             foreach ($account->result_array() as $key => $value) {
                 $editable_data = $value;
             }
-            $editable_data['password'] = $this->common->decode($editable_data['password']);
+            $editable_data['password'] = ''; // not readable
             $data['form'] = $this->form->build_form($this->accounts->accounts_form->get_user_form_fields($editable_data['id']), $editable_data);
             $this->load->view('view_user_details', $data);
         }
@@ -323,7 +323,6 @@ class User extends MX_Controller
                 $this->load->library('did_lib');
                 $did_result = $this->did_lib->did_billing_process($this->session->userdata, $accountinfo['id'], $did_id);
                 if ($did_result[0] == "SUCCESS") {
-                    $did_arr['is_parent_billing'] = "false";
                     $order_id = '';
                     $payment_gateway = '';
                     if ($reseller_id > 0) {
@@ -347,7 +346,8 @@ class User extends MX_Controller
                     $did_arr['price'] = $this->common_model->calculate_currency($product_array['price'], '', '', true, false);
                     $did_arr['setup_fee'] = $this->common_model->calculate_currency($product_array['setup_fee'], '', '', true, false);
                     $did_arr['next_billing_date'] = ($product_array['billing_days'] == 0) ? gmdate('Y-m-d 23:59:59', strtotime('+10 years')) : gmdate("Y-m-d 23:59:59", strtotime("+" . $product_array['billing_days'] . " days"));
-                    $last_id = $this->order->confirm_order($did_arr, $accountinfo['id'], $accountinfo);
+                    // the DID belongs to the seller, only the customer is charged
+                    $last_id = $this->order->confirm_order($did_arr, $accountinfo['id'], $accountinfo, array('parent_billing' => false));
                     $final_array = array_merge($account_arr, $did_arr);
                     if ($last_id > 0) {
                         $final_array['quantity'] = 1;
@@ -550,43 +550,19 @@ class User extends MX_Controller
         $this->user_cdrreport_export();
     }
 
+    /*
+     * old "change password" page (view_changepassword, linked nowhere). It compared
+     * the stored value with the typed old password and stored the new one unencrypted, without the
+     * password rules. The portal page is user/user_change_password.
+     */
     function change_password()
     {
-        $accountinfo = $this->session->userdata('accountinfo');
-        $id = $accountinfo['id'];
-        $this->load->model('user_model');
-
-        $query = $this->user_model->change_password($id);
-        foreach ($query as $row) {
-            $data['password'] = $row->password;
-        }
-        $databasepassword = $data['password'];
-        $password = $_POST['oldpassword'];
-        $newpassword = $_POST['newpassword'];
-        $conformpassword = $_POST['conformpassword'];
-        if ($databasepassword == $password) {
-
-            if ($conformpassword == $newpassword) {
-                $update = $newpassword;
-                $this->load->model('user_model');
-                $this->user_model->change_db_password($update, $id);
-                $this->session->set_flashdata('astpp_errormsg', gettext("Password changed Sucessfully....!!!"));
-                redirect(base_url() . 'user/user/changepassword/');
-            } else {
-                $this->session->set_flashdata('astpp_notification', gettext("New Password & Conformpassword not match."));
-                redirect(base_url() . 'user/user/changepassword/');
-            }
-        } else {
-            $this->session->set_flashdata('astpp_notification', gettext("Invalid old passwword."));
-            redirect(base_url() . 'user/user/changepassword/');
-        }
+        redirect(base_url() . 'user/user_change_password/');
     }
 
     function changepassword()
     {
-        $data['username'] = $this->session->userdata('user_name');
-        $data['page_title'] = gettext('Change Password');
-        $this->load->view('view_changepassword', $data);
+        redirect(base_url() . 'user/user_change_password/');
     }
 
     function user_generate_password()
@@ -602,7 +578,7 @@ class User extends MX_Controller
     function user_sipdevice_voicemail_random_password()
     {
        $digit='5';
-       echo rand(pow(10, $digit - 1), pow(10, $digit) - 1);exit;
+       echo random_int((int) pow(10, $digit - 1), (int) pow(10, $digit) - 1);exit;
    }
 
    function user_refill_coupon_list()
@@ -686,49 +662,18 @@ function user_refill_coupon_number($refill_coupon_no)
 
 function user_refill_coupon_action($refill_coupon_no)
 {
+    // This booked any coupon number without checking its status or owner (also used or inactive
+    // coupons, again and again); now only through payment::redeem_coupon().
     $accountinfo = $this->session->userdata('accountinfo');
-    $reseller_id = $accountinfo['reseller_id'];
-    if ($reseller_id == 0) {
-        $reseller_id = '-1';
-    }
-    $date = gmdate('Y-m-d H:i:s');
-
-    $customer_id = $accountinfo['id'];
-    $result = $this->db_model->getSelect("*", "refill_coupon", array(
-        "number" => $refill_coupon_no
-    ));
-    if ($result->num_rows() > 0) {
-        $result = $result->result_array()[0];
-        $balance = $this->common->get_field_name("balance", "accounts", array(
-            "id" => $customer_id
-        ));
-        $new_balance = ($accountinfo["posttoexternal"] == 1) ? ($balance - $result['amount']) : ($balance + $result['amount']);
-
-        $this->db->where('number', $refill_coupon_no);
-        $refill_coupon_data = array(
-            'status' => 2,
-            "account_id" => $customer_id,
-            'firstused' => $date
-        );
-        $this->db->update('refill_coupon', $refill_coupon_data);
-
-        $payment_info = array(
-            "price" => $result['amount'],
-            "payment_by" => "Voucher",
-            "payment_fee" => 0,
-            "invoice_type" => "credit",
-            "product_category" => 3,
-            "description" => "Refill done using voucher'('" . $refill_coupon_no . " ')'",
-            "order_item_id" => 0,
-            "charge_type" => "Voucher"
-        );
-
-        $where = array(
-            'id' => $accountinfo['currency_id']
-        );
-        $currency_info = (array) $this->db->get_where("currency", $where)->result_array()[0];
-        $this->payment->add_payments_transcation($payment_info, $accountinfo, $currency_info);
+    $result = $this->payment->redeem_coupon($refill_coupon_no, $accountinfo['id']);
+    if ($result == 10) {
         $this->session->set_flashdata('astpp_errormsg', gettext('Refill Coupon amount is added successfully to your account'));
+    } elseif ($result == 1) {
+        $this->session->set_flashdata('astpp_notification', gettext('The Coupon Number field have inactive refill coupon.'));
+    } elseif ($result == 2) {
+        $this->session->set_flashdata('astpp_notification', gettext('This Coupon Number is already in use.'));
+    } else {
+        $this->session->set_flashdata('astpp_notification', gettext('This Coupon Number is not found.'));
     }
     redirect(base_url() . "user/user_refill_coupon_list/");
 }
@@ -810,9 +755,13 @@ function user_invoice_config()
     $add_array = $this->input->post();
     $data["account_data"] = $add_array;
     if (isset($add_array['submit'])) {
-        if ($_FILES['file']['name'] == '') {
-            $invoiceconf = $this->user_model->get_invoiceconf();
-            $file_name = ($invoiceconf['logo'] != '') ? $invoiceconf['logo'] : '';
+        if (! isset($_FILES['file']['name']) || $_FILES['file']['name'] == '') {
+            // get_invoiceconf() was called without its argument (HTTP 500 when saving
+            // without a new logo); keep the logo of the own company profile
+            $invoiceconf = (array) $this->db->get_where('invoice_conf', array(
+                'accountid' => $accountinfo['id']
+            ))->first_row();
+            $file_name = isset($invoiceconf['logo']) ? $invoiceconf['logo'] : '';
         }
         if (isset($_FILES['file']['name']) && $_FILES['file']['name'] != '') {
             $files = $_FILES['file'];
@@ -822,11 +771,18 @@ function user_invoice_config()
             }
             $file = $_FILES['file'];
             $uploadedFile = $file["tmp_name"];
-            $file_name = $file['name'];
+            // Only the browser supplied MIME type was checked and the original
+            // file name (and a POSTed account id) was used as target -> "logo.php" upload.
             $file_type = $file['type'];
-            if ($file_type == 'image/jpg' || $file_type == 'image/png' || $file_type == 'image/jpeg') {
+            $image_info = @getimagesize($uploadedFile);
+            $image_ext = array(
+                IMAGETYPE_PNG => 'png',
+                IMAGETYPE_JPEG => 'jpg'
+            );
+            if ($image_info !== FALSE && isset($image_ext[$image_info[2]])) {
+                $file_name = crc32($file['name'] . microtime()) . '.' . $image_ext[$image_info[2]];
                 $dir_path = FCPATH . "upload/";
-                $path = $dir_path . $add_array['accountid'] . "_" . $file['name'];
+                $path = $dir_path . (int) $accountinfo['id'] . "_" . $file_name;
                 if (move_uploaded_file($uploadedFile, $path)) {
                     $this->session->set_flashdata('astpp_errormsg', gettext('files added successfully!'));
                 } else {
@@ -840,10 +796,19 @@ function user_invoice_config()
         }
         $add_array['logo'] = $file_name;
         unset($add_array['submit']);
+        // Never trust the posted account id / record id
+        $add_array['accountid'] = $accountinfo['id'];
         if ($add_array['id'] == '') {
-            $add_array['accountid'] = $accountinfo['id'];
             $this->user_model->add_invoice_config($add_array);
         } else {
+            $owned = $this->db->get_where('invoice_conf', array(
+                'id' => $add_array['id'],
+                'accountid' => $accountinfo['id']
+            ))->num_rows();
+            if ($owned == 0) {
+                $this->session->set_flashdata('astpp_notification', gettext('Permission Denied!'));
+                redirect(base_url() . 'user/user_invoice_config/');
+            }
             $this->user_model->edit_invoice_config($add_array, $add_array['id']);
         }
         $this->session->set_flashdata('astpp_errormsg', gettext('Invoice config updated successfully!'));
@@ -914,7 +879,7 @@ function user_myprofile()
         foreach ($account->result_array() as $key => $value) {
             $editable_data = $value;
         }
-        $editable_data['password'] = $this->common->decode($editable_data['password']);
+        $editable_data['password'] = ''; // not readable
         $data['form'] = $this->form->build_form($this->user_form->get_userprofile_form_fields($editable_data), $editable_data);
     }
     $this->load->view('view_user_details', $data);
@@ -930,33 +895,15 @@ function user_change_password()
         if ($this->form_validation->run() == FALSE) {
             $data['validation_errors'] = validation_errors();
         } else {
-            $password_encode = $this->common->encode($add_array['new_password']);
+            // stored as hash. The new portal password was also written as SIP
+            // password of the device named like the account (readable in sip_devices, and a
+            // connected PBX lost its registration); portal and SIP passwords are separate now.
             $data = array(
-                'password' => $password_encode
+                'password' => $this->common->password_store($add_array['new_password'])
             );
-            $this->db->where('id', $add_array['id']);
+            // the account of the session (the POST field id named any account)
+            $this->db->where('id', $accountinfo['id']);
             $this->db->update('accounts', $data);
-
-            $this->db->where('accountid', $accountinfo['id']);
-            $this->db->where('username', $accountinfo['number']);
-            $sip_info = (array) $this->db->get_where("sip_devices")->first_row();
-            if (! empty($sip_info)) {
-                $did_params = (array) (json_decode($sip_info['dir_params']));
-                $sipdevice_array = array(
-                    'dir_params' => json_encode(array(
-                        "password" => $add_array['new_password'],
-                        'vm-enabled' => "true",
-                        "vm-password" => $did_params['vm-password'],
-                        "vm-mailto" => $did_params['vm-mailto'],
-                        "vm-attach-file" => "true",
-                        "vm-keep-local-after-email" => "true",
-                        "vm-email-all-messages" => "true"
-                    ))
-                );
-                $this->db->where('accountid', $accountinfo['id']);
-                $this->db->where('username', $accountinfo['number']);
-                $this->db->update('sip_devices', $sipdevice_array);
-            }
             $this->session->set_flashdata('astpp_errormsg', gettext('Password Updated Successfully!'));
             redirect(base_url() . 'user/user_change_password/');
         }
@@ -1171,13 +1118,14 @@ function user_invoice_payment($invoiceid)
 
 function user_invoice_payment_pay($action = "")
 {
-    $this->load->module("user/payment");
+    // top-up controller user/topup (was user/payment, see there)
+    $this->load->module("user/topup");
     if ($action == "GET_AMT") {
         $amount = $this->input->post("value", true);
         $amount = $this->common_model->add_calculate_currency($amount, "", "", true, false);
         echo number_format($amount, 2);
     } else {
-        $this->payment->index();
+        $this->topup->index();
     }
 }
 
@@ -1369,6 +1317,23 @@ function user_did_forward($id = '')
     $this->did->did_forward($id);
 }
 
+// The DID forward form loads its extension list from did/did_local_change, which the
+// customer portal cannot use (module did). Same list here: own DIDs, own SIP devices only.
+function user_did_local_change($call_type_code = '', $did_id = '', $extensions = '')
+{
+    $accountinfo = $this->session->userdata('accountinfo');
+    $own = $this->db->get_where('dids', array(
+        'id' => (int) $did_id,
+        'accountid' => (int) $accountinfo['id']
+    ))->num_rows();
+    if ($own == 0) {
+        echo '<select class="col-md-12 form-control form-control-lg selectpicker extensions_set" id="extensions_id" name="extensions"><option>--</option></select>';
+        return;
+    }
+    $this->load->module('did/did');
+    $this->did->did_local_change($call_type_code, (int) $did_id, $extensions);
+}
+
 function user_did_forward_save()
 {
     $add_array = $this->input->post();
@@ -1514,12 +1479,14 @@ function user_ipmap_action($action = 'delete', $id = false)
     $add_array = $this->input->post();
     $accountinfo = $this->session->userdata('accountinfo');
     if ($action == 'add') {
-        $ip = $add_array['ip'];
-        if (strpos($ip, '/') !== false) {
-            $add_array['ip'] = $add_array['ip'];
-        } else {
-            $add_array['ip'] = $add_array['ip'] . '/32';
+        // "address/bits", /32 or /128 if none given; anything else is refused
+        // (see common::ipmap_cidr())
+        $ip_cidr = $this->common->ipmap_cidr($add_array['ip']);
+        if ($ip_cidr === false) {
+            $this->session->set_flashdata('astpp_notification', gettext('Please enter a valid IP address or network, e.g. 192.0.2.10 or 192.0.2.0/24.'));
+            redirect(base_url() . "user/user_ipmap/");
         }
+        $add_array['ip'] = $ip_cidr;
         $where = array(
             "ip" => trim($add_array['ip']),
             "prefix" => trim($add_array['prefix'])
@@ -1832,7 +1799,10 @@ function user_cdrs_report_json()
 
 function user_report_recording_download($file_name)
 {
-    $file_name = $this->config->item('recordings_path') . $file_name;
+    $file_name = $this->common->recording_file($file_name);
+    if ($file_name === false) {
+        show_404();
+    }
     header('Content-Description: File Transfer');
     header('Content-Type: application/octet-stream');
     header('Content-Disposition: attachment; filename=' . basename($file_name));
@@ -1947,12 +1917,16 @@ function user_cdrreport_export()
 
 function user_payment($action = "")
 {
-    $this->load->module("user/payment");
+    // top-up controller user/topup (was user/payment, see there)
+    $this->load->module("user/topup");
     if ($action == "GET_AMT") {
         $amount = $this->input->post("value", true);
         $this->user_convert_amount($amount);
+    } elseif ($action == "CHECKOUT" && $this->input->server('REQUEST_METHOD') === 'POST') {
+        // store the PayPal payment on the server, then redirect to PayPal
+        $this->topup->checkout();
     } else {
-        $this->payment->index();
+        $this->topup->index();
     }
 }
 
@@ -2046,12 +2020,13 @@ function user_fund_transfer_save()
                         if ($post_array['toaccountid']) {
                             $reseller_id = $toaccountinfo['reseller_id'];
 
-                            if (($toaccountinfo['type'] != 3) && ($toaccountinfo['type'] != 0)) {
-
-                                $this->session->set_flashdata('astpp_notification', gettext('Access Denied! unable transfer fund to this account'));
-                            }                            
+                            // The message was set, but the transfer went on (also to reseller and
+                            // admin accounts of the same level). Amounts as numbers: number_format()
+                            // added thousands separators and the checks below compared strings.
+                            $to_denied = ($toaccountinfo['type'] != 3) && ($toaccountinfo['type'] != 0);
                             // Kinjal ASTPPCOM-1319 Start
-                            $post_array['credit'] = number_format($this->common_model->add_calculate_currency($post_array['credit'], '', '', false, false,'en_En'), 4);
+                            $post_array['credit'] = round((float) $this->common_model->add_calculate_currency($post_array['credit'], '', '', false, false,'en_En'), 4);
+                            $balance = (float) $balance;
                             // Kinjal ASTPPCOM-1319 END
 
                             $minimum_fund = (array) $this->db->get_where('system', array(
@@ -2059,17 +2034,19 @@ function user_fund_transfer_save()
                             ), 1)->first_row();
 
                             // Kinjal ASTPPCOM-1319 Start
-                            $minimum_fund['value'] = number_format($this->common_model->add_calculate_currency($minimum_fund['value'], '', '', false, false,'en_En'), 4);
+                            $minimum_fund['value'] = round((float) $this->common_model->add_calculate_currency($minimum_fund['value'], '', '', false, false,'en_En'), 4);
                             $from_currency = common_model::$global_config['system_config'] ['base_currency'];
                             $minimum_fund_value = number_format($this->common_model->add_calculate_currency($minimum_fund['value'],$from_currency, $currency['currency'], false, false,'en_En'), 4);
                             // Kinjal ASTPPCOM-1319 END
-                            if ($post_array['toaccountid'] == $account_info['number']) {
+                            if ($to_denied) {
+                                $this->session->set_flashdata('astpp_notification', gettext('Access Denied! unable transfer fund to this account'));
+                            } elseif ($post_array['toaccountid'] == $account_info['number']) {
                                 $this->session->set_flashdata('astpp_notification', gettext('You can not transfer fund in same account.'));
                             } elseif ($reseller_id != $account_info['reseller_id']) {
                                 $this->session->set_flashdata('astpp_notification', gettext('You can only transfer fund in same level account.'));
                             } elseif ($post_array['toaccountid'] == '') {
                                 $this->session->set_flashdata('astpp_notification', gettext('Please enter To account number.'));
-                            } elseif (empty($post_array['credit'])) {
+                            } elseif ($post_array['credit'] <= 0) {
                                 $this->session->set_flashdata('astpp_notification', gettext('Please enter valid amount.'));
                             } elseif ($post_array['credit'] > $balance) {
                                 $this->session->set_flashdata('astpp_notification', gettext('You have insufficient balance.'));
@@ -2088,7 +2065,9 @@ function user_fund_transfer_save()
                             } elseif (!$this->check_calls_running()) {
                                 $this->session->set_flashdata('astpp_notification', gettext('You can not transfer fund when your calls are running!'));
                             } else {
-                                $from['id'] = $post_array['id'];
+                                // always the logged-in account (this was the hidden form field id,
+                                // while the balance check above used the own account)
+                                $from['id'] = $account_info['id'];
                                 $from['account_currency'] = $post_array['account_currency'];
                                 $from['accountid'] = $post_array['fromaccountid'];
 
@@ -2757,11 +2736,11 @@ function user_customer_validate_ip()
 {
     $add_array = $this->input->post();
     if (! empty($add_array)) {
-        $ip = $add_array['ip'];
-        if (strpos($ip, '/') !== false) {
-            $add_array['ip'] = $add_array['ip'];
-        } else {
-            $add_array['ip'] = $add_array['ip'] . '/32';
+        // same form as stored by user_ipmap_action(); not an IP / network = invalid
+        $add_array['ip'] = $this->common->ipmap_cidr($add_array['ip']);
+        if ($add_array['ip'] === false) {
+            echo 'FALSE';
+            return;
         }
         $this->db->where('ip', $add_array['ip']);
         $this->db->where('prefix', $add_array['prefix']);
@@ -2805,17 +2784,31 @@ function user_orders_termination()
 
 function user_invoice_unpaid_pay()
 {
-    $paymnet_array = $this->input->post();
-    $data['paypal_url'] = $paymnet_array['paypal_url'];
-    $data['total_amt'] = $paymnet_array['amount'];
-    $data['paypal_email_id'] = $paymnet_array['business'];
-    $data['item_name'] = (isset($paymnet_array['item_name']) && $paymnet_array['item_name'] != '') ? $paymnet_array['item_name'] : "Product";
-    $data['account_id'] = $paymnet_array['custom'];
-    $data['order_id'] = $paymnet_array['item_number'];
-    $data['to_currency'] = $paymnet_array['currency_code'];
-    $data['notify_url'] = $paymnet_array['notify_url'];
-    $data['return'] = $paymnet_array['return'];
-    $data['cancel_return'] = $paymnet_array['cancel_return'];
+    // The PayPal form was built from POST fields (receiver, amount, notify and return URL). Now:
+    // own unpaid invoice, amount (base currency) > 0 and at most the open amount, pending payment
+    // stored on the server (libraries/astpp/paypal.php).
+    $accountinfo = $this->session->userdata('accountinfo');
+    $this->load->library('astpp/paypal');
+    $account = (array) $this->db->get_where('accounts', array('id' => $accountinfo['id']))->row_array();
+    $invoice_id = (int) $this->input->post('item_number');
+    $invoice = $this->db->get_where('view_invoices', array('id' => $invoice_id, 'accountid' => $accountinfo['id']))->row_array();
+    $settings = $this->paypal->for_account($account);
+    $amount = paypal::amount(trim((string) $this->input->post('amount')));
+    $paid = 0;
+    if (! empty($invoice)) {
+        $paid = (float) $this->db->select_sum('credit')->get_where('invoice_details', array('invoiceid' => $invoice_id))->row()->credit;
+    }
+    $open = empty($invoice) ? 0 : (float) $invoice['debit'] - $paid;
+    $row = null;
+    if (! empty($invoice) && $settings !== null && $amount !== false && $amount > 0 && $amount <= $open + 0.005) {
+        $row = $this->paypal->create($account, 'invoice', $invoice_id, $amount + ($amount * $settings['fee'] / 100), $amount, $settings);
+    }
+    if ($row === null) {
+        $this->session->set_flashdata('astpp_notification', gettext('PayPal is not available or the amount is invalid.'));
+        redirect(base_url() . 'user/user_invoices_list/');
+        exit();
+    }
+    $data = $this->paypal->form_data($row, $settings, 'Invoice ' . $invoice_id);
     $this->load->view("paypal_redirect", $data);
 }
 

@@ -77,6 +77,8 @@
 	      type:"POST",
 	      url:url,
 	      data:{"status":status,"id":id,"table":table},
+	      // switch back if the server refused (no permission for this row)
+	      error:function(){ $('#switch'+id).prop('checked', status != 'true'); },
 			//~ success:function(data){ alert(data);
 	
 		//~ }
@@ -93,6 +95,7 @@
 	      type:"POST",
 	      url:url,
 	      data:{"is_email_enable":status,"id":id,"table":table},
+	      error:function(){ $('#switch_email'+id).prop('checked', status != 'true'); },
 	      });
 	 }
 	 
@@ -106,6 +109,7 @@
 	      type:"POST",
 	      url:url,
 	      data:{"is_sms_enable":status,"id":id,"table":table},
+	      error:function(){ $('#switch_sms'+id).prop('checked', status != 'true'); },
 	      });
 	 }
 	 
@@ -119,6 +123,7 @@
 	      type:"POST",
 	      url:url,
 	      data:{"is_alert_enable":status,"id":id,"table":table},
+	      error:function(){ $('#switch_alert'+id).prop('checked', status != 'true'); },
 	      });
 	 }
 	 

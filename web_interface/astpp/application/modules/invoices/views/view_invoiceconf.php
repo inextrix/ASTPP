@@ -62,7 +62,7 @@ $(document).ready(function() {
         }
     });
     $("#logo_delete").click(function(){
-        var id=$("input[type='hidden']").val();
+        var id=$("#invoice_conf_form input[name='id']").first().val(); // was the first hidden field of the page (now the CSRF token)
         var image=$('#company_logo').prop('src');
         var confirm_string = 'Are you sure want to remove Logo?';
 	    var answer = confirm(confirm_string);
@@ -86,7 +86,7 @@ $(document).ready(function() {
 
     $("#fav_delete").click(function(){
        
-        var id=$("input[type='hidden']").val();
+        var id=$("#invoice_conf_form input[name='id']").first().val(); // was the first hidden field of the page (now the CSRF token)
         var image=$('#company_fav').prop('src');
        
        var confirm_string = 'Are you sure want to remove Favicon?';

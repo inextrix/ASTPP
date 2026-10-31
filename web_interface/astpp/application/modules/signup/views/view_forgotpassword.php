@@ -178,7 +178,7 @@ body {
 						<div class="form-group">
 							<input type="text" class="form-control m-0" id="number"
 								name="number" placeholder=""
-								value="<?php if (isset($value['number'])) echo  $value['number']; else ''; ?>">
+								value="<?php if (isset($value['number'])) echo htmlspecialchars((string) $value['number'], ENT_QUOTES, 'UTF-8'); ?>">
 											
 												<?php if (isset($error['number'])) echo $error['number']; ?>              
 												<label class="error_label"> <span id="n_number"
@@ -191,7 +191,7 @@ body {
 						<div class="form-group">
 							<input type="text" class="form-control m-0" id="email"
 								name="email" placeholder=""
-								value="<?php if (isset($value['email'])) echo  $value['email']; else ''; ?>">
+								value="<?php if (isset($value['email'])) echo htmlspecialchars((string) $value['email'], ENT_QUOTES, 'UTF-8'); ?>">
 											
 												<?php if (isset($error['email'])) echo $error['email']; ?>              
 												<label class="error_label"> <span id="e_name"

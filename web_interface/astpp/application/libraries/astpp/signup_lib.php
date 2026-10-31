@@ -156,14 +156,16 @@ class Signup_lib {
 		$this->CI->db->where ( 'name', 'default' );
 		$sipprofile_result = ( array ) $this->CI->db->get ( 'sip_profiles' )->first_row ();
 		$digits=5;
-		$random_password = rand(pow(10, $digits-1), pow(10, $digits)-1);
+		$random_password = random_int((int) pow(10, $digits - 1), (int) pow(10, $digits) - 1);
 		$sipdevice_array = array (
 				'username' => $accountinfo ['number'],
 				'sip_profile_id' => $sip_profile_info ['id'],
 				"reseller_id"=>$accountinfo ['reseller_id'],
 				'accountid' => $accountinfo['id'],
 				'dir_params' => json_encode(array(
-					"password"=> $this->CI->common->decode ( $accountinfo ['password'] ),
+					// own random password; the portal password was used, which
+					// is no longer readable (and must not be readable in sip_devices either)
+					"password"=> $this->CI->common->generate_password (),
 					'vm-enabled' => "true",
 					"vm-password"=> $random_password,
 					"vm-mailto"=> (isset($accountinfo['email']))?$accountinfo['email']:'',
@@ -265,12 +267,19 @@ class Signup_lib {
 			$this->CI->payment->add_payments_transcation($payment_arr,$accountinfo,$currency_info);
 	}
 	private function _send_email($accountinfo){
+		// no mail without an address (the insert into mail_details failed with "Column 'to'
+		// cannot be null" after the account had already been created)
+		if ((! isset ( $accountinfo ['email'] ) || $accountinfo ['email'] == '') && (! isset ( $accountinfo ['notification_email'] ) || $accountinfo ['notification_email'] == '')) {
+			return;
+		}
 		$accountinfo ['confirm'] = base_url ();
 		if ($accountinfo ['id'] == "") {
 			$accountinfo ['id'] = $last_id;
 		}
-		$accountinfo ['password'] = $this->CI->common->decode ( $accountinfo ['password'] );
-		$this->CI->common->mail_to_users ( 'create_account', $accountinfo );	
+		// the welcome mail names the account number and links the page where the
+		// user sets the password (#PASSWORD#, see common::password_mail_hint())
+		$accountinfo ['password'] = '';
+		$this->CI->common->mail_to_users ( 'create_account', $accountinfo );
 	}
 	public function bulk_account_creation($add_array){
 		$current_date = gmdate ( "Y-m-d H:i:s" );
@@ -301,7 +310,6 @@ class Signup_lib {
 			$acc_num = $number [$i];
 			$email="$acc_num"."@gmail.com";
 			
-			$current_password = $this->CI->common->generate_password ();
 			$insert_array = array();
 			$insert_array = $default_settings;
 			$tax_id = $insert_array['tax_id'];
@@ -310,7 +318,9 @@ class Signup_lib {
 			$insert_array['email']=$email;
 			$insert_array['validfordays']=$add_array ['validfordays'];
 			$insert_array['first_name']=$acc_num;
-			$insert_array['password'] =$this->CI->common->encode ( $current_password );
+			// a random password nobody was told was stored; now a value that
+			// matches no password (set it in the account form or with "forgot password")
+			$insert_array['password'] =$this->CI->common->password_locked ();
 			$insert_array['pricelist_id'] =$add_array ['pricelist_id'];
 			$insert_array['reseller_id'] =$add_array ['reseller_id'];
 			$insert_array['status'] = "0";

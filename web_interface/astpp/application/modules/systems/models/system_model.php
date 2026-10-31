@@ -104,16 +104,17 @@ class System_model extends CI_Model
         $this->db->where("reseller_id", $reseller_id);
         $this->db->where("name", $name);
         $this->db->update("system", $add_array);
-        if ($name == 'base_currency') {
+        // Only for the system-wide setting: the currency table is global, and resellers reach this
+        // method too (systems/configuration) although they have no base_currency row of their own;
+        // otherwise a reseller could set the rate of any currency to 1 for the whole system.
+        if ($name == 'base_currency' && $reseller_id == 0 && isset($add_array['value']) && ! is_array($add_array['value'])) {
 
-            $screen_path = getcwd() . "/cron";
-            $screen_filename = "CurrencyUpdate" . strtotime('now');
-            $command = "cd " . $screen_path . " && /usr/bin/screen -d -m -S  $screen_filename php cron.php CurrencyUpdate";
-            exec($command);
+            astpp_cron_background('CurrencyUpdate');
+            // the new base currency has the rate 1 (this always set INR)
             $this->db->update("currency", array(
                 "currencyrate" => '1'
             ), array(
-                "currency" => "INR"
+                "currency" => (string) $add_array['value']
             ));
         }
     }
@@ -129,15 +130,12 @@ class System_model extends CI_Model
     function edit_resellertemplate($data, $id)
     {
         $arraydata = $data;
-        if ($this->session->userdata('logintype') == 1 || $this->session->userdata('logintype') == 5) {
-            $account_data = $this->session->userdata("accountinfo");
-            $reseller = $account_data['id'];
-            $array = $data;
-            $data = array(
-                'reseller_id' => $reseller
-            );
-            $this->db->where("id", $id);
-        }
+        // Only the own template of the reseller (the posted id could be any
+        // template, and without reseller session the update had no WHERE at all)
+        $account_data = $this->session->userdata("accountinfo");
+        $this->db->where("id", $id);
+        $this->db->where("reseller_id", (int) $account_data['id']);
+        $arraydata['reseller_id'] = (int) $account_data['id'];
         unset($arraydata["action"]);
         unset($arraydata["form"]);
         unset($arraydata["page_title"]);
@@ -358,6 +356,10 @@ class System_model extends CI_Model
     function add_languages($add_array)
     {
         unset($add_array["action"], $add_array["id"]);
+        // The locale becomes a column name (ALTER TABLE) and a directory/shell path
+        if (! isset($add_array['locale']) || ! preg_match('/^[A-Za-z]{2,3}(_[A-Za-z]{2,4})?$/', $add_array['locale'])) {
+            return false;
+        }
         $this->db->insert("languages", $add_array);
         $this->db->query('ALTER TABLE translations ADD ' . "`" . $add_array['locale'] . "`" . ' VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL');
         $this->db->query('UPDATE translations SET ' . "`" . $add_array['locale'] . "`" . '= en_En');

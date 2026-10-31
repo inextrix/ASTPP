@@ -37,6 +37,26 @@ $hook ['pre_controller'][] = array (
 		'filename' => 'router.php',
 		'filepath' => 'hooks' 
 );
+// CSRF token: output filter (pre_controller), check before every controller method
+$hook ['pre_controller'][] = array (
+		'class' => 'Csrf_guard',
+		'function' => 'start',
+		'filename' => 'csrf_guard.php',
+		'filepath' => 'hooks' 
+);
+$hook ['post_controller_constructor'][] = array (
+		'class' => 'Csrf_guard',
+		'function' => 'check',
+		'filename' => 'csrf_guard.php',
+		'filepath' => 'hooks' 
+);
+// Central record ownership / role check before every controller method
+$hook ['post_controller_constructor'][] = array (
+		'class' => 'Access_control',
+		'function' => 'check',
+		'filename' => 'access_control.php',
+		'filepath' => 'hooks' 
+);
 /*********************************************************/
 /*
  *

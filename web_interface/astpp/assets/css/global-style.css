@@ -329,7 +329,7 @@ input.ace[type=checkbox], input.ace[type=radio] {
 /* COLORS: l=light, t=transparent, d=dark, c=contrast*/
 
 .color-one{background:#fff;}
-.color-one-c{ background:url('http://192.168.1.25:8099/assets/images/feature-2.png') no-repeat 0 0; 
+.color-one-c{ background:none no-repeat 0 0; 
 background-size:100%; height:330px; position:absolute;
 }
 
@@ -366,10 +366,10 @@ background-size:100%; height:330px; position:absolute;
 .portlet-content{width: 100%;}
 /*.portlet-content{background:#fff; color:#9ab2cc;float: left; width: 100%;}*/
 /*.color-three p{color:#a1a1a1;}*/
-.color-gray{background:url('http://192.168.1.25:8099/assets/images/testmonial_back.png') repeat-y; 
+.color-gray{background:none repeat-y; 
 color:#9ab2cc; background-size:100%;
 }
-.color-rate{background:url('http://192.168.1.25:8099/assets/images/rate_img.png') no-repeat; 
+.color-rate{background:none no-repeat; 
 color:#9ab2cc; background-size:100%; height:351px;
 }
 .orange{background:#ff8c43;}
@@ -386,7 +386,7 @@ color:#9ab2cc; background-size:100%; height:351px;
 .white{background:#fff;}
 
 /* BANNERS */
-.banner-1{background:url('http://192.168.1.25:8099/assets/images/carousel/carousel-img-2.png') no-repeat;
+.banner-1{background:none no-repeat;
 }
 
 /* DELIMITERS & INDICATORS */
@@ -766,7 +766,7 @@ color:#DDD;}
 .carousel-1 .description.fluid-center .subtitle{font-size:20px; margin:0; display:block; text-align:center;}
 .carousel-1 .description.fluid-center .features{display:block; margin-top:40px; text-align:center;}
 .carousel-1 .description.fluid-center .features i{width:110px; height:110px; background:#FFF; text-align:center; line-height:110px; font-size:54px; color:#697e93; font-weight:700;border-radius:96px; margin-right:20px;}
-.color_feature{ background:url('http://192.168.1.25:8099/assets/images/text.png') repeat-y;
+.color_feature{ background:none repeat-y;
 }
 .carousel-2{}
 .carousel-2 p{color:#6c6c6c; line-height:30px; font-size:14px; text-align:justify;}
@@ -1138,7 +1138,7 @@ border:1px solid #cfcfcf;
 
 /* LISTS */
 ul.list-2{-webkit-padding-start:20px; margin:15px 0;}
-ul.list-2 li{padding-left:15px; list-style-type:none; background:url('http://192.168.1.25:8099/assets/images/list-style-2.png') no-repeat 0 8px; 
+ul.list-2 li{padding-left:15px; list-style-type:none; background:none no-repeat 0 8px; 
 color:#555;
 }
 ul.list-2 li a{color:#555;}
@@ -1365,7 +1365,7 @@ background: linear-gradient(to bottom, #727272 0%,#565656 100%);
 filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#727272', endColorstr='#565656',GradientType=0 ); */
 }
 footer .img{
-    background:url('http://192.168.1.25:8099/assets/images/footer_back.png') no-repeat right bottom;
+    background:none no-repeat right bottom;
 }
 footer:before, footer:after {display:table; content:" ";}
 footer:after{clear:both;}

@@ -31,11 +31,79 @@ class common {
 		$this->CI->load->library ( 'email' );
 		$this->CI->load->library ( 'session' );
 	}
+	/**
+	 * An IP map entry as "address/bits", or false if it is none. Without "/bits" an IPv4
+	 * address becomes /32, an IPv6 address /128; bits must be a number up to 32 or 128. IPv6 used to
+	 * be stored without prefix (IP map module) or with /32 (account page) and accepted any text after
+	 * "/"; the dialplan's IP query failed for every account on a row without valid prefix.
+	 */
+	function ipmap_cidr($ip) {
+		$parts = explode('/', trim((string) $ip), 2);
+		if (filter_var($parts[0], FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) !== false) {
+			$max_bits = 32;
+		} elseif (filter_var($parts[0], FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) !== false) {
+			$max_bits = 128;
+		} else {
+			return false;
+		}
+		if (! isset($parts[1])) {
+			return $parts[0] . '/' . $max_bits;
+		}
+		if (! ctype_digit($parts[1]) || strlen($parts[1]) > 3 || (int) $parts[1] > $max_bits) {
+			return false;
+		}
+		return $parts[0] . '/' . (int) $parts[1];
+	}
+	/**
+	 * Absolute path of a call recording the logged-in account may download, or false.
+	 * Recordings are named <call uuid>.wav. Admin / sub admin: every recording; reseller: CDRs of
+	 * its customers; everybody else: own CDRs. Previously any logged-in account could fetch any
+	 * recording by name.
+	 */
+	function recording_file($file_name) {
+		if ($this->CI->session->userdata('user_login') == FALSE || !preg_match('/^([0-9A-Za-z-]{8,64})\.wav$/', (string) $file_name, $m)) {
+			return false;
+		}
+		$path = $this->CI->config->item('recordings_path') . $m[0];
+		if (!is_file($path)) {
+			return false;
+		}
+		$logintype = $this->CI->session->userdata('logintype');
+		if ($logintype == 2 || $logintype == 4) {
+			return $path;
+		}
+		$accountinfo = $this->CI->session->userdata('accountinfo');
+		if (empty($accountinfo['id'])) {
+			return false;
+		}
+		$this->CI->db->from('cdrs');
+		$this->CI->db->like('uniqueid', $m[1], 'after');
+		if ($logintype == 1) {
+			$this->CI->db->where('reseller_id', (int) $accountinfo['id']);
+		} else {
+			$this->CI->db->where('accountid', (int) $accountinfo['id']);
+		}
+		return $this->CI->db->count_all_results() > 0 ? $path : false;
+	}
+	/*
+	 * Generated passwords have at least 16 characters and pass the portal password rule
+	 * (application/libraries/astpp/password_policy.php); they had 8 characters.
+	 * Also used for SIP device passwords, longer ones are fine there.
+	 */
 	function generate_password() {
+		$this->CI->load->library ( 'astpp/password_policy' );
+		do {
+			$pass = $this->generate_password_candidate ();
+		} while ( $this->CI->password_policy->check ( $pass ) !== '' || ! preg_match ( '/\d/', $pass ) || ! preg_match ( '/[A-Za-z]/', $pass ) );
+		return $pass;
+	}
+	private function generate_password_candidate() {
 
-		$length         = (common_model::$global_config ['system_config'] ['pinlength'] < 8) ? 8 : common_model::$global_config ['system_config'] ['pinlength'];
-		
-		$length=(int)$length;
+		$length         = (common_model::$global_config ['system_config'] ['pinlength'] < 16) ? 16 : common_model::$global_config ['system_config'] ['pinlength'];
+
+		// at most 64: above 255 no candidate passes the password rules and generate_password()
+		// would never return
+		$length=min((int)$length, 64);
 		$password_type  = common_model::$global_config ['system_config'] ['password_type'];
 		$type = !empty($type) ? $type : ($password_type == '0' ? 'hard':'simple');
 
@@ -52,18 +120,24 @@ class common {
 			if(strpos($available_sets, 's') !== false)
 				$sets[] = '!@#$^*()';
 
+			// random_int() instead of array_rand()/str_shuffle() (Mersenne Twister, predictable
+			// from the time of the request)
 			$all = '';
-			$password = '';
+			$chars = array();
 			foreach($sets as $set)
 			{
-				$password .= $set[array_rand(str_split($set))];
+				$chars[] = $set[random_int(0, strlen($set) - 1)];
 				$all .= $set;
 			}
-
-			$all = str_split($all);
 			for($i = 0; $i < $length - count($sets); $i++)
-				$password .= $all[array_rand($all)];
-				$pass = str_shuffle($password);
+				$chars[] = $all[random_int(0, strlen($all) - 1)];
+			for ($i = count($chars) - 1; $i > 0; $i--) {
+				$j = random_int(0, $i);
+				$tmp = $chars[$i];
+				$chars[$i] = $chars[$j];
+				$chars[$j] = $tmp;
+			}
+			$pass = implode('', $chars);
 
 		} else {
 		
@@ -71,30 +145,37 @@ class common {
    			$pass        = array(); 
    			$alphaLength = strlen($alphabet) - 1; 
 
-			for ($i = 0; $i < 8; $i++) {
-			    $n = rand(0, $alphaLength);
+			for ($i = 0; $i < $length; $i++) {
+			    $n = random_int(0, $alphaLength);
 			    $pass[] = $alphabet[$n];
 			}
    		 return implode($pass); 
 		}
 		return $pass;
 	}
+	// Random numbers with random_int() (CSPRNG). rand()/mt_rand() were seeded with
+	// srand(time()) by the session library, so numbers, PINs and passwords created in
+	// the same second were identical and predictable from the creation time. The loop
+	// below checks every new candidate (before, the old condition was checked again or
+	// a result object was used as array).
+	private function astpp_random_digits($size) {
+		$size = max(1, min(18, (int) $size));
+		return random_int((int) pow(10, $size - 1), (int) pow(10, $size) - 1);
+	}
+
+	private function astpp_unique_random_digits($size, $field, $tablename) {
+		do {
+			$uname = $this->astpp_random_digits($size);
+			$acc_result = (array) $this->CI->db_model->getSelect('Count(*) as count', $tablename, array($field => $uname))->first_row();
+		} while ($acc_result['count'] != 0);
+		return $uname;
+	}
+
 	function find_uniq_rendno($size = '', $field = '', $tablename = '') {
 		if ($tablename != '') {
-			$size=(int)$size;
-			$accounttype_array = array ();
-			$uname = rand ( pow ( 10, $size - 1 ), pow ( 10, $size ) - 1 );
-			$where = array (
-					$field => $uname
-			);
-			$acc_result = $this->CI->db_model->getSelect ( 'Count(*) as count', $tablename, $where );
-			$acc_result = (array)$acc_result->first_row ();
-			if ( $acc_result ['count'] != 0 ) {
-				$uname = rand ( pow ( 10, $size - 1 ), pow ( 10, $size ) - 1 );
-				$acc_result = $this->CI->db_model->getSelect ( 'Count(*) as count', $tablename, $where );
-			}
+			$uname = $this->astpp_unique_random_digits($size, $field, $tablename);
 		} else {
-			$uname = rand ( pow ( 10, $size - 1 ), pow ( 10, $size ) - 1 );
+			$uname = $this->astpp_random_digits($size);
 		}
 		return $uname;
 	}
@@ -105,19 +186,9 @@ class common {
 		//ASTPPCOM-1183 End
 
 		if ($tablename != '') {
-			$accounttype_array = array ();
-			$uname = rand ( pow ( 10, $size - 1 ), pow ( 10, $size ) - 1 );
-			$where = array (
-					$field => $uname
-			);
-			$acc_result = $this->CI->db_model->getSelect ( 'Count(*) as count', $tablename, $where );
-			$acc_result = $acc_result->result ();
-			while ( $acc_result [0]->count != 0 ) {
-				$uname = rand ( pow ( 10, $size - 1 ), pow ( 10, $size ) - 1 );
-				$acc_result = $this->CI->db_model->getSelect ( 'Count(*) as count', $tablename, $where );
-			}
+			$uname = $this->astpp_unique_random_digits($size, $field, $tablename);
 		} else {
-			$uname = rand ( pow ( 10, $size - 1 ), pow ( 10, $size ) - 1 );
+			$uname = $this->astpp_random_digits($size);
 		}
 		$start_prifix_value = common_model::$global_config ['system_config'] ['startingdigit'];
 		if ($tablename == 'accounts' && $start_prifix_value != 0) {
@@ -138,7 +209,7 @@ class common {
 			if(($count_result['count'] >= $difference) || ($min > $max)){
 				$uname = $this->find_uniq_rendno_customer(common_model::$global_config ['system_config'] ['cardlength'],$field,$tablename);
 			}else{
-				$uname = mt_rand ($min,$max);
+				$uname = random_int ((int) $min, (int) $max);
 				$length=strlen($max);
 				$uname=str_pad($uname,$length, '0', STR_PAD_LEFT);
 				$where = array (
@@ -148,7 +219,7 @@ class common {
 				$acc_result = $this->CI->db_model->getSelect ( 'Count(*) as count', $tablename, $where );
 				$acc_result = (array)$acc_result->first_row ();
 				while ( $acc_result['count'] != 0 ) {
-					$uname = mt_rand ($min,$max);
+					$uname = random_int ((int) $min, (int) $max);
 					$length=strlen($max);
 					$uname=str_pad($uname,$length, '0', STR_PAD_LEFT);
 					$where = array (
@@ -165,7 +236,7 @@ class common {
 		$chars = "1234567890"; 
 		$final_rand = '';
 		for($i = 0; $i < $length; $i ++) {
-			$final_rand .= $chars [rand ( 0, strlen ( $chars ) - 1 )];
+			$final_rand .= $chars [random_int ( 0, strlen ( $chars ) - 1 )];
 		}
 		return $final_rand;
 	}
@@ -1472,7 +1543,7 @@ class common {
 		
 		$message = str_replace('#NAME#', $accountinfo['first_name'] . " " . $accountinfo['last_name'], $message);
         $message = str_replace('#NUMBER#', $accountinfo['number'], $message);
-        $message = str_replace('#PASSWORD#', $accountinfo['password'], $message);
+        $message = str_replace('#PASSWORD#', $this->password_mail_hint(), $message); // portal passwords are not readable
         $message = str_replace('#COMPANY_WEBSITE#', $company_website, $message);
 		$message = str_replace('#COMPANY_EMAIL#', $settings_reply_email, $message);
 		break;
@@ -1570,7 +1641,7 @@ class common {
             case 'new_password':
 			
 				$message = str_replace('#NAME#', $accountinfo['first_name'] . " " . $accountinfo['last_name'], $message);
-                $message = str_replace('#PASSWORD#', $accountinfo['password'], $message);
+                $message = str_replace('#PASSWORD#', $this->password_mail_hint(), $message); // portal passwords are not readable
                 $message = str_replace('#COMPANY_WEBSITE#', $company_website, $message);
 				$message = str_replace('#COMPANY_EMAIL#', $settings_reply_email, $message);
 			
@@ -1578,7 +1649,7 @@ class common {
            
            	case 'reset_password':
 				$message = str_replace('#NAME#', $accountinfo['first_name'] . " " . $accountinfo['last_name'], $message);
-                $message = str_replace('#PASSWORD#', $accountinfo['password'], $message);
+                $message = str_replace('#PASSWORD#', $this->password_mail_hint(), $message); // portal passwords are not readable
                 $message = str_replace('#COMPANY_WEBSITE#', $company_website, $message);
 				$message = str_replace('#COMPANY_EMAIL#', $settings_reply_email, $message);
 			
@@ -2090,6 +2161,69 @@ class common {
 		$data = openssl_decrypt(substr($crypttext, $ivSize), 'BF-ECB', $this->CI->config->item ( 'private_key' ), OPENSSL_RAW_DATA, $iv);
 		return $data;
 	}
+
+	/*
+	 * Portal passwords (accounts.password) are stored with password_hash()
+	 * (Argon2id, bcrypt where PHP has no Argon2). They used to be stored with encode() (Blowfish-ECB
+	 * with the PRIVATE_KEY of astpp-config.conf): whoever had the database and the configuration had
+	 * every password, and the edit forms, "show password" and the welcome mail showed them.
+	 * Old Blowfish values stay valid until the next successful login, which replaces them with a
+	 * hash (Auth_model::verify_login). Every place that sets or checks a portal password uses these
+	 * functions; nothing decodes a portal password any more. SIP device passwords are a different
+	 * thing: FreeSWITCH needs them readable (sip_devices.dir_params).
+	 */
+	function password_store($plain) {
+		return password_hash ( (string) $plain, defined ( 'PASSWORD_ARGON2ID' ) ? PASSWORD_ARGON2ID : PASSWORD_DEFAULT );
+	}
+	function password_is_hash($stored) {
+		return password_get_info ( (string) $stored ) ['algoName'] !== 'unknown';
+	}
+	/** True if $plain is the password stored in $stored (hash or old Blowfish value). */
+	function password_matches($plain, $stored) {
+		$plain = (string) $plain;
+		$stored = (string) $stored;
+		if ($plain === '' || $stored === '') {
+			return false;
+		}
+		if ($this->password_is_hash ( $stored )) {
+			return password_verify ( $plain, $stored );
+		}
+		return hash_equals ( $stored, (string) $this->encode ( $plain ) );
+	}
+	/**
+	 * Value for accounts whose password nobody knows (bulk creation): matches no password (neither a
+	 * hash nor a Blowfish value, encode() never yields "!"), costs no hashing; the password is set in
+	 * the account form or with "forgot password".
+	 */
+	function password_locked() {
+		return '!' . bin2hex ( random_bytes ( 16 ) );
+	}
+	/** Password field of an account form: empty keeps the stored password, otherwise its hash is saved. */
+	function password_from_form(&$fields, $key = 'password') {
+		if (! isset ( $fields [$key] ) || (string) $fields [$key] === '') {
+			unset ( $fields [$key] );
+			return;
+		}
+		$fields [$key] = $this->password_store ( $fields [$key] );
+	}
+	/** Old Blowfish value or a hash with outdated parameters. */
+	function password_needs_update($stored) {
+		$stored = (string) $stored;
+		return ! $this->password_is_hash ( $stored ) || password_needs_rehash ( $stored, defined ( 'PASSWORD_ARGON2ID' ) ? PASSWORD_ARGON2ID : PASSWORD_DEFAULT );
+	}
+	/**
+	 * Same work as one password_verify() against a stored hash, for logins of unknown or not yet
+	 * migrated accounts (otherwise the answer time tells whether an account exists). Hashes of a
+	 * random value nobody knows, with the default parameters of password_store().
+	 */
+	function password_dummy_check($plain) {
+		$dummy = defined ( 'PASSWORD_ARGON2ID' ) ? '$argon2id$v=19$m=65536,t=4,p=1$eXNoREE0MVYwOTd1dFguZA$MBfJSbbYoCal9cet7cNcVBtx8u9on9fnnXFNaaCnN58' : '$2y$12$B4pEcLfPT7w3HdHTr0Fz7.BfOi1gz00UVrqOf8ZnL5MqMUGwQuvXS';
+		password_verify ( (string) $plain, $dummy );
+	}
+	/** Replacement for #PASSWORD# in portal mails: the password is not readable, the user sets it at the reset page. */
+	function password_mail_hint() {
+		return gettext ( '(not sent by e-mail - set your password at' ) . ' ' . base_url () . 'forgotpassword/ ' . gettext ( 'with your account number and e-mail address)' );
+	}
 	function set_recording($status = '') {
 		$status_array = array (
 				'0' => 'On',
@@ -2555,6 +2689,11 @@ class common {
 		return true;
 	}
 	function customer_delete_dependencies($id,$entity=0) {
+		// An empty selection (id '' or 0) deleted the records without account (accountid 0)
+		$id = ( int ) $id;
+		if ($id <= 0) {
+			return;
+		}
 		$this->delete_data ( 'ani_map', array (
 				'accountid' => $id
 		) );
@@ -2618,7 +2757,11 @@ class common {
 		}
 	}
 	function reseller_delete_dependencies($id) {
-
+		// Id '' or 0 worked on the data of the admin (reseller_id 0)
+		$id = ( int ) $id;
+		if ($id <= 0) {
+			return;
+		}
 		$accountinfo = $this->CI->session->userdata ( 'accountinfo' );
 		$child_arr = $this->select_data ( "accounts", array (
 				"reseller_id" => $id,
@@ -2694,6 +2837,11 @@ class common {
 		) );
 	}
 	function subreseller_list($parent_id = '') {
+		// An empty selection (id '' or 0) deleted the customers of the admin (reseller_id 0)
+		$parent_id = ( int ) $parent_id;
+		if ($parent_id <= 0) {
+			return;
+		}
 		$customer_id = $parent_id;
 		$this->reseller_delete_dependencies ( $parent_id );
 		$query = 'select id,type from accounts where reseller_id = ' . $parent_id . ' AND deleted =0';
@@ -2850,7 +2998,9 @@ class common {
 		return $InvoiceConf;
 	}
 	function csv_to_array($filename = '', $delimiter = ',') {
-		if (! file_exists ( $filename ) || ! is_readable ( $filename ))
+		// Without an uploaded file the path was the upload directory; fgetcsv() on a
+		// directory never returns FALSE and the loop ran forever. Only read regular files.
+		if (! is_file ( $filename ) || ! is_readable ( $filename ))
 			return FALSE;
 		$header = NULL;
 		$data = array ();
@@ -2961,19 +3111,9 @@ class common {
     	}
     	function pin_generate($size = '', $field = '', $tablename = ''){
 		if ($tablename != '') {
-			$accounttype_array = array ();
-			$uname = rand ( pow ( 10, $size - 1 ), pow ( 10, $size ) - 1 );
-			$where = array (
-					$field => $uname
-			);
-			$acc_result = $this->CI->db_model->getSelect ( 'Count(*) as count', $tablename, $where );
-			$acc_result = $acc_result->result ();
-			while ( $acc_result [0]->count != 0 ) {
-				$uname = rand ( pow ( 10, $size - 1 ), pow ( 10, $size ) - 1 );
-				$acc_result = $this->CI->db_model->getSelect ( 'Count(*) as count', $tablename, $where );
-			}
+			$uname = $this->astpp_unique_random_digits($size, $field, $tablename);
 		} else {
-			$uname = rand ( pow ( 10, $size - 1 ), pow ( 10, $size ) - 1 );
+			$uname = $this->astpp_random_digits($size);
 		}
 		$start_prifix_value = common_model::$global_config ['system_config'] ['startingdigit'];
 		if ($tablename == 'accounts' && $start_prifix_value != 0) {
@@ -2985,7 +3125,13 @@ class common {
 	}
 	
 	function get_reseller_info(){
-			 
+			 // a reseller got the list of all resellers; it only sees itself as parent
+			 $logintype = $this->CI->session->userdata('logintype');
+			 if ($logintype == 1 || $logintype == 5) {
+				$self = $this->CI->session->userdata('accountinfo');
+				$name = (isset($self['company_name']) && $self['company_name'] != '') ? $self['company_name'] . ' ' : $self['first_name'] . ' ' . $self['last_name'];
+				return array($self['id'] => $name . '(' . $self['number'] . ')');
+			 }
 			 $reseller_info    = $this->CI->db_model->getSelect("*","accounts",array("type"=>1,"deleted"=>0,"status"=>0));
 			 if($reseller_info->num_rows > 0) {
 			    	$reseller_data = $reseller_info->result_array();
@@ -3810,10 +3956,9 @@ class common {
 	// END
 	// ASTPPCOM-975 Start
 	function encrypt( $string, $action = 'e' ) {
+        // Keys come from the per-installation configuration (config.php), no built-in fallback.
         $secret_key =  config_item('api_decipher_auth_token');
- 		$secret_key = $secret_key != "" ? $secret_key : "YPPFWnaYBUmuINDsUsfnpceeJgGrGwFQ";
         $secret_iv =  config_item('iv_key');
-		$secret_iv = isset($secret_iv) && $secret_iv != "<IV_KEY>" ? $secret_iv : "UwCs*^jjkNU53u%?QjGb2CAycS3Wqg94";
         $output = false;
         $encrypt_method = "AES-256-CBC";
         $key = hash( 'sha256', $secret_key );

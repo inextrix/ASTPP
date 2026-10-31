@@ -125,14 +125,14 @@ function save_ani(cardinfo)
 
     local callstart = os.date("!%Y-%m-%d %H:%M:%S")    
 	if(tonumber(result) == 1) then
-		local query = "INSERT INTO ani_map (number,accountid,status,creation_date,last_modified_date) VALUES ('"..session:getVariable("caller_id_number").."','"..cardinfo['id'].."',0,'"..callstart.."','"..callstart.."')";
+		local query = db_sql("INSERT INTO ani_map (number,accountid,status,creation_date,last_modified_date) VALUES (?s,?i,0,?s,?s)", session:getVariable("caller_id_number"), cardinfo['id'], callstart, callstart);
 		Logger.debug("[SAVE_ANI] Query :" .. query)
 		dbh:query(query);
 	end
 end
 -- To get account by id
 function get_account_by_id(accountid)
-	local query = "SELECT *,(select currencyrate from currency where id=currency_id) as currencyrate FROM "..TBL_USERS.." WHERE id = \""..accountid.."\" AND status=0 AND deleted=0 limit 1";
+	local query = db_sql("SELECT *,(select currencyrate from currency where id=currency_id) as currencyrate FROM "..TBL_USERS.." WHERE id = ?i AND status=0 AND deleted=0 limit 1", accountid);
 	
 			Logger.debug("[DOAUTHORIZATION] Query :" .. query)
 	
@@ -146,7 +146,7 @@ function get_account_by_id(accountid)
 end
 
 function get_account(accountcode)
-	local query = "SELECT *,(select currencyrate from currency where id=currency_id) as currencyrate FROM "..TBL_USERS.." WHERE number = \""..accountcode.."\" AND status=0 AND deleted=0 limit 1";
+	local query = db_sql("SELECT *,(select currencyrate from currency where id=currency_id) as currencyrate FROM "..TBL_USERS.." WHERE number = ?s AND status=0 AND deleted=0 limit 1", accountcode);
 
 	Logger.debug("[DOAUTHORIZATION] Query :" .. query)
 
@@ -162,7 +162,11 @@ end
 -- Check DID info 
 function get_ani(ani_number)
     
-    local query = "SELECT * FROM ani_map WHERE number = ".. ani_number
+    -- The caller id used to go in unquoted, so MariaDB compared it as a number. Kept for
+    -- numeric caller ids; anything else is compared as escaped text (was an SQL error, or
+    -- SQL injected through the caller id).
+    local ani_type = string.match(ani_number or "", "^%s*[+-]?%d+%s*$") and "?i" or "?s"
+    local query = db_sql("SELECT * FROM ani_map WHERE number = "..ani_type, ani_number)
     Logger.debug("[CHECK_DID] Query :" .. query)  
     assert (dbh:query(query, function(u)
 	ani = u;
@@ -182,13 +186,13 @@ function validate_card_usage(carddata)
         if ( carddata['first_used'] == "0000-00-00 00:00:00") then
 
             -- If "firstused" has not been set, we will set it now.
-               local query = "UPDATE accounts SET first_used = now() WHERE id = " .. carddata['id'];
+               local query = db_sql("UPDATE accounts SET first_used = now() WHERE id = ?i", carddata['id']);
                Logger.debug("[validate_card_usage] Query :" .. query)  
                dbh:query(query);
 
             if ( tonumber(carddata['validfordays']) > 0 ) then
                 -- Check if the card is set to expire and deal with that as appropriate.            
-                local query = "UPDATE accounts SET expiry = DATE_ADD('"..callstart.."', INTERVAL " .. carddata['validfordays'].." day) WHERE id = "..carddata['id']
+                local query = db_sql("UPDATE accounts SET expiry = DATE_ADD(?s, INTERVAL ?i day) WHERE id = ?i", callstart, carddata['validfordays'], carddata['id'])
                 Logger.debug("[validate_card_usage] Query :" .. query)
 	            dbh:query(query);
                 return 0
@@ -197,11 +201,11 @@ function validate_card_usage(carddata)
         elseif ( tonumber(carddata['validfordays']) >= 0 ) then
         
                 if (carddata['expiry'] == '0000-00-00 00:00:00') then
-                    local query = "UPDATE accounts SET expiry = DATE_ADD('"..callstart.."', INTERVAL " .. carddata['validfordays'].." day) WHERE id = "..carddata['id']
+                    local query = db_sql("UPDATE accounts SET expiry = DATE_ADD(?s, INTERVAL ?i day) WHERE id = ?i", callstart, carddata['validfordays'], carddata['id'])
                     Logger.debug("[validate_card_usage] Query :" .. query)
     	            dbh:query(query);
 
-                    local query = "SELECT DATE_ADD('"..callstart.."', INTERVAL " .. carddata['validfordays'].." day) AS expiry"  
+                    local query = db_sql("SELECT DATE_ADD(?s, INTERVAL ?i day) AS expiry", callstart, carddata['validfordays'])
                     Logger.debug("[validate_card_usage] Query :" .. query)
                     assert (dbh:query(query, function(u)
                     	new_expiry = u
@@ -209,20 +213,20 @@ function validate_card_usage(carddata)
                     carddata['expiry'] = new_expiry['expiry']
                 end
 
-                local query = "SELECT DATE_FORMAT('"..carddata['expiry'].."' , '%Y%m%d%H%i%s') AS expiry"  
+                local query = db_sql("SELECT DATE_FORMAT(?s , '%Y%m%d%H%i%s') AS expiry", carddata['expiry'])
                 Logger.debug("[validate_card_usage] Query :" .. query)
                 assert (dbh:query(query, function(u)
                 	expiry = u
                 end))
 
-                local query = "SELECT DATE_FORMAT('"..callstart.."' , '%Y%m%d%H%i%s') AS expiry"
+                local query = db_sql("SELECT DATE_FORMAT(?s , '%Y%m%d%H%i%s') AS expiry", callstart)
                 Logger.debug("[validate_card_usage] Query :" .. query)
                 assert (dbh:query(query, function(u)
                 	now = u
                 end))
                 
                 if(tonumber(expiry['expiry']) <= tonumber(now['expiry'])) then
-                    local query = "DELETE FROM ani_map WHERE accountid = ".. carddata['id'];                    
+                    local query = db_sql("DELETE FROM ani_map WHERE accountid = ?i", carddata['id']);
 	                dbh:query(query);
                     return 1
                 end    

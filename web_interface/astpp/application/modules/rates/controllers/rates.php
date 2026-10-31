@@ -1480,7 +1480,8 @@ class Rates extends MX_Controller
 
     function csv_to_array($filename = '', $delimiter = ',')
     {
-        if (! file_exists($filename) || ! is_readable($filename))
+        // only regular files (a directory made the read loop endless)
+        if (! is_file($filename) || ! is_readable($filename))
             return FALSE;
         $header = NULL;
         $data = array();
@@ -1617,7 +1618,10 @@ class Rates extends MX_Controller
         $trunkID = $this->input->post("trunkid");
         $check_header = $this->input->post("check_header");
         $pattern_prefix = $this->input->post("pattern-prefix");
-        $filefields = unserialize($this->input->post("filefields"));
+        $filefields = unserialize($this->input->post("filefields"), array('allowed_classes' => false));
+        if (! is_array($filefields)) {
+            $filefields = array();
+        }
         $new_final_arr = array();
         $invalid_array = array();
         $new_final_arr_key = array();

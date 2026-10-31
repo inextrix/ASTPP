@@ -235,7 +235,7 @@ if ( ! defined('K_TCPDF_EXTERNAL_CONFIG')) {
 	 * if true allows to call TCPDF methods using HTML syntax
 	 * IMPORTANT: For security reason, disable this feature if you are printing user HTML content.
 	 */
-	define('K_TCPDF_CALLS_IN_HTML', true);
+	define('K_TCPDF_CALLS_IN_HTML', false);
 }
 
 //============================================================+

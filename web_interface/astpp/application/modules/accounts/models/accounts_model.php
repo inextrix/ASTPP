@@ -41,9 +41,32 @@ class Accounts_model extends CI_Model
         return $last_id;
     }
 
+    /*
+     * Batch update only for the fields of the batch form. build_batch_update_array() sets every
+     * POST key as a column, so type, reseller_id, posttoexternal ... of all listed accounts were
+     * changeable. A reseller may only set its own rate groups.
+     */
+    private function batch_fields($update_array, $allowed)
+    {
+        $out = array();
+        foreach ($allowed as $field) {
+            if (isset($update_array[$field]) && is_array($update_array[$field])) {
+                $out[$field] = $update_array[$field];
+            }
+        }
+        $me = $this->session->userdata('accountinfo');
+        if (isset($out['pricelist_id']) && isset($me['type']) && ($me['type'] == 1 || $me['type'] == 5)) {
+            $pricelist = isset($out['pricelist_id']['pricelist_id']) ? (string) $out['pricelist_id']['pricelist_id'] : '';
+            if ($pricelist !== '' && ($pricelist === '0' || ! ctype_digit($pricelist) || $this->db->get_where('pricelists', array('id' => (int) $pricelist, 'reseller_id' => (int) $me['id']))->num_rows() === 0)) {
+                unset($out['pricelist_id']);
+            }
+        }
+        return $out;
+    }
+
     function reseller_rates_batch_update($update_array)
     {
-        unset($update_array['action']);
+        $update_array = $this->batch_fields($update_array, array('status', 'notify_flag', 'pricelist_id', 'notify_credit_limit', 'balance', 'credit_limit', 'maxchannels'));
         $update_array['type'] = 1;
         $date = gmdate("Y-m-d h:i:s");
         $this->db_model->build_search('reseller_list_search');
@@ -117,7 +140,7 @@ class Accounts_model extends CI_Model
 
     function customer_rates_batch_update($update_array)
     {
-        unset($update_array['action']);
+        $update_array = $this->batch_fields($update_array, array('status', 'local_call', 'is_recording', 'notify_flag', 'allow_ip_management', 'pricelist_id', 'balance', 'notify_credit_limit', 'expiry', 'credit_limit', 'charge_per_min', 'cps', 'maxchannels'));
         $date = gmdate("Y-m-d h:i:s");
         $this->db_model->build_search('customer_list_search');
         $reseller_info = $this->session->userdata['accountinfo'];
@@ -517,6 +540,9 @@ class Accounts_model extends CI_Model
 
     function update_balance($amount, $accountid, $payment_type)
     {
+        // amount and id are concatenated into SQL - numbers only (decimal(20,5))
+        $amount = sprintf('%.5F', (float) $amount);
+        $accountid = (int) $accountid;
         if ($payment_type == 0) {
             $query = "update accounts set balance =  IF(posttoexternal=1,balance-" . $amount . ",balance+" . $amount . ") where id ='" . $accountid . "'";
 

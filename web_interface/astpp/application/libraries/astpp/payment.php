@@ -88,7 +88,51 @@ class payment {
 
 		return $invoiceid;
 	}
-	
+
+	/*
+	 * Redeem a refill coupon for an account: only an active coupon (status 0) of the account's own
+	 * seller (refill_coupon.reseller_id = accounts.reseller_id, 0 = administrator), only for an
+	 * active prepaid account (as the portal shows it), and only once: the coupon is marked as used
+	 * in the same UPDATE that checks its status, so two requests at the same time cannot both book
+	 * it. Returns 10 (booked), 1 (inactive), 2 (already used), 3 (not found / not of this seller).
+	 */
+	public function redeem_coupon($number, $account_id) {
+		$number = trim((string) $number);
+		if ($number === '' || strlen($number) > 30 || ! ctype_digit($number)) {
+			return 3;
+		}
+		$account = $this->CI->db->get_where('accounts', array('id' => (int) $account_id, 'status' => 0, 'deleted' => 0))->row_array();
+		if (empty($account) || $account['posttoexternal'] == 1) {
+			return 3;
+		}
+		$coupon = $this->CI->db->get_where('refill_coupon', array('number' => $number, 'reseller_id' => (int) $account['reseller_id']))->row_array();
+		if (empty($coupon)) {
+			return 3;
+		}
+		if ($coupon['status'] != 0) {
+			return $coupon['status'] == 1 ? 1 : 2;
+		}
+		$this->CI->db->where(array('id' => $coupon['id'], 'status' => 0));
+		$this->CI->db->update('refill_coupon', array('status' => 2, 'account_id' => $account['id'], 'firstused' => gmdate('Y-m-d H:i:s')));
+		if ($this->CI->db->affected_rows() != 1) {
+			return 2;
+		}
+		$payment_info = array(
+			"price" => $coupon['amount'],
+			"payment_by" => "Voucher",
+			"payment_fee" => 0,
+			"invoice_type" => "credit",
+			"product_category" => 3,
+			"description" => "Refill done using voucher (" . $number . ")",
+			"order_item_id" => 0,
+			"charge_type" => "Voucher",
+			"is_apply_tax" => "true"
+		);
+		$currency_info = (array) $this->CI->db->get_where('currency', array('id' => $account['currency_id']))->row_array();
+		$this->add_payments_transcation($payment_info, $account, $currency_info);
+		return 10;
+	}
+
 	function getRealIpAddr(){
 			    if (!empty($_SERVER['HTTP_CLIENT_IP']))   
 			    {

@@ -591,10 +591,9 @@ class User_form extends common
     function get_userprofile_change_password()
     {
 
-        //Jaimin ASTPPCOM-844
-    $userpassword_strength = $this->CI->common->get_field_name('value', 'system', array("name"=>'password_type'));
-         if ($userpassword_strength['value'] == 1) {
-             $new_password =  array(
+        // one rule for every portal password (libraries/astpp/password_policy.php); this chose by
+        // password_type between strong_password (8+ with classes) and modrate_password (4 to 8)
+        $new_password = array(
             gettext('New Password'),
             'PASSWORD',
             array(
@@ -602,32 +601,15 @@ class User_form extends common
                 'size' => '20',
                 'class' => "text field medium",
                 'id' => 'new_password_show',
+                'autocomplete' => 'new-password',
                 'onmouseover' => 'seetext(new_password_show)',
                 'onmouseout' => 'hidepassword(new_password_show)'
             ),
-            'required|modrate_password|password_check_old[accounts]',
+            'required|portal_password[session]|password_check_old[accounts]',
             'tOOL TIP',
             '',
             ''
         );
-         }else{
-            $new_password =  array(
-            gettext('New Password'),
-            'PASSWORD',
-            array(
-                'name' => 'new_password',
-                'size' => '20',
-                'class' => "text field medium",
-                'id' => 'new_password_show',
-                'onmouseover' => 'seetext(new_password_show)',
-                'onmouseout' => 'hidepassword(new_password_show)'
-            ),
-            'required|strong_password|password_check_old[accounts]',
-            'tOOL TIP',
-            '',
-            ''
-        ); }
-    //END
 
         $form['forms'] = array(
             base_url() . 'user/user_change_password/',
@@ -1845,7 +1827,7 @@ class User_form extends common
         $val = $id > 0 ? 'sip_devices.username.' . $id : 'sip_devices.username';
         $uname_user = $this->CI->common->find_uniq_rendno('10', '', '');
 	$digits = 5;
-	$random_password = rand(pow(10, $digits - 1), pow(10, $digits) - 1);
+	$random_password = random_int((int) pow(10, $digits - 1), (int) pow(10, $digits) - 1);
         $password = $this->CI->common->generate_password();
         if ($id > 0) {
             $password_field = array(

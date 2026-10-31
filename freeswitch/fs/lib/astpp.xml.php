@@ -57,7 +57,7 @@ function load_acl($logger, $db, $config) {
                                 $res_acl_value ['ip'] = $value . "/32";
                         }
                 }
-		$xml .= "       <node type=\"allow\" cidr=\"" . $res_acl_value ['ip'] . "\"/>\n";
+		$xml .= "       <node type=\"allow\" cidr=\"" . astpp_xml_attr ( $res_acl_value ['ip'] ) . "\"/>\n";
 	}
 	
 	// For gateways
@@ -130,7 +130,7 @@ function load_sofia($logger, $db, $config) {
 	if ($config['homer_capture_server'] != "") {
 		$xml .= " <global_settings>\n";
 		$xml .= " <param name=\"sip-capture\" value=\"yes\"/>\n";
-		$xml .= " <param name=\"capture-server\" value=\"".$config['homer_capture_server']."\"/>\n";
+		$xml .= " <param name=\"capture-server\" value=\"" . astpp_xml_attr ( $config['homer_capture_server'] ) . "\"/>\n";
 		$xml .= " </global_settings>\n";
 	}
 
@@ -145,10 +145,12 @@ function load_sofia($logger, $db, $config) {
 		
 		$settings = json_decode ( $sp_value ['profile_data'], true );
 		// $logger->log(print_r($settings,true));
-		$xml .= "   <profile name=\"" . $sp_value ['name'] . "\">\n";
+		// Profile and gateway values are escaped - a gateway password containing
+		// & < or " used to break the whole sofia.conf, and passwords are masked in the debug log
+		$xml .= "   <profile name=\"" . astpp_xml_attr ( $sp_value ['name'] ) . "\">\n";
 		
 		$xml .= "   <domains>\n";
-		$xml .= "       <domain name=\"" . $sp_value ['sip_ip'] . "\" alias=\"true\" parse=\"true\"/>\n";
+		$xml .= "       <domain name=\"" . astpp_xml_attr ( $sp_value ['sip_ip'] ) . "\" alias=\"true\" parse=\"true\"/>\n";
 		$xml .= "   </domains>\n";
 		/*
 		 * $xml .= " <aliases>\n";
@@ -156,10 +158,10 @@ function load_sofia($logger, $db, $config) {
 		 * $xml .= " </aliases>\n";
 		 */
 		$xml .= "   <settings>\n";
-		$xml .= "       <param name=\"sip-ip\" value=\"" . $sp_value ['sip_ip'] . "\"/>\n";
-		$xml .= "       <param name=\"sip-port\" value=\"" . $sp_value ['sip_port'] . "\"/>\n";
-		foreach ( $settings as $set_key => $set_val ) {
-			$xml .= "       <param name=\"" . $set_key . "\" value=\"" . $set_val . "\"/>\n";
+		$xml .= "       <param name=\"sip-ip\" value=\"" . astpp_xml_attr ( $sp_value ['sip_ip'] ) . "\"/>\n";
+		$xml .= "       <param name=\"sip-port\" value=\"" . astpp_xml_attr ( $sp_value ['sip_port'] ) . "\"/>\n";
+		foreach ( ( array ) $settings as $set_key => $set_val ) {
+			$xml .= "       <param name=\"" . astpp_xml_attr ( $set_key ) . "\" value=\"" . astpp_xml_attr ( $set_val ) . "\"/>\n";
 		}
 		$xml .= "       <param name=\"user-agent-string\" value=\"ASTPP\"/>\n";
 
@@ -172,12 +174,12 @@ function load_sofia($logger, $db, $config) {
 		$sp_gw = $db->run ( $query );
 		$logger->log ( $sp_gw );
 		foreach ( $sp_gw as $sp_gw_key => $sp_gw_value ) {
-			$xml .= "       <gateway name=\"" . $sp_gw_value ['name'] . "\">\n";
+			$xml .= "       <gateway name=\"" . astpp_xml_attr ( $sp_gw_value ['name'] ) . "\">\n";
 			
 			$sp_gw_settings = json_decode ( $sp_gw_value ['gateway_data'], true );
-			foreach ( $sp_gw_settings as $sp_gw_settings_key => $sp_gw_settings_value ) {
+			foreach ( ( array ) $sp_gw_settings as $sp_gw_settings_key => $sp_gw_settings_value ) {
 				if ($sp_gw_settings_value != "")
-					$xml .= "           <param name=\"" . $sp_gw_settings_key . "\" value=\"" . $sp_gw_settings_value . "\"/>\n";
+					$xml .= "           <param name=\"" . astpp_xml_attr ( $sp_gw_settings_key ) . "\" value=\"" . astpp_xml_attr ( $sp_gw_settings_value ) . "\"/>\n";
 			}
 			$xml .= "       </gateway>\n";
 		}
@@ -191,46 +193,57 @@ function load_sofia($logger, $db, $config) {
 	$xml .= "   </configuration>\n";
 	$xml .= "   </section>\n";
 	$xml .= "</document>\n";
-	$logger->log ( $xml );
+	$logger->log ( preg_replace ( '/(<param name="[^"]*password[^"]*" value=")[^"]*"/i', '$1***"', $xml ) );
 	return $xml;
 }
 function update_vm_data($logger, $db, $password, $user) {
-	$query = "SELECT * FROM sip_devices where username='" . $_REQUEST ['user'] . "' limit 1";
+	// The SIP user name comes from the request: always bind it as a parameter.
+	$query = "SELECT * FROM sip_devices where username=? limit 1";
 	$logger->log ( "Directory Query : " . $query );
-	$res_dir = $db->run ( $query );
+	$res_dir = $db->run ( $query, array ( ( string ) $_REQUEST ['user'] ) );
+	if (! is_array ( $res_dir ) || empty ( $res_dir ))
+		return;
 	$params = json_decode ( $res_dir [0] ['dir_params'], true );
 	$params ['vm-password'] = $password;
-	
-	$query = "update sip_devices set dir_params = '" . json_encode ( $params, true ) . "' where username='" . $_REQUEST ['user'] . "' limit 1";
-	$res_dir = $db->run ( $query );
+
+	$query = "update sip_devices set dir_params = ? where username=? limit 1";
+	$res_dir = $db->run ( $query, array ( json_encode ( $params, true ), ( string ) $_REQUEST ['user'] ) );
+}
+
+// Escape a value for an XML attribute of the documents returned to FreeSWITCH
+function astpp_xml_attr($value) {
+	return htmlspecialchars ( ( string ) $value, ENT_QUOTES | ENT_XML1, 'UTF-8' );
 }
 
 // Build directory xml
 function load_directory($logger, $db) {
 	$xml = "";
-	
-	$query = "SELECT username,dir_params,dir_vars,number as accountcode,accountid FROM sip_devices,accounts WHERE sip_devices.status=0 AND accounts.status=0 AND accounts.deleted=0 AND accounts.id=sip_devices.accountid AND username='" . $_REQUEST ['user'] . "' limit 1";
+
+	// The SIP user name is sent by the client before any authentication: bind it as a parameter.
+	$query = "SELECT username,dir_params,dir_vars,number as accountcode,accountid FROM sip_devices,accounts WHERE sip_devices.status=0 AND accounts.status=0 AND accounts.deleted=0 AND accounts.id=sip_devices.accountid AND username=? limit 1";
 	$logger->log ( "Directory Query : " . $query );
-	$res_dir = $db->run ( $query );
+	$res_dir = $db->run ( $query, array ( ( string ) $_REQUEST ['user'] ) );
 	$logger->log ( $res_dir );
-	
+	if (! is_array ( $res_dir ))
+		$res_dir = array ();
+
 	foreach ( $res_dir as $res_dir_key => $res_dir_value ) {
 		$xml = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n";
 		$xml .= "<document type=\"freeswitch/xml\">\n";
 		$xml .= "   <section name=\"Directory\" description=\"Directory\">\n";
-		$xml .= "       <domain name=\"" . $_REQUEST ['domain'] . "\" alias=\"true\">\n";
-		$xml .= "           <user id=\"" . $_REQUEST ['user'] . "\">\n";
-		
+		$xml .= "       <domain name=\"" . astpp_xml_attr ( $_REQUEST ['domain'] ) . "\" alias=\"true\">\n";
+		$xml .= "           <user id=\"" . astpp_xml_attr ( $_REQUEST ['user'] ) . "\">\n";
+
 		$params = json_decode ( $res_dir_value ['dir_params'], true );
-		
+
 		$vars = json_decode ( $res_dir_value ['dir_vars'], true );
 		$param_xml = $var_xml = "";
-		foreach ( $params as $parms_key => $res_dir_params ) {
-			$param_xml .= "<param name=\"" . $parms_key . "\" value=\"" . $res_dir_params . "\"/>\n";
+		foreach ( ( array ) $params as $parms_key => $res_dir_params ) {
+			$param_xml .= "<param name=\"" . astpp_xml_attr ( $parms_key ) . "\" value=\"" . astpp_xml_attr ( $res_dir_params ) . "\"/>\n";
 		}
-		
-		foreach ( $vars as $var_key => $res_dir_vars ) {
-			$var_xml .= "<variable name=\"" . $var_key . "\" value=\"" . $res_dir_vars . "\"/>\n";
+
+		foreach ( ( array ) $vars as $var_key => $res_dir_vars ) {
+			$var_xml .= "<variable name=\"" . astpp_xml_attr ( $var_key ) . "\" value=\"" . astpp_xml_attr ( $res_dir_vars ) . "\"/>\n";
 		}
 		
 		$xml .= "               <params>\n";
@@ -241,9 +254,9 @@ function load_directory($logger, $db) {
 		$xml .= "               <variables>\n";
 		$xml .= $var_xml;
 		$xml .= "<variable name=\"sipcall\" value=\"true\"/>\n";
-		$xml .= "<variable name=\"sip_user\" value=\"" . $_REQUEST ['user'] . "\"/>\n";
-		$xml .= "<variable name=\"accountcode\" value=\"" . $res_dir_value ['accountcode'] . "\"/>\n";
-		$xml .= "<variable name=\"domain_name\" value=\"" . $_REQUEST ['domain'] . "\"/>\n";
+		$xml .= "<variable name=\"sip_user\" value=\"" . astpp_xml_attr ( $_REQUEST ['user'] ) . "\"/>\n";
+		$xml .= "<variable name=\"accountcode\" value=\"" . astpp_xml_attr ( $res_dir_value ['accountcode'] ) . "\"/>\n";
+		$xml .= "<variable name=\"domain_name\" value=\"" . astpp_xml_attr ( $_REQUEST ['domain'] ) . "\"/>\n";
 		$xml .= "               </variables>\n";
 		
 		$xml .= "           </user>\n";

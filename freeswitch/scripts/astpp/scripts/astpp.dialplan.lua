@@ -46,7 +46,7 @@ end
 
 --@TODO: We will take it to Feature code module
 ------------------------- VOICEMAIL LISTEN START--------------------------------------
-if(tonumber(config['voicemail_number']) == tonumber(destination_number)) then
+if(config['voicemail_number'] ~= nil and config['voicemail_number']:gsub("%s+", "") ~= '' and config['voicemail_number']:gsub("%s+", "") == destination_number) then
 Logger.info("[Dialplan] VOICEMAIL : ")
 	xml = xml_voicemail(xml,destination_number)
 return;
@@ -157,6 +157,14 @@ number_loop_str = number_loop(destination_number,'blocked_patterns')
 -- Do authorization
 userinfo = doauthorization("number",accountcode,call_direction,destination_number,number_loop_str,config)
 
+-- Unknown or deleted account (no row, doauthorization() logged it): reject it here.
+-- The script went on and failed with a Lua error in the speed dial lookup (no account id), so the
+-- call was not routed at all, without announcement.
+if (userinfo['id'] == nil) then
+	error_xml_without_cdr(destination_number,"ACCOUNT_INACTIVE_DELETED",calltype,config['playback_audio_notification'],0)
+	return 0
+end
+
 --------------------------------------- SPEED DIAL --------------------------------------
 --if(string.len(destination_number) == 1 ) then
 	destination_number = get_speeddial_number(destination_number,userinfo['id'])
@@ -167,6 +175,29 @@ userinfo = doauthorization("number",accountcode,call_direction,destination_numbe
     Logger.info("[Dialplan] New Call direction : ".. call_direction)
 --end
 -----------------------------------------------------------------------------------------
+
+-- Apply the customer's origination localization (number_originate) here, before the DID
+-- check, the blocked-prefix check and the package lookup. The number used to be translated only
+-- further down, so a number dialled in national, 00 or + format never matched the package patterns
+-- (call refused for lack of funds) or the blocked prefixes, and the CDR counted no package minutes.
+local number_originate_applied = false
+if (userinfo ~= nil and call_direction == 'outbound' and (tonumber(userinfo['localization_id']) or 0) > 0) then
+	local early_localization = get_localization(userinfo['localization_id'],'O')
+	if (early_localization and early_localization['number_originate'] ~= nil and early_localization['number_originate'] ~= '') then
+		number_originate_applied = true
+		local translated_number = do_number_translation((early_localization['number_originate']:gsub(" ", "")),destination_number)
+		if (translated_number ~= destination_number) then
+			Logger.info("[Dialplan] Localization : "..destination_number.." -> "..translated_number)
+			destination_number = translated_number
+			call_direction = define_call_direction(destination_number,accountcode,config)
+			if (call_direction == 'outbound' and (userinfo['ACCOUNT_ERROR'] == '' or userinfo['ACCOUNT_ERROR'] == 'NO_SUFFICIENT_FUND')
+				and check_blocked_prefix(userinfo,destination_number,number_loop(destination_number,'blocked_patterns')) == "false") then
+				Logger.warning("[Dialplan] ["..accountcode.."] Destination blocked after localization : "..destination_number)
+				userinfo['ACCOUNT_ERROR'] = 'DESTINATION_BLOCKED'
+			end
+		end
+	end
+end
 
 -- @TODO : Need to confirm with Rushika for fraud feature
 --Added for fraud detection checking
@@ -189,13 +220,9 @@ if(userinfo ~= nil) then
 		error_xml_without_cdr(destination_number,"DESTINATION_BLOCKED",calltype,config['playback_audio_notification'],userinfo['id'])
 		return 0
 	end
-    -- Get package information of customer	
-	package_array = package_calculation (destination_number,userinfo,call_direction)
-
-	if(userinfo['ACCOUNT_ERROR'] == 'NO_SUFFICIENT_FUND') then
-		error_xml_without_cdr(destination_number,"NO_SUFFICIENT_FUND",calltype,config['playback_audio_notification'],userinfo['id'])
-		return 0
-	end
+	-- Expired and inactive accounts are rejected before the package lookup (they were
+	-- checked after it: package_calculation() then failed with a Lua error, because balance is
+	-- never set for such an account, and package minutes would even have cleared the account error)
     if(userinfo['ACCOUNT_ERROR'] == 'ACCOUNT_EXPIRE') then
 		error_xml_without_cdr(destination_number,"ACCOUNT_EXPIRE",calltype,config['playback_audio_notification'],userinfo['id'])
 		return 0
@@ -207,6 +234,13 @@ if(userinfo ~= nil) then
 		error_xml_without_cdr(destination_number,"ACCOUNT_INACTIVE_DELETED",calltype,config['playback_audio_notification'],accountid)
 		return 0
     end
+    -- Get package information of customer	
+	package_array = package_calculation (destination_number,userinfo,call_direction)
+
+	if(userinfo['ACCOUNT_ERROR'] == 'NO_SUFFICIENT_FUND') then
+		error_xml_without_cdr(destination_number,"NO_SUFFICIENT_FUND",calltype,config['playback_audio_notification'],userinfo['id'])
+		return 0
+	end
 
 	-- Code for Prefix based routing to select rate group
 	original_destination_number = destination_number	
@@ -254,7 +288,7 @@ if (userinfo ~= nil) then
     end
 
 	-- If call is pstn and dialed modify defined then do number translation
-	if (call_direction == 'outbound' and tonumber(userinfo['localization_id']) > 0 and or_localization and or_localization['number_originate'] ~= nil) then	
+	if (not number_originate_applied and call_direction == 'outbound' and tonumber(userinfo['localization_id']) > 0 and or_localization and or_localization['number_originate'] ~= nil) then
 		or_localization['number_originate'] = or_localization['number_originate']:gsub(" ", "")			
 		destination_number = do_number_translation(or_localization['number_originate'],destination_number)
 	end
@@ -333,7 +367,8 @@ if (userinfo ~= nil) then
 				end
 		end		
         if(reseller_userinfo['ACCOUNT_ERROR'] == 'ACCOUNT_INACTIVE_DELETED') then
-		    error_xml_without_cdr(destination_number,"ACCOUNT_INACTIVE_DELETED",calltype,config['playback_audio_notification'],userinfo)
+		    -- an account id, not the account table (was a Lua error in tonumber())
+		    error_xml_without_cdr(destination_number,"ACCOUNT_INACTIVE_DELETED",calltype,config['playback_audio_notification'],customer_userinfo['id'])
 		    return 0
 	    end
 
@@ -344,6 +379,27 @@ if (userinfo ~= nil) then
 
 	    if(reseller_userinfo['ACCOUNT_ERROR'] == 'NO_SUFFICIENT_FUND') then
 		    error_xml_without_cdr(destination_number,"NO_SUFFICIENT_FUND",calltype,config['playback_audio_notification'],reseller_userinfo['id'])
+		    return 0
+	    end
+
+	    -- doauthorization() returns early for an expired reseller, before the blocked prefixes
+	    -- are checked; the blocklist of the reseller applies anyway
+	    if(reseller_userinfo['ACCOUNT_ERROR'] == 'ACCOUNT_EXPIRE' and call_direction == 'outbound'
+	    		and check_blocked_prefix(reseller_userinfo,destination_number,number_loop_str) == "false") then
+		    Logger.warning("[Dialplan] [Reseller "..reseller_userinfo['id'].."] Destination blocked (reseller expired) : "..destination_number)
+		    reseller_userinfo['ACCOUNT_ERROR'] = 'DESTINATION_BLOCKED'
+	    end
+
+	    -- blocked prefixes of a reseller were looked up but never enforced
+	    if(reseller_userinfo['ACCOUNT_ERROR'] == 'DESTINATION_BLOCKED') then
+		    error_xml_without_cdr(destination_number,"DESTINATION_BLOCKED",calltype,config['playback_audio_notification'],reseller_userinfo['id'])
+		    return 0
+	    end
+
+	    -- customers of an expired reseller are rejected like an expired customer (their calls
+	    -- went through)
+	    if(reseller_userinfo['ACCOUNT_ERROR'] == 'ACCOUNT_EXPIRE') then
+		    error_xml_without_cdr(destination_number,"ACCOUNT_EXPIRE",calltype,config['playback_audio_notification'],reseller_userinfo['id'])
 		    return 0
 	    end
     

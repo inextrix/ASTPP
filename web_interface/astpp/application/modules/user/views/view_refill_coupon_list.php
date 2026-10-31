@@ -45,7 +45,7 @@ $(document).ready(function() {
     });
     function test(){
 		var refill_coupon_no = document.getElementById('refill_coupon_number').value;
-	    window.location = "<?= base_url()?>user/user_refill_coupon_action/"+refill_coupon_no+"/";
+	    window.location = csrf_url("<?= base_url()?>user/user_refill_coupon_action/"+encodeURIComponent(refill_coupon_no)+"/"); // CSRF token
 
 	}
 </script>

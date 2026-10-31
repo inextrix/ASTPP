@@ -35,6 +35,10 @@ class ProcessInvoice extends MX_Controller
     function __construct()
     {
         parent::__construct();
+        // Cron controller: only reachable from this server (CLI, or wget from cron_settings)
+        if (! astpp_internal_request ()) {
+        	show_404 ();
+        }
         $this->load->model("db_model");
         $this->load->library("astpp/common");
         $this->load->library("astpp/order");

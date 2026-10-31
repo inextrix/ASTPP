@@ -23,10 +23,22 @@
 class Broadcastemail extends CI_Controller {
 	function __construct() {
 		parent::__construct ();
+		// Cron controller: only reachable from this server (CLI, or wget from cron_settings)
+		if (! astpp_internal_request ()) {
+			show_404 ();
+		}
 		$this->load->model ( "db_model" );
 		$this->load->library ( "astpp/email_lib" );
 	}
 	function broadcast_email() {
+		// One run at a time: the minute cron and the immediate start after mails were queued
+		// (astpp_cron_background), or two cron runs when sending takes longer than a minute,
+		// would otherwise read the same queued mails and send them twice.
+		$lock = @fopen ( realpath ( APPPATH ) . '/cache/broadcast_email.lock', 'c' );
+		if ($lock !== false && ! flock ( $lock, LOCK_EX | LOCK_NB )) {
+			fclose ( $lock );
+			return;
+		}
 		$where = array (
 				"status" => "1" 
 		);
@@ -38,6 +50,10 @@ class Broadcastemail extends CI_Controller {
 				unset ( $account_value ['id'] );
 				$this->email_lib->send_notifications ( '', $account_value, '', $account_value ['attachment'], 1, 0, 1 );
 			}
+		}
+		if ($lock !== false) {
+			flock ( $lock, LOCK_UN );
+			fclose ( $lock );
 		}
 	}
 }

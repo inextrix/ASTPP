@@ -551,6 +551,9 @@ class Db_model extends CI_Model {
 				if (($logintype == 1 || $logintype == 5) && $id_where == 'where_arr' && $this->db->field_exists ( 'reseller_id', $table )) {
 					if($table != 'taxes'){
 						$id_value ['reseller_id'] = $this->session->userdata ["accountinfo"] ['id'];
+					} else {
+						// taxes of the admin and the own ones, not those of other resellers
+						$this->db->where_in ( 'reseller_id', array ( 0, ( int ) $this->session->userdata ["accountinfo"] ['id'] ) );
 					}
 				}
 				$where = $id_value;
@@ -1035,6 +1038,9 @@ class Db_model extends CI_Model {
 		return $available_bal;
 	}
 	function update_balance($amount, $accountid, $payment_type) {
+		// amount and id are concatenated into SQL - numbers only (decimal(20,5))
+		$amount = sprintf('%.5F', (float) $amount);
+		$accountid = (int) $accountid;
 		if ($payment_type == "debit" || $payment_type == "0") {
 
 			$query = "update accounts set balance =  IF(posttoexternal=1,balance+" . $amount . ",balance-" . $amount . ") where id ='" . $accountid . "'";
@@ -1049,23 +1055,35 @@ class Db_model extends CI_Model {
 	function build_batch_update_array($update_array) {
 		$updateflg = false;
 		foreach ( $update_array as $key => $update_fields ) {
+			// The column name comes from the POST keys and is used unquoted
+			if (! preg_match ( '/^[A-Za-z_][A-Za-z0-9_]*$/', ( string ) $key )) {
+				continue;
+			}
 			if (is_array ( $update_fields )) {
-				switch ($update_fields ["operator"]) {
+				$operator = isset ( $update_fields ["operator"] ) ? ( string ) $update_fields ["operator"] : '';
+				$value = isset ( $update_fields [$key] ) ? $update_fields [$key] : '';
+				switch ($operator) {
 					case "1" :
 						break;
 					case "2" :
-						if ($update_fields [$key] != '') {
+						if ($value != '') {
 							$updateflg = true;
-							$this->db->set ( $key, $update_fields [$key] );
+							$this->db->set ( $key, $value );
 						}
 						break;
+					// Increase/decrease were built as raw SQL from the POST value
+					// (SQL injection) - only numbers are allowed
 					case "3" :
-						$this->db->set ( $key, $key . "+" . $update_fields [$key], FALSE );
-						$updateflg = true;
+						if (is_numeric ( $value )) {
+							$this->db->set ( $key, $key . "+" . ( float ) $value, FALSE );
+							$updateflg = true;
+						}
 						break;
 					case "4" :
-						$this->db->set ( $key, $key . "-" . $update_fields [$key], FALSE );
-						$updateflg = true;
+						if (is_numeric ( $value )) {
+							$this->db->set ( $key, $key . "-" . ( float ) $value, FALSE );
+							$updateflg = true;
+						}
 						break;
 				}
 			} else {
@@ -1366,6 +1384,21 @@ class Db_model extends CI_Model {
         }
         return $drp_list;
     }
+
+    /** products a reseller works with - its own and those it opted in (not all products). */
+    function build_dropdown_reseller_products($select, $table, $id_where = '', $id_value = '') {
+        $account_data = $this->session->userdata("accountinfo");
+        $me = (int) $account_data['id'];
+        $select_params = explode(',', $select);
+        $this->db->select($select, false);
+        $this->db->from('products');
+        $this->db->where("is_deleted = 0 AND (reseller_id = $me OR id IN (SELECT product_id FROM reseller_products WHERE account_id = $me))", NULL, FALSE);
+        $drp_list = array();
+        foreach ($this->db->get()->result() as $drp_value) {
+            $drp_list[$drp_value->{$select_params [0]}] = $drp_value->{$select_params[1]};
+        }
+        return $drp_list;
+    }
 	function build_concat_dropdown_cutomer_reseller($select, $table, $id_where = '', $id_value = '') {
 		$accountinfo = $this->session->userdata ( "accountinfo" );
 		$reseller_id=$accountinfo['id'];
@@ -1419,6 +1452,9 @@ class Db_model extends CI_Model {
 				if (($logintype == 1 || $logintype == 5) && $id_where == 'where_arr' && $this->db->field_exists ( 'reseller_id', $table )) {
 					if($table != 'taxes'){
 						$id_value ['reseller_id'] = $this->session->userdata ["accountinfo"] ['id'];
+					} else {
+						// taxes of the admin and the own ones, not those of other resellers
+						$this->db->where_in ( 'reseller_id', array ( 0, ( int ) $this->session->userdata ["accountinfo"] ['id'] ) );
 					}
 				}
 				$where = $id_value;
@@ -1489,6 +1525,9 @@ class Db_model extends CI_Model {
 				if (($logintype == 1 || $logintype == 5) && $id_where == 'where_arr' && $this->db->field_exists ( 'reseller_id', $table )) {
 					if($table != 'taxes'){
 						$id_value ['reseller_id'] = $this->session->userdata ["accountinfo"] ['id'];
+					} else {
+						// taxes of the admin and the own ones, not those of other resellers
+						$this->db->where_in ( 'reseller_id', array ( 0, ( int ) $this->session->userdata ["accountinfo"] ['id'] ) );
 					}
 				}
 				$where = $id_value;

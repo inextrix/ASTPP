@@ -64,13 +64,15 @@ class Orders_model extends CI_Model
     function get_reseller_orders_list($flag, $start = 0, $limit = 0)
     {
         $this->db_model->build_search('reseller_orders_list_search', 'orders.');
-        if ($this->session->userdata('logintype') == 1 || $this->session->userdata('logintype') == 5) {
+        // "My Orders" - only administrators see all orders (customers and providers
+        // got the orders of all accounts)
+        if ($this->session->userdata('logintype') == 2 || $this->session->userdata('logintype') == 4) {
+            $where_arr = array();
+        } else {
             $account_data = $this->session->userdata("accountinfo");
             $where_arr = array(
                 "orders.accountid" => $account_data['id']
             );
-        } else {
-            $where_arr = array();
         }
         if (isset($_GET['sortname']) && $_GET['sortname'] != 'undefined') {
             $this->db->order_by($_GET['sortname'], ($_GET['sortorder'] == 'undefined') ? 'desc' : $_GET['sortorder']);

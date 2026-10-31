@@ -411,9 +411,7 @@
                      type="hidden" readonly name="country" value="USA"> <input
                      type="hidden" readonly name="quantity" value="1"> <input
                      type="hidden" readonly name="rm" value="2"> <input
-                     type="hidden" readonly name="no_shipping" value="1"> <input
-                     type="hidden" readonly name="PHPSESSID"
-                     value="<?=session_id(); ?>"> <input type="hidden" readonly
+                     type="hidden" readonly name="no_shipping" value="1"> <input type="hidden" readonly
                      name="currency_code" value="<?php echo $to_currency ?>"> <input
                      type="hidden" readonly name="notify_url"
                      value="<?=$notify_url?>"> <input type="hidden" readonly

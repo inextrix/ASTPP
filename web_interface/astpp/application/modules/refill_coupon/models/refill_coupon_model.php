@@ -71,11 +71,15 @@ class Refill_coupon_model extends CI_Model
 
     function add_refill_coupon($add_array)
     {
-        $count = $add_array['count'];
-        unset($add_array['action']);
-        unset($add_array['count']);
+        $count = (int) $add_array['count'];
         $prefix = $add_array['prefix'];
-        unset($add_array['prefix']);
+        // only the form fields (the whole POST array was inserted: account_id, firstused, status
+        // ... of the new coupons could be set)
+        $add_array = array(
+            'amount' => $add_array['amount'],
+            'description' => isset($add_array['description']) ? $add_array['description'] : '',
+            'status' => 0
+        );
         $accountinfo = $this->session->userdata('accountinfo');
         $reseller_id = $accountinfo['type'] == 1 ? $accountinfo['id'] : 0;
         $insert_arr = array();

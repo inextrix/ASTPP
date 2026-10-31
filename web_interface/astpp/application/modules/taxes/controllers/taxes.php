@@ -175,23 +175,25 @@ class Taxes extends MX_Controller
             $value = str_replace("'", "", $value);
             $taxes_array[$value] = $value;
         }
-        $tax_value = common_model::$global_config['system_config']['tax_type'];
-        $new_str = "";
-        $existing_str = "";
-        $tax_options = explode(",", $tax_value);
-
-        foreach ($tax_options as $key => $value) {
-            if (isset($taxes_array[$value])) {
-                $query = "Update `system` set value=REPLACE(value,'$value','')";
-                $this->db->query($query);
-                $query = "Update `system` set value=REPLACE(value,',,',',')";
-                $this->db->query($query);
-                $query = "Update `system` set value=REPLACE(value,',,',',')";
-                $this->db->query($query);
+        // The REPLACE() statements ran without a WHERE clause
+        // on the whole `system` table and removed the tax id (e.g. "1") from every
+        // setting (IP addresses, ports, ...). Only rewrite the tax_type lists.
+        $tax_rows = $this->db->get_where('system', array(
+            'name' => 'tax_type'
+        ))->result_array();
+        foreach ($tax_rows as $tax_row) {
+            $remaining = array();
+            foreach (explode(",", $tax_row['value']) as $value) {
+                $value = trim($value);
+                if ($value !== '' && ! isset($taxes_array[$value])) {
+                    $remaining[] = $value;
+                }
             }
+            $this->db->where('id', $tax_row['id']);
+            $this->db->update('system', array(
+                'value' => implode(',', $remaining)
+            ));
         }
-        $query = "UPDATE `system` SET value = TRIM(BOTH ',' FROM value) where name='tax_type'";
-        $this->db->query($query);
         $where = "id IN ($ids)";
         $taxes_where = "taxes_id IN(" . $ids . ")";
         $this->db->where($taxes_where);

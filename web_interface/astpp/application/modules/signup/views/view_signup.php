@@ -208,18 +208,6 @@ function isNumberKey(evt){
 										<div id="noscript-warning"><?php echo gettext("ASTPP work best with JavaScript enabled"); ?></div>
 									</noscript>
 
-									</script>
-									<script src='https://www.google.com/recaptcha/api.js'></script>
-
-									<script>
-            function onSubmit(token) {
-				
-                $("#customer_form").submit();
-                return true;
-            }
-			 
-        </script>
-
 </head>
 <? extend('master.php') ?>
 <? startblock('extra_head') ?>

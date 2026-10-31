@@ -29,9 +29,11 @@ class db extends PDO {
 	public function __construct($cdr = "") {
 		$config = parse_ini_file ( "/var/lib/astpp/astpp-config.conf" );
 		
+		// Never allow several statements in one query (stacked queries).
 		$options = array (
 				PDO::ATTR_PERSISTENT => true,
-				PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION 
+				PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+				PDO::MYSQL_ATTR_MULTI_STATEMENTS => false
 		);
 		
 		try {
@@ -45,6 +47,13 @@ class db extends PDO {
 			$this->error = $e->getMessage ();
 		}
 		echo $this->error;
+	}
+	
+	/**
+	 * Escape a value for use inside a quoted SQL string literal.
+	 */
+	public function esc($value) {
+		return substr ( $this->quote ( ( string ) $value ), 1, - 1 );
 	}
 	
 	/**

@@ -25,6 +25,10 @@ class GenerateInvoice extends MX_Controller {
 	public static $global_config;
 	function __construct() {
 		parent::__construct ();
+		// Cron controller: only reachable from this server (CLI, or wget from cron_settings)
+		if (! astpp_internal_request ()) {
+			show_404 ();
+		}
 		$this->load->model ( "db_model" );
 		$this->load->library ( "astpp/common" );
 		$this->load->library ( 'html2pdf' );
@@ -74,10 +78,7 @@ class GenerateInvoice extends MX_Controller {
 						break;
 				}
 			}
-			$screen_path = getcwd () . "/cron";
-			$screen_filename = "Email_Broadcast_" . strtotime ( 'now' );
-			$command = "cd " . $screen_path . " && /usr/bin/screen -d -m -S  $screen_filename php cron.php BroadcastEmail";
-			exec ( $command );
+			astpp_cron_background('BroadcastEmail');
 		}
 	}
 	function validate_invoice_date($account_value) {
@@ -276,9 +277,14 @@ class GenerateInvoice extends MX_Controller {
 			$TemplateData ['template'] = str_replace ( "#DUE_DATE#", $invData ['due_date'], $TemplateData ['template'] );
 		}
 		$dir_path = getcwd () . "/attachments/";
+		// No shell and no directories from the file name: the invoice prefix is part of it and
+		// resellers can edit it in their company profile.
+		$Filenm = basename ( $Filenm );
+		$FilePath = FCPATH . "invoices/" . ( int ) $AccountData ['id'] . "/" . $Filenm;
 		$path = $dir_path . $Filenm;
-		$command = "cp " . $FilePath . " " . $path;
-		exec ( $command );
+		if (is_file ( $FilePath )) {
+			@copy ( $FilePath, $path );
+		}
 		$email_array = array (
 				'accountid' => $AccountData ['id'],
 				'subject' => $TemplateData ['subject'],

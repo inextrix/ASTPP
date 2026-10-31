@@ -201,9 +201,12 @@ class Products extends MX_Controller {
 		$accountinfo = $this->session->userdata ( "accountinfo" );
 			if(!empty($add_array ) && $add_array !='' ){
 				$product_category = $this->common->get_field_name("product_category","products",array("id"=>$productid));
-				$this->product_model->update_reseller_optin_product($add_array,$productid,$accountinfo );
-				
-				$this->session->set_flashdata ( 'astpp_errormsg', gettext('Product updated successfully!') );
+				// false for an invalid price or setup fee
+				if ($this->product_model->update_reseller_optin_product($add_array,$productid,$accountinfo ) === false) {
+					$this->session->set_flashdata ( 'astpp_notification', gettext('Invalid price or setup fee!') );
+				} else {
+					$this->session->set_flashdata ( 'astpp_errormsg', gettext('Product updated successfully!') );
+				}
 				if($product_category == 4){
 					redirect ( base_url () . 'did/did_list/' );
 				}else{
@@ -296,8 +299,10 @@ class Products extends MX_Controller {
 				$data['product_info'] = $add_array ;
 				$data['product_info']['description'] =  isset($add_array['product_description'])?$add_array['product_description']:['description'];
 				$data['product_info']['buy_cost'] = isset($add_array['product_buy_cost'])?$add_array['product_buy_cost']:$product_info['buy_cost'];
-				
-				$data['product_rate_group'] = $this->db_model->build_dropdown("id,name", "pricelists", "", $where_arr);	
+
+				// the reseller filter was already used up by the query above, the list showed
+				// the rate groups of all resellers
+				$data['product_rate_group'] = $this->db_model->build_dropdown("id,name", "pricelists", "where_arr", array("reseller_id" => $reseller_id));
 
 				$data['product_info']['apply_on_rategroups'] = $product_info['apply_on_rategroups'];
 				$data['product_info']['name'] = (isset($add_array['product_name']) && $add_array['product_name'] !='' )?$add_array['product_name']: $product_info['name'];
@@ -602,8 +607,11 @@ class Products extends MX_Controller {
 			$reseller_id = $accountinfo ['reseller_id'] >0 ? $accountinfo ['reseller_id'] : 0;
 			$accountid = $accountinfo ['type'] == 1 ? $accountinfo ['id'] : 0;
 			if ($this->session->userdata ( 'logintype' ) == 1 || $this->session->userdata ( 'logintype' ) == 5) {	
-				$where =$this->db->where("product_id IN (".$ids.")");
-				$product_info = ( array ) $this->db->get_where( "reseller_products", $where )->result_array();
+				// get_where() got the DB object as condition, so the rows of all resellers were read,
+				// and the opt-out below had no WHERE (reset the opt-in of every reseller).
+				// Only the rows of this reseller now.
+				$this->db->where("product_id IN (".$ids.")", NULL, FALSE);
+				$product_info = ( array ) $this->db->get_where( "reseller_products", array("account_id" => $accountid) )->result_array();
 				foreach ($product_info as $key => $value) {
 					if ($value['is_owner']==  0 ) {
 						
@@ -613,6 +621,7 @@ class Products extends MX_Controller {
 							$this->db->update("reseller_products",array("is_optin"=>1));
 						}
 					else{
+						$this->db->where ("id",$value['id']);
 						$this->db->update("reseller_products",array("is_optin"=>1));
 						echo TRUE;
 					}
@@ -829,7 +838,12 @@ class Products extends MX_Controller {
 			$ProductData = $this->input->post(); 
 			$account_id = $this->input->post('account_id');
 			$accountinfo = $this->session->userdata ( "accountinfo" );
+			// price, period and minutes come from the offer (the form shows them read-only)
 			$order_id =$this->order->confirm_order($ProductData,$account_id,$accountinfo);
+			if (! ($order_id > 0)) {
+				$this->session->set_flashdata ( 'astpp_notification', gettext('Invalid price, quantity or product!'));
+				redirect ( base_url () . 'products/products_list/' );
+			}
 			$this->session->set_flashdata ( 'astpp_errormsg', gettext('Product assigned successfully!'));
 			redirect ( base_url () . 'products/products_list/' );
 		}else{
@@ -878,27 +892,32 @@ class Products extends MX_Controller {
 				}else{
 					$product_info = $this->db_model->getSelect ( "*", " products", array ('id' => $productid,'status'=>0));
 				}
-				if($product_info->num_rows > 0)
+				// purchase price from the parent's offer (was the read-only form field
+				// product_buy_cost), own selling price and setup fee only as plain amounts
+				$offer = $this->order->parent_offer($productid, $accountinfo);
+				if($product_info->num_rows > 0 && $offer !== null)
 				{
 					$product_info = $product_info->result_array()[0];
 					$add_array['billing_type'] = $product_info['billing_type'];
 					$add_array['billing_days'] = $product_info['billing_days'];
 					$add_array['commission'] = $product_info['commission'];
 					$add_array['free_minutes'] = $product_info['free_minutes'];
-					if(($accountinfo['reseller_id'] > 0 || $accountinfo['type'] == 1) && $accountinfo['is_distributor'] == 0 ){
-						$add_array['buy_cost'] = $this->common_model->add_calculate_currency ($add_array['product_buy_cost'], "", '', false, false );
-					}else{ 
-						$add_array['buy_cost'] = $product_info['buy_cost'] ;
-					}
-					if($accountinfo['is_distributor'] == 0){ 
-						$add_array['price']  = isset($add_array['price'])?$this->common_model->add_calculate_currency ($add_array['price'], "", '', false, false ):$this->common_model->add_calculate_currency ($product_info['price'], "", '', false, false );
-						$add_array['setup_fee']  = isset($add_array['setup_fee'])?$this->common_model->add_calculate_currency ($add_array['setup_fee'], "", '', false, false ):$this->common_model->add_calculate_currency ($product_info['setup_fee'], "", '', false, false );
-					}else{   
-						$add_array['price']  =$product_info['price'];
-						$add_array['setup_fee']  =  $product_info['setup_fee'];
+					$add_array['buy_cost'] = $offer['price'];
+					if($accountinfo['is_distributor'] == 0){
+						$price = isset($add_array['price']) ? order::amount($add_array['price']) : (float) $offer['price'];
+						$setup_fee = isset($add_array['setup_fee']) ? order::amount($add_array['setup_fee']) : (float) $offer['setup_fee'];
+						if ($price === false || $setup_fee === false) {
+							$this->session->set_flashdata ( 'astpp_notification', gettext('Invalid price or setup fee!'));
+							redirect ( base_url () . 'products/products_list/' );
+						}
+						$add_array['price']  = isset($add_array['price'])?$this->common_model->add_calculate_currency ($price, "", '', false, false ):$price;
+						$add_array['setup_fee']  = isset($add_array['setup_fee'])?$this->common_model->add_calculate_currency ($setup_fee, "", '', false, false ):$setup_fee;
+					}else{
+						$add_array['price']  =$offer['price'];
+						$add_array['setup_fee']  =  $offer['setup_fee'];
 					}
 				$query = "INSERT INTO reseller_products (product_id, account_id, reseller_id,country_id,commission, setup_fee, price, free_minutes,buy_cost,billing_type, billing_days, status, is_optin,is_owner,optin_date,modified_date)
-	VALUES($productid,".$accountinfo['id'].", ".$accountinfo ['reseller_id'].", ".$add_array ['country_id'].",".$add_array['commission'].",'".$add_array['setup_fee']."','".$add_array['price']."',".$add_array['free_minutes'].",".$add_array['buy_cost'].",".$add_array['billing_type'].",".$add_array['billing_days'].", 0, 0, 1, '".gmdate("Y-m-d H:i:s")."','".gmdate("Y-m-d H:i:s")."') ON DUPLICATE KEY UPDATE product_id = VALUES(product_id), account_id = VALUES(account_id), reseller_id = VALUES(reseller_id), commission = VALUES(commission), setup_fee = VALUES(setup_fee), price = VALUES(price), free_minutes = VALUES(free_minutes), buy_cost = VALUES(buy_cost),billing_type = VALUES(billing_type), billing_days = VALUES(billing_days), status = VALUES(status), is_optin = VALUES(is_optin), is_owner = VALUES(is_owner), optin_date = VALUES(optin_date),modified_date = VALUES(modified_date)";
+	VALUES(" . (int)$productid . ",".(int)$accountinfo['id'].", ".(int)$accountinfo['reseller_id'].", ".(int)$add_array['country_id'].",".(float)$add_array['commission'].",'".(float)$add_array['setup_fee']."','".(float)$add_array['price']."',".(int)$add_array['free_minutes'].",".(float)$add_array['buy_cost'].",".(int)$add_array['billing_type'].",".(int)$add_array['billing_days'].", 0, 0, 1, '".gmdate("Y-m-d H:i:s")."','".gmdate("Y-m-d H:i:s")."') ON DUPLICATE KEY UPDATE product_id = VALUES(product_id), account_id = VALUES(account_id), reseller_id = VALUES(reseller_id), commission = VALUES(commission), setup_fee = VALUES(setup_fee), price = VALUES(price), free_minutes = VALUES(free_minutes), buy_cost = VALUES(buy_cost),billing_type = VALUES(billing_type), billing_days = VALUES(billing_days), status = VALUES(status), is_optin = VALUES(is_optin), is_owner = VALUES(is_owner), optin_date = VALUES(optin_date),modified_date = VALUES(modified_date)";
 				$query = $this->db->query($query);
 				$this->session->set_flashdata ( 'astpp_errormsg', gettext('Product optin successfully!'));
 				redirect ( base_url () . 'products/products_list/' );
@@ -926,11 +945,14 @@ class Products extends MX_Controller {
 			} 
 			if($status == 'false'){
 				$orders = $this->db_model->getSelect("*","order_items",array("product_id"=>$product_id));
+				// The opt-out deleted/disabled the opt-in of every reseller, not only the own one
 				if($orders->num_rows == 0){
 					$this->db->where("product_id",$product_id);
+					$this->db->where("account_id",$accountinfo['id']);
 					$this->db->delete("reseller_products");
 				}else{
 					$this->db->where("product_id",$product_id);
+					$this->db->where("account_id",$accountinfo['id']);
 					$this->db->update("reseller_products",array("status"=>1));			
 				}
 

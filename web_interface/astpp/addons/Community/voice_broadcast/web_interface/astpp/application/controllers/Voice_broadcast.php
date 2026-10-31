@@ -23,6 +23,10 @@
 class Voice_broadcast extends CI_Controller {
 	function __construct() {
 		parent::__construct ();
+		// Cron controller: only reachable from this server (CLI, or wget from cron_settings)
+		if (! astpp_internal_request ()) {
+			show_404 ();
+		}
 		$this->load->library('astpp/permission');
 		$this->load->library("astpp/common");
 		$this->load->model('db_model');
@@ -64,7 +68,7 @@ class Voice_broadcast extends CI_Controller {
 					$voice_broadcast_port = $this->common->get_field_name('value','system',array('name'=>'voice_broadcast_port'));
 					foreach($destination_number as $dest_number){
 						$originate_str="api originate {sip_h_P-Voice_broadcast=true,ignore_early_media=true,sip_h_P-Accountcode=".$account_res['number'].",sip_h_P-cb_destination=".$dest_number.",sip_h_P-cb_source=".$dest_number.",variable_effective_caller_id_name=".$dest_number.",origination_caller_id_number=".$dest_number.",effective_caller_id_number=".$dest_number.",Caller-Destination-Number=".$dest_number.",Hunt-Orig-Caller-ID-Number=".$dest_number.",Hunt-Callee-ID-Name=".$dest_number.",sip_h_P-Voice_broadcast_type=".$sipdevice_res['username']."}sofia/default/".$dest_number."@".$domain.":".$voice_broadcast_port." &playback(/opt/ASTPP/web_interface/astpp/upload/voice_broadcast/".$value['broadcast'].") xml public ".$number." ".$number." 40";
-						$this->reload_freeswitch($originate_str);
+						$this->_reload_freeswitch($originate_str);
 					}
 					$this->db->update ( "voice_broadcast", array ("status" => 2), array ("id" => $value['id']));
 					$response_arr = array ('status' => 'true', 'Please wait, Your call is on the way.',200);
@@ -77,7 +81,8 @@ class Voice_broadcast extends CI_Controller {
 		}
 		echo json_encode($response_arr);
 	}
- 	function reload_freeswitch($command){
+ 	// Internal helper, not routable (leading underscore).
+ 	function _reload_freeswitch($command){
         $response = '';
         $query = $this->db_model->getSelect("*", "freeswich_servers", array('status'=>0));
         $fs_data = $query->result_array();

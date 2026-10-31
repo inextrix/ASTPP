@@ -368,14 +368,22 @@ buycost,reseller_products.price,reseller_products.billing_type,reseller_products
 		}else{
 			$product_info = $this->db_model->getSelect ( "*", " products", array ('id' => $productid,'status'=>0));
 		}
+		// selling price and setup fee only as plain amounts; purchase price from the parent's offer
+		// (the reseller's own selling price was stored as buy_cost)
+		$price = order::amount(isset($add_array['price']) ? $add_array['price'] : '');
+		$setup_fee = order::amount(isset($add_array['setup_fee']) ? $add_array['setup_fee'] : '');
+		$offer = $this->order->parent_offer($productid, $accountinfo);
+		if ($price === false || $setup_fee === false || $offer === null) {
+			return false;
+		}
 		if($product_info->num_rows > 0)
 		 {
 		 $product_info = $product_info->result_array()[0];
 		 $optin_product_update = array(
-					"buy_cost"=>$this->common_model->add_calculate_currency ($product_info['price'], "", '', false, false ),
+					"buy_cost"=>$offer['price'],
 					"commission"=>$product_info['commission'],
-					"setup_fee"=>$this->common_model->add_calculate_currency ($add_array['setup_fee'], "", '', false, false ),
-					"price"=>$this->common_model->add_calculate_currency ($add_array['price'], "", '', false, false ),
+					"setup_fee"=>$this->common_model->add_calculate_currency ($setup_fee, "", '', false, false ),
+					"price"=>$this->common_model->add_calculate_currency ($price, "", '', false, false ),
 					"free_minutes"=>$product_info['free_minutes'],
 					"billing_type"=>$product_info['billing_type'],
 					"billing_days"=>$product_info['billing_days'],

@@ -118,31 +118,20 @@ class Systems extends MX_Controller
         $data['details'] = $this->system_model->get_subcategory_menu($group_title);
 
         $add_array = $this->input->post();
-        if(isset($_FILES) && $_FILES != ''){
-            if($add_array['file_type'] == 0){
-                $filename=$_FILES;
-                $file = $filename['calling_cards_welcome_file']['type'];
-                $actual_file_name=$filename['calling_cards_welcome_file']['name'];
-                $actual_file_name=str_replace(' ', '', $actual_file_name);
-                $path_parts = pathinfo($actual_file_name);
-                $without_extension1 =strlen($path_parts['filename']); 
-                $start_file = $path_parts['filename'];
-                if ($without_extension1 > 10) {
-                    $start_file=substr($path_parts['filename'],0,10);
-                }
-                $uploadedFile1 = $filename['calling_cards_welcome_file']['tmp_name'];
-                $dir_path=  getcwd()."/upload/";
-                $file_name= $filename['calling_cards_welcome_file']['name'];
-                $start_file.'_'.$date.'.'.$path_parts['extension'];
-                $path =$dir_path.$file_name;
-                if(file_exists(getcwd().'/upload/' . $filename)){
+        // Only when a welcome file was really uploaded: accept only .wav/.mp3 audio files and
+        // never use the client supplied file name as is (the file is stored in the web root).
+        if (isset($_FILES['calling_cards_welcome_file']['name']) && $_FILES['calling_cards_welcome_file']['name'] != ''
+            && isset($add_array['file_type']) && $add_array['file_type'] == 0) {
+            $upload = $_FILES['calling_cards_welcome_file'];
+            $file_name = preg_replace('/[^A-Za-z0-9._-]/', '', basename(str_replace(' ', '', (string) $upload['name'])));
+            $extension = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
+            if ($file_name !== '' && in_array($extension, array('wav', 'mp3'), true) && is_uploaded_file($upload['tmp_name'])) {
+                $path = getcwd() . "/upload/" . $file_name;
+                if (file_exists($path) || move_uploaded_file($upload['tmp_name'], $path)) {
                     $add_array['calling_cards_welcome_file'] = $file_name;
                 }
-                else{
-                    if (move_uploaded_file($uploadedFile1,$path)) {
-                        $add_array['calling_cards_welcome_file'] =$file_name;
-                    }
-                }
+            } else {
+                $this->session->set_flashdata('astpp_notification', gettext('Only .wav or .mp3 files are allowed.'));
             }
         }
         if (! empty($add_array)) {
@@ -763,19 +752,27 @@ class Systems extends MX_Controller
                 $db_username = $this->db->username;
                 $db_password = $this->db->password;
                 $db_hostname = $this->db->hostname;
-                $filename = $add_array['path'];
+                // The file name was used unquoted in a shell command (command
+                // injection, path traversal) and the DB password was visible in `ps`.
+                $filename = basename((string) $add_array['path']);
+                if (! preg_match('/^[A-Za-z0-9._-]+\.sql(\.gz)?$/', $filename)) {
+                    echo gettext('Invalid backup file name. Allowed: letters, digits, ".", "_", "-" and the extension .sql or .sql.gz');
+                    exit();
+                }
+                $add_array['path'] = $filename;
                 $backup_file = DATABASE_DIRECTORY . $filename;
+                $do_gzip = 0;
                 if (substr($backup_file, - 3) == '.gz') {
                     $backup_file = substr($backup_file, 0, - 3);
                     $do_gzip = 1;
                 }
 
-                $run_backup = "/usr/bin/mysqldump -all --databases " . $db_name . " -u'" . $db_username . "' -p'" . $db_password . "' > '$backup_file'";
+                $run_backup = "MYSQL_PWD=" . escapeshellarg($db_password) . " /usr/bin/mysqldump -all -h " . escapeshellarg($db_hostname) . " -u " . escapeshellarg($db_username) . " --databases " . escapeshellarg($db_name) . " > " . escapeshellarg($backup_file);
                 $error_zip = 0;
                 exec($run_backup, $output, $error);
                 if ($do_gzip) {
                     $gzip = $this->config->item('gzip-path');
-                    $run_gzip = $gzip . " " . $backup_file;
+                    $run_gzip = $gzip . " " . escapeshellarg($backup_file);
                     exec($run_gzip, $output, $error_zip);
                 }
 
@@ -826,14 +823,17 @@ class Systems extends MX_Controller
             $db_username = $this->db->username;
             $db_password = $this->db->password;
             $db_hostname = $this->db->hostname;
-            $path = DATABASE_DIRECTORY . $result_array[0]['path'];
+            // Quote every shell argument, no password on the command line
+            $path = DATABASE_DIRECTORY . basename((string) $result_array[0]['path']);
             if (file_exists($path)) {
                 if (substr($path, - 3) == '.gz') {
                     $GUNZIP_EXE = $this->config->item('gunzip-path');
-                    $run_gzip = $GUNZIP_EXE . " < " . $path . " | ";
+                    $run_gzip = $GUNZIP_EXE . " < " . escapeshellarg($path) . " | ";
+                } else {
+                    $run_gzip = "/bin/cat " . escapeshellarg($path) . " | ";
                 }
                 $MYSQL = "/usr/bin/mysql";
-                $run_restore = $run_gzip . $MYSQL . " -h" . $db_hostname . " -u" . $db_username . " -p" . $db_password . " " . $db_name;
+                $run_restore = $run_gzip . "MYSQL_PWD=" . escapeshellarg($db_password) . " " . $MYSQL . " -h " . escapeshellarg($db_hostname) . " -u " . escapeshellarg($db_username) . " " . escapeshellarg($db_name);
                 exec($run_restore);
                 $this->session->set_flashdata('astpp_errormsg', gettext('Database Restore successfully.'));
                 redirect(base_url() . 'systems/database_restore/');
@@ -850,7 +850,7 @@ class Systems extends MX_Controller
         $result = $this->system_model->get_backup_data($id);
         $result_array = $result->result_array();
         if ($result->num_rows() > 0) {
-            $path = DATABASE_DIRECTORY . $result_array[0]['path'];
+            $path = DATABASE_DIRECTORY . basename((string) $result_array[0]['path']);
             $filename = basename($path);
             $len = filesize($path);
 
@@ -886,9 +886,11 @@ class Systems extends MX_Controller
                 $data['page_title'] = gettext('Import Database');
                 $this->load->view('view_import_database', $data);
             } else {
-                $db_file = explode(".", $upload_greeting_file);
-                if ($db_file[1] == 'csv' || $db_file[1] == 'tar' || $db_file[1] == 'sql') {
-                    $target_path = basename($_FILES['userfile']['name']);
+                // The old check accepted e.g. "x.sql.php" and stored it in the
+                // web root (current working directory) -> remote code execution.
+                $upload_name = basename((string) $upload_greeting_file);
+                if (preg_match('/^[A-Za-z0-9._-]+\.(sql|sql\.gz|csv|tar)$/', $upload_name)) {
+                    $target_path = DATABASE_DIRECTORY . $upload_name;
                     move_uploaded_file($_FILES["userfile"]["tmp_name"], $target_path);
 
                     $query = $this->system_model->import_database($filename_text, $_FILES['userfile']['name']);

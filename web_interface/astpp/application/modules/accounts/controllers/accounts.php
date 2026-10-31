@@ -229,7 +229,7 @@
                     $taxes_data = $taxes_data->result_array();
                     $account_data["tax_id"] = explode(",", $taxes_data[0]['taxes_id']);
                 }
-                $account_data['password'] = $this->common->decode($account_data['password']);
+                $account_data['password'] = ''; // not readable, the form shows an empty field
                 $account_data['first_used'] = $this->common->convert_GMT_to($account_data['first_used'], $account_data['first_used'], $account_data['first_used']);
                 $reseller_id = ($account_data['reseller_id'] > 0) ? $account_data['reseller_id'] : 0;
                 $data['form'] = $this->form->build_form($this->accounts_form->get_customer_form_fields($entity_name, $edit_id, $reseller_id), $account_data);
@@ -255,7 +255,10 @@
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $add_array = $this->input->post();
             $current_date = gmdate("Y-m-d H:i:s");
-            
+            // this form creates customers (0) and providers (3) only; any type from the hidden field
+            // was stored (also -1 = administrator, 2 = sub-administrator)
+            $add_array['type'] = (isset($add_array['type']) && (string) $add_array['type'] === '3') ? '3' : '0';
+
             $entity_name = strtolower($this->common->get_entity_type('', '', $add_array['type']));
             $data['country_id'] = $add_array['country_id'];
             $data['timezone_id'] = $add_array['timezone_id'];
@@ -277,7 +280,7 @@
                         $add_array['credit_limit'] = 0;
                     }
 
-                    $add_array['password'] = $this->common->encode($add_array['password']);
+                    $this->common->password_from_form($add_array); // hash, empty keeps the password
                     $add_array['credit_limit'] = $this->common_model->add_calculate_currency($add_array['credit_limit'], '', '', false, false);
 
                     $query = $this->accounts_model->remove_all_account_tax($add_array['id']);
@@ -292,6 +295,9 @@
                         unset($add_array['tax_id']);
                     }
                     unset($add_array['posttoexternal'], $add_array['number'], $add_array['balance'], $add_array['expiry']);
+                    // edit_account() writes the whole POST array; account type, owner and internal
+                    // columns are no form fields (type -1 turned a customer into an administrator)
+                    unset($add_array['type'], $add_array['reseller_id'], $add_array['deleted'], $add_array['creation'], $add_array['is_distributor'], $add_array['permission_id'], $add_array['last_bill_date'], $add_array['inuse']);
                     $this->db->select('validfordays');
                     $validfordays = (array) $this->db->get_where("accounts", array(
                         "id" => $add_array["id"]
@@ -313,12 +319,17 @@
                 if ($this->form_validation->run() == FALSE) {
                     $data['validation_errors'] = validation_errors();
                 } else {
-                    $add_array['password'] = $this->common->encode($add_array['password']);
+                    $this->common->password_from_form($add_array); // hash, empty keeps the password
                     $add_array['credit_limit'] = $this->common_model->add_calculate_currency($add_array['credit_limit'], '', '', false, false);
                     $add_array['notification_email'] = (! empty($add_array['notification_email'])) ? $add_array['notification_email'] : $add_array['email'];
                     if ($add_array['posttoexternal'] == 1) {
                         $add_array['balance'] = 0;
                     }
+                    // the administrator may create the customer for a reseller - only for an existing one
+                    if (isset($add_array['reseller_id']) && $add_array['reseller_id'] > 0 && $this->db->get_where('accounts', array('id' => (int) $add_array['reseller_id'], 'type' => 1, 'deleted' => 0))->num_rows() === 0) {
+                        $add_array['reseller_id'] = 0;
+                    }
+                    unset($add_array['deleted'], $add_array['is_distributor'], $add_array['permission_id']);
                     $last_id = $this->accounts_model->add_account($add_array);
                     $this->session->set_flashdata('astpp_errormsg', gettext(ucfirst($entity_name)).' '.gettext('Added Successfully!'));
 
@@ -462,16 +473,14 @@
         $add_array = $this->input->post();
         if ($action == "add" && ! empty($add_array)) {
             if ($add_array['ip'] != "") {
-                $ip = $add_array['ip'];
-                if (strpos($ip, '/') !== false) {
-                    $add_array['ip'] = $add_array['ip'];
-                } else {
-                    if (preg_match('/[^a-zA-Z]/', $add_array['ip'])) {
-                        $add_array['ip'] = $add_array['ip'] . '/32';
-                    } else {
-                        $add_array['ip'] = $add_array['ip'] . '/64';
-                    }
+                // "address/bits", /32 or /128 if none given (/32 was appended to
+                // IPv6 addresses too); anything else is refused, see common::ipmap_cidr()
+                $ip_cidr = $this->common->ipmap_cidr($add_array['ip']);
+                if ($ip_cidr === false) {
+                    $this->session->set_flashdata('astpp_notification', gettext('Please enter a valid IP address or network, e.g. 192.0.2.10 or 192.0.2.0/24.'));
+                    redirect(base_url() . "accounts/" . $accounttype . "_ipmap/" . $accountid . "/");
                 }
+                $add_array['ip'] = $ip_cidr;
                 $where = array(
                     "ip" => trim($add_array['ip']),
                     "prefix" => trim($add_array['prefix'])
@@ -1485,7 +1494,16 @@
                 echo $data['validation_errors'];
                 exit();
             } else {
-              $post_array['credit'] = $this->common_model->add_calculate_currency($post_array['credit'], '', '', false, false);
+              // plain amount > 0 (greater_than[0] also accepted 1e308, 0x1A ...); payment type only
+              // refill (0) or post charge (1)
+              $credit = order::amount(trim((string) $post_array['credit']), 999999999);
+              if ($credit === false || $credit <= 0 || ! in_array((string) $post_array['payment_type'], array('0', '1'), true)) {
+                  echo json_encode(array(
+                      'credit_error' => gettext('Please enter valid amount.')
+                  ));
+                  exit();
+              }
+              $post_array['credit'] = $this->common_model->add_calculate_currency($credit, '', '', false, false);
               $response = $this->accounts_model->account_process_payment($post_array);
               $customer_info['refill_amount'] = $post_array['credit'];
               if ($post_array['payment_type'] == 1) {
@@ -1639,7 +1657,7 @@ function reseller_edit($edit_id = '')
         $encrypted_string = $this->common->encode($edit_data['id']);
         $encrypt = $this->common->encode_params($encrypted_string);
         $edit_data['registration_url'] = base_url() . "signup/" . $encrypt;
-        $edit_data['password'] = $this->common->decode($edit_data['password']);
+        $edit_data['password'] = ''; // not readable, the form shows an empty field
         $edit_data['credit_limit'] = $this->common_model->calculate_currency(($edit_data['credit_limit']), '', '', true, false);
 
         $entity_name = strtolower($this->common->get_entity_type('', '', $edit_data['type']));
@@ -1660,6 +1678,8 @@ function reseller_save()
 {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $add_array = $this->input->post();
+        // this form creates resellers only (any type from the hidden field was stored)
+        $add_array['type'] = '1';
         $entity_name = strtolower($this->common->get_entity_type('', '', $add_array['type']));
         $data['country_id'] = $add_array['country_id'];
         $data['timezone_id'] = $add_array['timezone_id'];
@@ -1702,7 +1722,10 @@ function reseller_save()
                     "id" => $add_array['id']
                 ))->first_row();
                 unset($add_array['is_distributor']);
-                $add_array['password'] = $this->common->encode($add_array['password']);
+                // edit_account() writes the whole POST array - not the account type, the owner,
+                // internal columns or the balance (changed through payments only, as for customers)
+                unset($add_array['type'], $add_array['reseller_id'], $add_array['deleted'], $add_array['creation'], $add_array['balance'], $add_array['last_bill_date'], $add_array['inuse']);
+                $this->common->password_from_form($add_array); // hash, empty keeps the password
                 $this->accounts_model->edit_account($add_array, $add_array['id']);
                 $this->session->set_flashdata('astpp_errormsg', gettext('Reseller updated successfully!'));
                 redirect(base_url() . 'accounts/reseller_list/');
@@ -1729,6 +1752,11 @@ function reseller_save()
             if ($this->form_validation->run() == FALSE) {
                 $data['validation_errors'] = validation_errors();
             } else {
+                // a parent chosen by the administrator must be an existing reseller
+                if (isset($add_array['reseller_id']) && $add_array['reseller_id'] > 0 && $this->db->get_where('accounts', array('id' => (int) $add_array['reseller_id'], 'type' => 1, 'deleted' => 0))->num_rows() === 0) {
+                    $add_array['reseller_id'] = 0;
+                }
+                unset($add_array['deleted']);
                 if ($add_array['reseller_id'] > 0) {
                     $this->db->select("is_distributor");
                     $is_distributor = (array) $this->db->get_where("accounts", array(
@@ -1736,7 +1764,7 @@ function reseller_save()
                     ))->first_row();
                     $add_array['is_distributor'] = $is_distributor['is_distributor'];
                 }
-                $add_array['password'] = $this->common->encode($add_array['password']);
+                $this->common->password_from_form($add_array); // hash, empty keeps the password
                 $add_array['credit_limit'] = $this->common_model->add_calculate_currency($add_array['credit_limit'], '', '', false, false);
                 $add_array['notification_email'] = (! empty($add_array['notification_email'])) ? $add_array['notification_email'] : $add_array['email'];
                 $last_id = $this->accounts_model->add_account($add_array);
@@ -1777,7 +1805,8 @@ function customer_sipdevice_random_password()
 
 function customer_sipdevice_voicemail_random_password($digit = '')
 {
-    echo rand(pow(10, $digit - 1), pow(10, $digit) - 1);
+    $digit = max(1, min(9, (int) $digit));
+    echo random_int((int) pow(10, $digit - 1), (int) pow(10, $digit) - 1);
 }
 
 function customer_generate_pin($digit = '')
@@ -1828,7 +1857,7 @@ function admin_edit($edit_id = '')
         $type = $accountinfo['type'] == - 1 ? 2 : $accountinfo['type'];
         $entity_type = strtolower($this->common->get_entity_type('', '', $type));
         $entitytype = str_replace(' ', '', $entity_type);
-        $accountinfo['password'] = $this->common->decode($accountinfo['password']);
+        $accountinfo['password'] = ''; // not readable, the form shows an empty field
         $admin_type = $this->common->get_field_name('type', 'accounts', array(
             'id' => $edit_id
         ));
@@ -1861,7 +1890,7 @@ function admin_save($add_array = false)
             if ($this->form_validation->run() == FALSE) {
                 $data['validation_errors'] = validation_errors();
             } else {
-                $add_array['password'] = $this->common->encode($add_array['password']);
+                $this->common->password_from_form($add_array); // hash, empty keeps the password
                 if ($add_array['type'] == - 1) {
                     unset($add_array['status']);
                 }
@@ -1886,7 +1915,7 @@ function admin_save($add_array = false)
             if ($this->form_validation->run() == FALSE) {
                 $data['validation_errors'] = validation_errors();
             } else {
-                $add_array['password'] = $this->common->encode($add_array['password']);
+                $this->common->password_from_form($add_array); // hash, empty keeps the password
                 $add_array['notification_email'] = (! empty($add_array['notification_email'])) ? $add_array['notification_email'] : $add_array['email'];
                 $last_id = $this->accounts_model->add_account($add_array);
                 $this->session->set_flashdata('astpp_errormsg', gettext(ucfirst($entity_type)) .' '.gettext('Added Successfully!'));
@@ -2599,14 +2628,13 @@ function provider_edit_account()
     $this->customer_edit_account();
 }
 
+/*
+ * returned the decoded portal password of an account (no page calls it).
+ * Portal passwords are not readable any more.
+ */
 function customer_show_password($id)
 {
-    $account = $this->db_model->getSelect("password", "accounts", array(
-        'id' => $id
-    ));
-    $account_data = $account->result_array();
-    $password = $this->common->decode($account_data[0]['password']);
-    echo $password;
+    show_404();
 }
 
 function reseller_export_cdr_xls()
@@ -2654,11 +2682,11 @@ function customer_validate_ip()
 {
     $add_array = $this->input->post();
     if (! empty($add_array)) {
-        $ip = $add_array['ip'];
-        if (strpos($ip, '/') !== false) {
-            $add_array['ip'] = $add_array['ip'];
-        } else {
-            $add_array['ip'] = $add_array['ip'] . '/32';
+        // same form as stored by customer_ipmap_action(); not an IP / network = invalid
+        $add_array['ip'] = $this->common->ipmap_cidr($add_array['ip']);
+        if ($add_array['ip'] === false) {
+            echo 'FALSE';
+            return;
         }
         $this->db->where('ip', $add_array['ip']);
         $this->db->where('prefix', $add_array['prefix']);
@@ -2789,6 +2817,19 @@ function customer_products_action($action, $accountid, $accounttype, $product_id
             "id" => $product_id
         ));
         $data['product_info'] = (array) $product_info->first_row();
+        // a reseller sells at its own offer: start the form with it, not with the admin's price
+        // (an unchanged form sold at the admin's price)
+        $me = $this->session->userdata('accountinfo');
+        if (isset($me['type']) && ($me['type'] == 1 || $me['type'] == 5)) {
+            $offer = (array) $this->db->get_where('reseller_products', array(
+                'product_id' => $product_id,
+                'account_id' => $me['id']
+            ))->first_row();
+            if (! empty($offer)) {
+                $data['product_info']['price'] = $offer['price'];
+                $data['product_info']['setup_fee'] = $offer['setup_fee'];
+            }
+        }
         $this->load->view("view_customer_orders_assign", $data);
     }
 
@@ -2823,7 +2864,19 @@ function customer_orders_save()
     $this->form_validation->set_rules('quantity', 'Quantity', 'numeric|is_natural|xss_clean');
     $this->form_validation->set_message('max_length', '%s field can not excced  numbers in length %s');
 
-    $total_amt = $ProductData['price'] + $ProductData['setup_fee'];
+    // The seller may set price, setup fee and billing period for this customer (fields of the
+    // assignment form); everything else comes from the product or the seller's offer. The balance
+    // check uses the amount that confirm_order() really books (incl. quantity).
+    $order_options = array(
+        'overrides' => array(
+            'price' => isset($ProductData['price']) ? $ProductData['price'] : '',
+            'setup_fee' => isset($ProductData['setup_fee']) ? $ProductData['setup_fee'] : '',
+            'billing_days' => isset($ProductData['billing_days']) ? $ProductData['billing_days'] : ''
+        )
+    );
+    $unit_price = $this->order->unit_price($ProductData['product_id'], $account_id, $order_options['overrides']);
+    $quantity = order::quantity(isset($ProductData['quantity']) ? $ProductData['quantity'] : '');
+    $total_amt = ($unit_price === false || $quantity === false) ? false : $unit_price * $quantity;
     $account_balance = $customer_data['posttoexternal'] == 1 ? $customer_data['credit_limit'] - ($customer_data['balance']) : $customer_data['balance'];
     $category_id = $this->common->get_field_name('product_category', 'products', array(
         'id' => $ProductData['product_id']
@@ -2857,8 +2910,13 @@ function customer_orders_save()
         $this->load->view("view_customer_orders_assign", $data);
     } else {
 
-        if ($account_balance > $total_amt) {
-            $last_id = $this->order->confirm_order($ProductData, $account_id, $accountinfo);
+        if ($total_amt === false) {
+            $this->session->set_flashdata('astpp_notification', gettext('Invalid price, quantity or product!'));
+            redirect(base_url() . 'accounts/customer_product/' . $account_id . '/');
+        }
+        // ">=": a free package (price 0) could not be assigned to a prepaid customer with balance 0
+        if ($account_balance >= $total_amt) {
+            $last_id = $this->order->confirm_order($ProductData, $account_id, $accountinfo, $order_options);
             if ($last_id != "") {
                 $ProductData['name'] = $this->common->get_field_name("name", "products", array(
                     "id" => $ProductData['product_id']
@@ -3048,6 +3106,8 @@ function customer_did_delete($accountid)
     if ($order_item->num_rows > 0) {
         $order_item = $order_item->result_array();
         foreach ($order_item as $key => $item) {
+            // The update had no WHERE and terminated the order items of all accounts
+            $this->db->where("id", $item['id']);
             $this->db->update("order_items", array(
                 "is_terminated" => 1,
                 "termination_date" => gmdate("Y-m-d"),

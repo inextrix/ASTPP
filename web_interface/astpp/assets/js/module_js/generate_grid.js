@@ -1,3 +1,7 @@
+// CSRF: token for state-changing GET actions (assets/js/astpp_csrf.js, hooks/csrf_guard.php)
+function csrf_url(url) {
+    return typeof window.astpp_csrf_url === 'function' ? window.astpp_csrf_url(url) : url;
+}
 $(document).ready(function () {
 
     $("#show_search").click(function () {
@@ -364,7 +368,7 @@ function redirect_page(url) {
         var result = custom_url.replace(/.*?:\/\//g, "");
         result = result.replace("//", "/");
         var newURL = window.location.protocol + "//" + result;
-        window.location.href = newURL;
+        window.location.href = csrf_url(newURL);
     }
 }
 ///*ASTPP_invoice_changes_05_05_start*/
@@ -572,7 +576,7 @@ function button_action(t) {
     }else if ((t.name.toLowerCase() == 'export' || t.name.toLowerCase() == "экспорт" || t.name == "Exportar" || t.name == "Exportation" || t.name == "Exportar") && flag == '3') {
         export_multiple(newURL);
     } else {
-        window.location = newURL;
+        window.location = csrf_url(newURL);
     }
 
 }

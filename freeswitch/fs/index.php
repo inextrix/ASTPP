@@ -57,7 +57,15 @@ $config = $lib->get_configurations ( $db );
 // Define logger object
 $logger = new logger ( $lib );
 // Define file name
-$file = "astpp." . $_REQUEST ['section'] . ".php";
+// Only known sections (a path in "section" included any local PHP file)
+$section = isset ( $_REQUEST ['section'] ) ? ( string ) $_REQUEST ['section'] : '';
+if (! in_array ( $section, array (
+		'configuration',
+		'directory'
+), true )) {
+	xml_not_found ();
+}
+$file = "astpp." . $section . ".php";
 
 // Include file
 include_once ("scripts/" . $file);

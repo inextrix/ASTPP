@@ -76,9 +76,9 @@ class notification {
 					$this->send_email_notification($notification_template_data,$accountinfo,$invoiceconf);
 				}
 
-				if(Common_model::$global_config ['system_config']['account_generate']==0){
-					$this->send_sms_notification($notification_template_data,$accountinfo,$invoiceconf);
-				}
+				// send_sms_notification() checks the SMS settings itself; the setting
+				// "account_generate" asked here does not exist (always true, PHP notice)
+				$this->send_sms_notification($notification_template_data,$accountinfo,$invoiceconf);
 
 			}else{
 				$error_msg = gettext('counld not find invoice configuration.');
@@ -106,22 +106,35 @@ class notification {
 	}
 	function send_sms_notification($notification_template_data,$accountinfo,$invoiceconf){
 		$numberlength=6;
-		$sms_details=$this->get_sms_settings_details();
-		$uniq_rendno = rand(pow(10, $numberlength - 1), pow(10, $numberlength) - 1);
-		$message = str_replace ( "<p>", "", $notification_template_data['template'] );
-		$message = str_replace ( "</p>", "", $notification_template_data['template'] );
-
-		$url="https://rest.nexmo.com/sms/json?api_key='be33a9f1'&api_secret='LPn30y0lCuBHjKk2'&from=NEXMO&to=".$accountinfo['number']."&text=".$message;
-            $ch = curl_init();
-			curl_setopt($ch, CURLOPT_URL, $url); 
-			curl_setopt($ch, CURLOPT_VERBOSE, 1); 
-			curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE); 
-			curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, FALSE); 
-			curl_setopt($ch, CURLOPT_POST, 1); 
-			curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1); 
-           		$result = curl_exec($ch);
-		
+		$uniq_rendno = random_int((int) pow(10, $numberlength - 1), (int) pow(10, $numberlength) - 1);
+		// Every notification was sent as SMS through a hard-coded third-party Nexmo account (API
+		// key and secret in the source), unencoded and without TLS verification. Now only if SMS
+		// notifications are enabled, with the operator's own SMS credentials (Configuration ->
+		// Notifications -> SMS); the seeded placeholder keys count as not configured
+		// (astpp_sms_configured() in index.php).
+		$sms = array();
+		$query = $this->CI->db_model->getSelect ( "name,value", "system", array ( 'group_title' => 'notifications' ) );
+		foreach ( $query->result_array () as $row ) {
+			$sms [strtolower ( $row ['name'] )] = $row ['value'];
+		}
+		if (! astpp_sms_configured ( $sms )) {
 			return $uniq_rendno;
+		}
+		$message = str_replace ( array ( "<p>", "</p>" ), "", $notification_template_data['template'] );
+		$url = 'https://rest.nexmo.com/sms/json?' . http_build_query ( array (
+				'api_key' => $sms ['sms_api_key'],
+				'api_secret' => $sms ['sms_secret_key'],
+				'from' => 'NEXMO',
+				'to' => $accountinfo['number'],
+				'text' => $message
+		) );
+		$ch = curl_init ();
+		curl_setopt ( $ch, CURLOPT_URL, $url );
+		curl_setopt ( $ch, CURLOPT_POST, 1 );
+		curl_setopt ( $ch, CURLOPT_RETURNTRANSFER, 1 );
+		curl_setopt ( $ch, CURLOPT_TIMEOUT, 15 );
+		curl_exec ( $ch );
+		return $uniq_rendno;
 	}
 	function get_sms_settings_details(){
 		$where = array (
@@ -155,7 +168,7 @@ class notification {
 		$push_alert_template = $notification_template_data['template'];
 			$email_template = str_replace ( '#NAME#', $accountinfo['first_name'] . " " . $accountinfo['last_name'], $email_template);
 			$email_template = str_replace ( '#NUMBER#', $accountinfo['number'],$email_template);
-			$email_template = str_replace ( '#PASSWORD#', $accountinfo['password'],$email_template);
+			$email_template = str_replace ( '#PASSWORD#', $this->CI->common->password_mail_hint (), $email_template); // portal passwords are not readable
 			$email_template = str_replace ( '#COMPANY_WEBSITE#',$invoiceconf['website'],$email_template);
 			$email_template = str_replace ( '#COMPANY_EMAIL#',$invoiceconf['emailaddress'],$email_template);
 			$email_template = str_replace ( '#COMPANY_NAME#',$invoiceconf['company_name'],$email_template);

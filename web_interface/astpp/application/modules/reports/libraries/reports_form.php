@@ -1066,6 +1066,13 @@ class Reports_form extends common
                     "status" => "1"
                 )
             );
+        } else {
+            // trunks belong to the admin, resellers do not see their names
+            foreach ($form[gettext('Search')] as $key => $field) {
+                if (isset($field[1]) && $field[1] === 'trunk_id') {
+                    unset($form[gettext('Search')][$key]);
+                }
+            }
         }
 
         $form['display_in'] = array(
@@ -4120,7 +4127,8 @@ class Reports_form extends common
                     'id',
                     'name',
                     'products',
-                    'build_dropdown',
+                    // listed the products of all resellers
+                    'build_dropdown_reseller_products',
                     'where_arr',
                     ""
                 ),

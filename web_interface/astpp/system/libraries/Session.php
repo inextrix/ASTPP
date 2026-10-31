@@ -405,13 +405,18 @@ class CI_Session {
 		}
 
 		// Kill the cookie
+		// Secure (HTTPS), HttpOnly and SameSite flags (options array: PHP >= 7.3)
 		setcookie(
 					$this->sess_cookie_name,
 					addslashes(serialize(array())),
-					($this->now - 31500000),
-					$this->cookie_path,
-					$this->cookie_domain,
-					0
+					array(
+						'expires' => ($this->now - 31500000),
+						'path' => $this->cookie_path,
+						'domain' => $this->cookie_domain,
+						'secure' => $this->_cookie_secure(),
+						'httponly' => TRUE,
+						'samesite' => 'Lax'
+					)
 				);
 	}
 
@@ -464,6 +469,12 @@ class CI_Session {
 		{
 			foreach ($newdata as $key => $val)
 			{
+				// "accountinfo" (and "token" after the login) is the account row;
+				// its password column (hash or old Blowfish value) never goes into the session table
+				if (($key === 'accountinfo' || $key === 'token') && is_array($val) && isset($val['password']))
+				{
+					$val['password'] = '';
+				}
 				$this->userdata[$key] = $val;
 			}
 		}
@@ -660,14 +671,33 @@ class CI_Session {
 		$expire = ($this->sess_expire_on_close === TRUE) ? 0 : $this->sess_expiration + time();
 
 		// Set the cookie
+		// Secure (HTTPS), HttpOnly and SameSite flags (options array: PHP >= 7.3)
 		setcookie(
 					$this->sess_cookie_name,
 					$cookie_data,
-					$expire,
-					$this->cookie_path,
-					$this->cookie_domain,
-					$this->cookie_secure
+					array(
+						'expires' => $expire,
+						'path' => $this->cookie_path,
+						'domain' => $this->cookie_domain,
+						'secure' => $this->_cookie_secure(),
+						'httponly' => TRUE,
+						'samesite' => 'Lax'
+					)
 				);
+	}
+
+	// --------------------------------------------------------------------
+
+	/**
+	 * Secure flag of the session cookie: as configured (cookie_secure), and always for
+	 * requests that arrive over HTTPS.
+	 *
+	 * @access	private
+	 * @return	bool
+	 */
+	function _cookie_secure()
+	{
+		return (bool) $this->cookie_secure || ( ! empty($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) !== 'off');
 	}
 
 	// --------------------------------------------------------------------
@@ -718,7 +748,8 @@ class CI_Session {
 	 */
 	function _unserialize($data)
 	{
-		$data = @unserialize(strip_slashes($data));
+		// The cookie and the session table must never instantiate objects (PHP object injection).
+		$data = @unserialize(strip_slashes($data), array('allowed_classes' => array('stdClass')));
 
 		if (is_array($data))
 		{
@@ -754,8 +785,9 @@ class CI_Session {
 			return;
 		}
 
-		srand(time());
-		if ((rand() % 100) < $this->gc_probability)
+		// No srand(time()): since PHP 7.1 it seeds mt_rand() for the whole request, so every
+		// rand()/mt_rand()/array_rand()/str_shuffle() value was predictable from the time.
+		if (random_int(0, 99) < $this->gc_probability)
 		{
 			$expire = $this->now - $this->sess_expiration;
                         $expire = $expire - 60*60*12*1;

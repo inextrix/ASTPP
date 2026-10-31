@@ -79,9 +79,30 @@ class Addons extends MX_Controller
     /**
      * *******************************
      */
+    // The add-on type, package name and version come from URL segments and end up in shell
+    // commands (cp, rm), file paths and SQL: only plain names and version numbers.
+    private function _valid_addon_args($type, $module = '', $version = '', $current_version = '')
+    {
+        if (! preg_match('/^[A-Za-z0-9_]+$/', (string) $type) || ! is_dir($this->config->item('addons_path') . $type)) {
+            return false;
+        }
+        if ((string) $module !== '' && ! preg_match('/^[A-Za-z0-9_]+$/', (string) $module)) {
+            return false;
+        }
+        foreach (array($version, $current_version) as $v) {
+            if ((string) $v !== '' && ! preg_match('/^[0-9][0-9.]*$/', (string) $v)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     // Main function for all addon activities
     function addons_list($type = "opensource")
     {
+        if (! $this->_valid_addon_args($type)) {
+            show_404();
+        }
 
         // Set page information
         // echo $type; exit;
@@ -94,8 +115,6 @@ class Addons extends MX_Controller
         $addons_path = $this->config->item('addons_path');
         $dir = $addons_path . $type;
 
-        $shared_file_permission = "chmod -Rf 777  " . $dir;
-        $shared_file_permission = system($shared_file_permission, $retval);
 
         $a = scandir($dir);
         // 77
@@ -129,6 +148,9 @@ class Addons extends MX_Controller
 
     public function addons_install($type = '', $module = '', $action = '', $version = "", $current_version = "")
     {
+        if (! $this->_valid_addon_args($type, $module, $version, $current_version)) {
+            show_404();
+        }
         $addons_path = $this->config->item('addons_path');
         $astpp_path = FCPATH;
         $fs_path = $this->config->item('fs_path');
@@ -233,8 +255,6 @@ class Addons extends MX_Controller
                     // $path = $addons_path.$type."/".$module."/freeswitch/scripts/astpp/lib/addons/";
                     $path = $addons_path . $type . "/" . $module . "/freeswitch/scripts/astpp/";
 
-                    $shared_file_permission = "chmod -Rf 777  " . $path;
-                    $shared_file_permission = system($shared_file_permission, $retval);
 
                     $scans = scandir($path);
 
@@ -498,6 +518,9 @@ class Addons extends MX_Controller
 
     public function addons_details($type, $package_name, $old_version)
     {
+        if (! $this->_valid_addon_args($type, $package_name, $old_version)) {
+            show_404();
+        }
         $addons_path = $this->config->item('addons_path');
         $data_array['page_title'] = ucwords(str_replace('_', ' ', $package_name));
         $val = '';

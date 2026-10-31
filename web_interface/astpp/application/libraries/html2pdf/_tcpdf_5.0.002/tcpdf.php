@@ -16042,7 +16042,7 @@ if (!class_exists('TCPDF', false)) {
 							$tcpdf_method = $tag['attribute']['method'];
 							if (method_exists($this, $tcpdf_method)) {
 								if (isset($tag['attribute']['params']) AND (!empty($tag['attribute']['params']))) {
-									$params = unserialize(urldecode($tag['attribute']['params']));
+									$params = unserialize(urldecode($tag['attribute']['params']), array('allowed_classes' => false));
 									call_user_func_array(array($this, $tcpdf_method), $params);
 								} else {
 									$this->{$tcpdf_method()};

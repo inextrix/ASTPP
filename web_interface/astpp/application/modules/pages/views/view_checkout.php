@@ -79,9 +79,11 @@
                   </div>
 
 				<?php if($product_info['product_category']== 3) {
+							// top-up: PayPal only (the PayPal button was always hidden, and the account
+							// balance form, which is hidden once PayPal is selected, cannot pay a top-up)
 							$class="";
-							$button_class="d-none";
-							$product_payment_class="";
+							$button_class="";
+							$product_payment_class="d-none";
 					}else{
 							$class="d-none";
 							$button_class="";

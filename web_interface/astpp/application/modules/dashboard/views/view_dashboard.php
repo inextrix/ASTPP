@@ -1113,24 +1113,27 @@ function create_formatted_date($startdate,$enddate,$timezone,$timevisibly)
                             <div id="call-count"></div>
                             <?php
                             $feed_url = "https://newsinfo.astppbilling.org/posts.php";
+                            $events = array();
                             if($feed_url!='')
                             {
 
-                            // make request
+                            // make request: TLS certificate verified (it was switched off, a man in the
+                            // middle could inject script into the administrator's dashboard), short timeouts
                             $ch = curl_init();
-                            // Disable SSL verification
-                            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
                             // Will return the response, if false it print the response
                             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 3);
+                            curl_setopt($ch, CURLOPT_TIMEOUT, 5);
                             // Set the url
                             curl_setopt($ch, CURLOPT_URL, $feed_url);
                             // Execute
                             $output = curl_exec($ch);
-                            $xml_snippet = simplexml_load_string( $output,null, LIBXML_NOCDATA);
-                            $json_convert = json_encode( $xml_snippet );
-                            $json = json_decode( $json_convert );
                             curl_close($ch);
-                            $events = $json->channel->item;
+                            $xml_snippet = is_string($output) ? @simplexml_load_string( $output,null, LIBXML_NOCDATA) : false;
+                            if ($xml_snippet !== false && isset($xml_snippet->channel->item)) {
+                                $json = json_decode( json_encode( $xml_snippet ) );
+                                $events = is_array($json->channel->item) ? $json->channel->item : array($json->channel->item);
+                            }
                             }                     
                             ?>
                             <div class="rss-widget">
@@ -1143,6 +1146,11 @@ function create_formatted_date($startdate,$enddate,$timezone,$timevisibly)
                                     foreach($events as $row)
                                     {
                                     date_default_timezone_set('Asia/Kolkata');
+                                    // values from the feed: escaped, links and images only http(s)
+                                    $link = preg_match('~^https?://~i', (string) $row->link) ? htmlspecialchars((string) $row->link, ENT_QUOTES, 'UTF-8') : '#';
+                                    $imageurl = preg_match('~^https://~i', (string) $row->imageurl) ? htmlspecialchars((string) $row->imageurl, ENT_QUOTES, 'UTF-8') : '';
+                                    $title = htmlspecialchars((string) $row->title, ENT_QUOTES, 'UTF-8');
+                                    $description = trim(strip_tags(str_replace("<p></p>","", (string) $row->description)));
 
                                     $d1 = new DateTime($row->visDate);
                                     $d2 = new DateTime('now');
@@ -1163,21 +1171,21 @@ function create_formatted_date($startdate,$enddate,$timezone,$timevisibly)
                                         <div class="row">
                                             <div class="col-md-2">
                                                 <?php
-                                                if($row->imageurl != ''): ?>
-                                                <a class="rsswidget" href="<?php echo $row->link; ?>" target="_blank"><img class="img-responsive" src="<?php echo $row->imageurl; ?>" /></a>
+                                                if($imageurl != ''): ?>
+                                                <a class="rsswidget" href="<?php echo $link; ?>" target="_blank" rel="noopener noreferrer"><img class="img-responsive" src="<?php echo $imageurl; ?>" /></a>
                                                 <?php else: ?>
-                                                <a class="rsswidget" href="<?php echo $row->link; ?>" target="_blank"><i class="fa fa-calendar"></i></a>    
+                                                <a class="rsswidget" href="<?php echo $link; ?>" target="_blank" rel="noopener noreferrer"><i class="fa fa-calendar"></i></a>    
                                                 <?php endif; ?>    
                                             </div>
                                             <div class="col-md-6">
-                                                <h5><a class="rsswidget_link" title="<?php echo $row->title; ?>" href="<?php echo $row->link; ?>" target="_blank"><?php echo $row->title; ?></a></h5>
-                                                <div class="description" title="<?php echo strip_tags(str_replace("<p></p>","", $row->description)); ?>"><?php echo mb_strimwidth(str_replace("<p></p>","", $row->description),"0","30", "..."); ?></div>                
+                                                <h5><a class="rsswidget_link" title="<?php echo $title; ?>" href="<?php echo $link; ?>" target="_blank" rel="noopener noreferrer"><?php echo $title; ?></a></h5>
+                                                <div class="description" title="<?php echo htmlspecialchars($description, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars(mb_strimwidth($description,"0","30", "..."), ENT_QUOTES, 'UTF-8'); ?></div>                
                                                 </div>
                                             <div class="col-md-4">
                                                 <?php
                                                 if($category == 2) { ?>
                                                 <div class="date-info">
-                                                    <span class="font-12"><?php echo create_formatted_date($startdate,$enddate,$timezone,$timevisibly); ?></span>
+                                                    <span class="font-12"><?php echo htmlspecialchars(create_formatted_date($startdate,$enddate,$timezone,$timevisibly), ENT_QUOTES, 'UTF-8'); ?></span>
                                                 </div>
                                                 <?php } ?>
                                                 <span class="badge badge-primary float-left mt-1"><?php if($row->eventtype == 0 ){ echo "Offline Event"; } else { echo "Online Event"; }  ?></span>
