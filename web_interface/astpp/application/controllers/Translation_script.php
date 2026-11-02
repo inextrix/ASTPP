@@ -28,7 +28,7 @@ class Translation_script extends CI_Controller {
 		if (! astpp_internal_request ()) {
 			$this->load->library ( 'session' );
 			if ($this->session->userdata ( 'user_login' ) != TRUE || ! in_array ( ( string ) $this->session->userdata ( 'logintype' ), array ( '2', '4' ), true )) {
-				show_404 ();
+				astpp_not_found ();
 			}
 		}
 		$this->load->library('csvreader');

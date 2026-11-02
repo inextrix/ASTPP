@@ -25,7 +25,7 @@ class Voice_broadcast extends CI_Controller {
 		parent::__construct ();
 		// Cron controller: only reachable from this server (CLI, or wget from cron_settings)
 		if (! astpp_internal_request ()) {
-			show_404 ();
+			astpp_not_found ();
 		}
 		$this->load->library('astpp/permission');
 		$this->load->library("astpp/common");
