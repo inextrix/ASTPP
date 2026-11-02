@@ -226,6 +226,21 @@ function astpp_internal_request() {
 }
 
 /*
+ * Answer for an internal-only controller called from outside: an explicit "404 Not Found" status
+ * with a minimal body. show_404() went through the CodeIgniter error page, and scanners and
+ * monitors reported these endpoints as "200 OK".
+ */
+function astpp_not_found() {
+	if (! headers_sent ()) {
+		http_response_code ( 404 );
+		header ( 'Content-Type: text/plain; charset=UTF-8' );
+		header ( 'Cache-Control: no-store' );
+	}
+	echo 'Not Found';
+	exit ();
+}
+
+/*
  * Start a cron task (key of $config['argv'] in config/cron.php, e.g. "BroadcastEmail") in the
  * background, right after mails were queued or the base currency changed. Replaces
  * "cd <dir>/cron && screen -d -m php cron.php <task>": "php" is the system default CLI, which

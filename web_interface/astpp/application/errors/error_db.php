@@ -56,7 +56,18 @@ p {
 <body>
 	<div id="container">
 		<h1><?php echo $heading; ?></h1>
-		<?php echo $message; ?>
+		<?php
+		// The message holds the MySQL error, the failed query and the calling file: written to the
+		// PHP error log, shown only in development (db_debug stays on, so failed queries still stop
+		// here instead of returning FALSE to callers that do not check it).
+		error_log('ASTPP database error' . (isset($_SERVER['REQUEST_URI']) ? ' [' . $_SERVER['REQUEST_URI'] . ']' : '')
+			. ': ' . preg_replace('/\s+/', ' ', strip_tags(str_replace('</p>', ' | ', $message))));
+		if (defined('ENVIRONMENT') && ENVIRONMENT == 'development') {
+			echo $message;
+		} else {
+			echo '<p>A database error occurred. Please contact the administrator.</p>';
+		}
+		?>
 	</div>
 </body>
 </html>
