@@ -33,17 +33,33 @@ class Crons extends MX_Controller {
 	function index() {
 		$crons = $this->db->where('status', 0)->where("'".$this->CurrentDate."' >= next_execution_date OR next_execution_date IS NULL", '', false)->from('cron_settings')->get();
 		if($crons->num_rows > 0){
-		       foreach ($crons->result() as $row) {
-			 $this->db->set('next_execution_date', '"'.$this->calculateNextRun($row,$this->CurrentDate).'"', false)->where('id', $row->id)->update('cron_settings');
-			 $row->file_path = str_replace("{BASE_URL}",base_url(),$row->file_path);
-			 $output = shell_exec($row->file_path." > /dev/null 2>/dev/null &");
-			 $this->db->set('last_execution_date', "'".gmdate("Y-m-d H:i:s")."'", false)->where('id', $row->id)->update('cron_settings');
-		       }
+		    foreach ($crons->result() as $row) {
+			$this->db->set('next_execution_date', '"'.$this->calculateNextRun($row,$this->CurrentDate).'"', false)->where('id', $row->id)->update('cron_settings');
+			// ASTPPENT-8702 Ashish start
+			$base_url_array= explode("{BASE_URL}",$row->file_path);
+			$url=explode('/',$base_url_array[1]);
+			$class_name = $url[0];
+			$function_name = $url[1];
+			$file_path = FCPATH ; 
+			$ps_path = exec("which ps");
+			$command1 = trim($ps_path).' aux | grep "'.$class_name.'"'.' | grep "php"';
+			$output = shell_exec($command1);
+			if (strpos($output, 'index') !== false) {
+				echo $class_name;
+			}else{
+				$command = 'cd '.$file_path.' && '.'php index.php '.$class_name.' '.$function_name;
+				exec($command,$output1);
+			}
+			// ASTPPENT-8702 Ashish end
+			$this->db->set('last_execution_date', "'".gmdate("Y-m-d H:i:s")."'", false)->where('id', $row->id)->update('cron_settings');
+		    }
 		}
 exit;
 	}
 	private function calculateNextRun($obj,$CurrentDate)
 	{
-	    return gmdate("Y-m-d H:i:s", strtotime($CurrentDate.' + '.$obj->exec_interval.' '.$obj->command));
+		// ASTPPENT-8702 Ashish start
+	    return date("Y-m-d H:i:s", strtotime($CurrentDate.' + '.$obj->exec_interval.' '.$obj->command));
+		// ASTPPENT-8702 Ashish end
 	}
 }
