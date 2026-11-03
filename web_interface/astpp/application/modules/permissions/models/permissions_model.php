@@ -25,7 +25,7 @@
 class permissions_model extends CI_Model
 {
 
-    function permissions_model()
+    function __construct() // PHP 4 style constructor (permissions_model()) is no constructor since PHP 8
     {
         parent::__construct();
     }

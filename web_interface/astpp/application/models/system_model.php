@@ -22,7 +22,7 @@
 // ##############################################################################
 #[\AllowDynamicProperties]
 class System_model extends CI_Model {
-	function System_model() {
+	function __construct() { // PHP 4 style constructor (System_model()) is no constructor since PHP 8
 		parent::__construct ();
 	}
 	function add_config($data) {

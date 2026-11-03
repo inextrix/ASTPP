@@ -278,11 +278,13 @@ class Db_model extends CI_Model {
 		if ($group_by != '') {
 			$this->db->group_by ( $group_by );
 		}
-		if ($start != '' && $end != '') {
+		// PHP 8: $start/$end are ints - PHP 7 treated 0 == '' as true, PHP 8 does
+		// not, so calls without paging got LIMIT 0 (e.g. package assignment found no product).
+		if ($start != 0 && $end != 0) {
 			$this->db->limit ( $start, $end );
 		}
 
-		if ($start != '' && $end == '') {
+		if ($start != 0 && $end == 0) {
 			$this->db->limit ( $start );
 		}
 
@@ -305,10 +307,12 @@ class Db_model extends CI_Model {
 		if ($group_by != '') {
 			$this->db->group_by ( $group_by );
 		}
-		if ($start != '' && $end != '') {
+		// PHP 8: $start/$end are ints - PHP 7 treated 0 == '' as true, PHP 8 does
+		// not, so calls without paging got LIMIT 0 (e.g. package assignment found no product).
+		if ($start != 0 && $end != 0) {
 			$this->db->limit ( $start, $end );
 		}
-		if ($start != '' && $end == '') {
+		if ($start != 0 && $end == 0) {
 			$this->db->limit ( $start );
 		}
 		$query = $this->db->get ();
@@ -337,11 +341,13 @@ class Db_model extends CI_Model {
 			$this->db->group_by ( $group_by );
 		}
 
-		if ($start != '' && $end != '') {
+		// PHP 8: $start/$end are ints - PHP 7 treated 0 == '' as true, PHP 8 does
+		// not, so calls without paging got LIMIT 0 (e.g. package assignment found no product).
+		if ($start != 0 && $end != 0) {
 			$this->db->limit ( $start, $end );
 		}
 
-		if ($start != '' && $end == '') {
+		if ($start != 0 && $end == 0) {
 			$this->db->limit ( $start );
 		}
 
