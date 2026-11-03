@@ -21,6 +21,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 // ##############################################################################
+#[\AllowDynamicProperties]
 class Dashboard_model extends CI_Model {
 	function __construct() {
 		parent::__construct ();
@@ -37,7 +38,7 @@ class Dashboard_model extends CI_Model {
 					'payment_by' => $accountinfo ['id'] 
 			);
 		}
-		if ($userlevel_logintype == 0 || $userlevel_logintype == 3) {
+		if (astpp_eq0($userlevel_logintype) || $userlevel_logintype == 3) {
 			$where_arr = array (
 					'accountid' => $accountinfo ['id'] 
 			);
@@ -73,7 +74,7 @@ class Dashboard_model extends CI_Model {
 		$end_date = $end_date . " 23:59:59";
 		$accountinfo = $this->session->userdata ( 'accountinfo' );
 		$parent_id = ($accountinfo ['type'] == 1) ? $accountinfo ['id'] : 0;
-		if ($this->session->userdata ( 'userlevel_logintype' ) != 0 && $this->session->userdata ( 'userlevel_logintype' ) != 3) {
+		if ((!astpp_eq0($this->session->userdata ( 'userlevel_logintype' ))) && $this->session->userdata ( 'userlevel_logintype' ) != 3) {
 			$where = "reseller_id ='$parent_id'";
 		} else {
 			$where = "accountid ='$parent_id'";
@@ -88,7 +89,7 @@ class Dashboard_model extends CI_Model {
 		$end_date = $end_date . " 23:59:59";
 		$accountinfo = $this->session->userdata ( 'accountinfo' );
 		$parent_id = ($accountinfo ['type'] == 1) ? $accountinfo ['id'] : 0;
-		if ($this->session->userdata ( 'userlevel_logintype' ) != 0 && $this->session->userdata ( 'userlevel_logintype' ) != 3) {
+		if ((!astpp_eq0($this->session->userdata ( 'userlevel_logintype' ))) && $this->session->userdata ( 'userlevel_logintype' ) != 3) {
 			$where = "reseller_id ='$parent_id'";
 		} else {
 			$where = "accountid ='$parent_id'";
@@ -104,7 +105,7 @@ class Dashboard_model extends CI_Model {
 		$end_date = $end_date . " 23:59:59";
 		$accountinfo = $this->session->userdata ( 'accountinfo' );
 		$parent_id = ($accountinfo ['type'] == 1) ? $accountinfo ['id'] : 0;
-		if ($this->session->userdata ( 'userlevel_logintype' ) != 0 && $this->session->userdata ( 'userlevel_logintype' ) != 3) {
+		if ((!astpp_eq0($this->session->userdata ( 'userlevel_logintype' ))) && $this->session->userdata ( 'userlevel_logintype' ) != 3) {
 			$where = "reseller_id ='$parent_id'";
 		} else {
 			$where = "accountid ='$parent_id'";
@@ -120,7 +121,7 @@ class Dashboard_model extends CI_Model {
 		$end_date = $end_date . " 23:59:59";
 		$accountinfo = $this->session->userdata ( 'accountinfo' );
 		$parent_id = ($accountinfo ['type'] == 1) ? $accountinfo ['id'] : 0;
-		if ($this->session->userdata ( 'userlevel_logintype' ) != 0 && $this->session->userdata ( 'userlevel_logintype' ) != 3) {
+		if ((!astpp_eq0($this->session->userdata ( 'userlevel_logintype' ))) && $this->session->userdata ( 'userlevel_logintype' ) != 3) {
 			$where = "reseller_id ='$parent_id'";
 		} else {
 			$where = "accountid ='$parent_id'";

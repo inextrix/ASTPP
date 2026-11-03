@@ -27,6 +27,7 @@
  * @link		
  */
 
+#[\AllowDynamicProperties]
 class CI_Cache_memcached extends CI_Driver {
 
 	private $_memcached; // Holds the memcached object
@@ -127,7 +128,7 @@ class CI_Cache_memcached extends CI_Driver {
 	{
 		$stored = $this->_memcached->get($id);
 
-		if (count($stored) !== 3)
+		if (astpp_count($stored) !== 3)
 		{
 			return FALSE;
 		}
@@ -135,7 +136,7 @@ class CI_Cache_memcached extends CI_Driver {
 		list($data, $time, $ttl) = $stored;
 
 		return array(
-			'expire'	=> $time + $ttl,
+			'expire'	=> astpp_n($time) + astpp_n($ttl),
 			'mtime'		=> $time,
 			'data'		=> $data
 		);
@@ -167,17 +168,17 @@ class CI_Cache_memcached extends CI_Driver {
 
 		foreach ($this->_memcache_conf as $name => $cache_server)
 		{
-			if ( ! array_key_exists('hostname', $cache_server))
+			if ( ! astpp_array_key_exists('hostname', $cache_server))
 			{
 				$cache_server['hostname'] = $this->_default_options['default_host'];
 			}
 	
-			if ( ! array_key_exists('port', $cache_server))
+			if ( ! astpp_array_key_exists('port', $cache_server))
 			{
 				$cache_server['port'] = $this->_default_options['default_port'];
 			}
 	
-			if ( ! array_key_exists('weight', $cache_server))
+			if ( ! astpp_array_key_exists('weight', $cache_server))
 			{
 				$cache_server['weight'] = $this->_default_options['default_weight'];
 			}

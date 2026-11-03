@@ -23,6 +23,7 @@
 if (! defined ( 'BASEPATH' ))
 	exit ( 'No direct script access allowed' );
 
+#[\AllowDynamicProperties]
 class payment {
 	function __construct($library_name = '') {
 		$this->CI = & get_instance ();
@@ -33,7 +34,7 @@ class payment {
 	public function add_payments_transcation($payment_info,$account_info,$currency_info){ 
 		$tax_calculation = '';
 		$is_apply_tax = (isset($payment_info['is_apply_tax']) && $payment_info['is_apply_tax'] == "false")?"false":"true";
-		 if($account_info ['posttoexternal'] == 0 &&  $is_apply_tax == "true"){
+		 if(astpp_eq0($account_info ['posttoexternal']) &&  $is_apply_tax == "true"){
 				$tax_calculation=$this->CI->common_model->calculate_taxes($account_info,$payment_info['price']);
 			  if($tax_calculation){
 				if($payment_info['product_category'] == 3 || (isset($payment_info['add_invoice_credit']) && $payment_info['add_invoice_credit'] == "true")){
@@ -43,10 +44,10 @@ class payment {
 				}
 			}
 		} 
-		$account_balance = $account_info ['posttoexternal'] == 1 ? $account_info ['credit_limit'] - ($account_info ['balance']) : $account_info ['balance'];
+		$account_balance = $account_info ['posttoexternal'] == 1 ? astpp_n($account_info ['credit_limit']) - (astpp_n($account_info ['balance'])) : $account_info ['balance'];
 		$reseller_id = $account_info['type']== 1 ? $account_info['id'] : 0;
 		$total_amt=  isset($tax_calculation['amount_with_tax'])?$tax_calculation['amount_with_tax']:$payment_info['price'];
-		$after_balance = $account_balance - $total_amt;
+		$after_balance = astpp_n($account_balance) - astpp_n($total_amt);
 		$insert_payment_arr = array (
 					"accountid" => $account_info ['id'],
 					"reseller_id"=>$account_info ['reseller_id'],
@@ -109,7 +110,7 @@ class payment {
 		if (empty($coupon)) {
 			return 3;
 		}
-		if ($coupon['status'] != 0) {
+		if ((!astpp_eq0($coupon['status']))) {
 			return $coupon['status'] == 1 ? 1 : 2;
 		}
 		$this->CI->db->where(array('id' => $coupon['id'], 'status' => 0));

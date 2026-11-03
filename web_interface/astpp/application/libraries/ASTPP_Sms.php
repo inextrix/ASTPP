@@ -28,7 +28,7 @@
 				
 			}
 
-			if ($flag == 0) {
+			if (astpp_eq0($flag)) {
 				if ($account_value['to_number'] != '' && $account_value['sms_body'] != '') {
 				
 					$apiSecret     = $this->CI->common->get_field_name('value','system',array ("name" => 'sms_secrete_key'));
@@ -60,7 +60,7 @@
 		if ($template_name == 'send_sms_otp' || $template_name == 'otp_add_user' ) {
 
 			$numberlength = 6;
-			$uniq_rendno  = random_int((int) pow(10, $numberlength - 1), (int) pow(10, $numberlength) - 1);
+			$uniq_rendno  = random_int((int) pow(10, astpp_n($numberlength) - 1), (int) pow(10, $numberlength) - 1);
 			$template     = str_replace("#OTP#",$uniq_rendno,$template ['sms_template']);
 			$body         = $template;
 
@@ -317,7 +317,7 @@
 			}catch(Exception $e){
 				$flag=1;
 			}
-		if($flag == 0){	
+		if(astpp_eq0($flag)){	
 		$message = $twilio->messages
                   ->create($to, // to
                            array(

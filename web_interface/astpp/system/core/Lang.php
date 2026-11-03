@@ -26,6 +26,7 @@
  * @author		ExpressionEngine Dev Team
  * @link		http://codeigniter.com/user_guide/libraries/language.html
  */
+#[\AllowDynamicProperties]
 class CI_Lang {
 
 	/**
@@ -75,7 +76,7 @@ class CI_Lang {
 
 		$langfile .= '.php';
 
-		if (in_array($langfile, $this->is_loaded, TRUE))
+		if (astpp_in_array($langfile, $this->is_loaded, TRUE))
 		{
 			return;
 		}
@@ -125,7 +126,7 @@ class CI_Lang {
 		}
 
 		$this->is_loaded[] = $langfile;
-		$this->language = array_merge($this->language, $lang);
+		$this->language = astpp_array_merge($this->language, $lang);
 		unset($lang);
 
 		log_message('debug', 'Language file loaded: language/'.$idiom.'/'.$langfile);

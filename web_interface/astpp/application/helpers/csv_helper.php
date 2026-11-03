@@ -49,7 +49,7 @@ if ( ! function_exists('array_to_csv'))
 		foreach ($array as $line)
 		{
 			$n++;
-			if ( ! fputcsv($f, $line))
+			if ( ! fputcsv($f, $line, ',', '"', '\\'))
 			{
 				show_error("Can't write line $n: $line");
 			}

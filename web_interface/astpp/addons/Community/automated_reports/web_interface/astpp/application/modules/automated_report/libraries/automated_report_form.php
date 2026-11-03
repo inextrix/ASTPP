@@ -23,6 +23,7 @@
 if (! defined('BASEPATH'))
     exit('No direct script access allowed');
 
+#[\AllowDynamicProperties]
 class Automated_report_form extends common
 {
 
@@ -52,7 +53,7 @@ class Automated_report_form extends common
         $status_array = null;
         $interval_frequency_array = null;
         $week_days = null;
-        if($id > 0){
+        if(astpp_gt($id, 0)){
             $status_array = array(
              gettext ( 'Status'),
              'status',

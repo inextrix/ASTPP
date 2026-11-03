@@ -21,6 +21,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 // ##############################################################################
+#[\AllowDynamicProperties]
 class DID_model extends CI_Model
 {
 
@@ -37,7 +38,7 @@ class DID_model extends CI_Model
         if ($this->session->userdata('logintype') == 1 || $this->session->userdata('logintype') == 5) {
             $where['account_id'] = $accountinfo['id'];
             if ($flag) {
-                if ($accountinfo['reseller_id'] > 0) {
+                if (astpp_gt($accountinfo['reseller_id'], 0)) {
                     // HP: PBX_ADDON
                     $query = $this->db_model->select("*,id as did_id_new,product_id as id", "view_dids", $where, "number", "desc", $limit, $start);
                 } else {
@@ -49,7 +50,7 @@ view_dids.price,view_dids.billing_type,view_dids.billing_days,
                     ), 'view_dids', 'dids.product_id=view_dids.product_id', 'inner', $limit, $start, 'DESC', 'dids.id');
                 }
             } else {
-                if ($accountinfo['reseller_id'] > 0) {
+                if (astpp_gt($accountinfo['reseller_id'], 0)) {
                     $query = $this->db_model->countQuery("*,product_id as id", "view_dids", $where);
                 } else {
                     $query = $this->db_model->getJionQueryCount('dids', 'dids.province,dids.city,dids.product_id as id,dids.number,dids.status,dids.accountid,dids.country_id,dids.last_modified_date,dids.cost,dids.call_type,dids.leg_timeout,dids.maxchannels,dids.extensions,view_dids.buy_cost,view_dids.setup_fee,
@@ -79,7 +80,7 @@ view_dids.price,view_dids.billing_type,view_dids.billing_days,
         $where['parent_id'] = $accountinfo['reseller_id'];
         $where['accountid'] = 0;
         $where['status'] = 0;
-        if ($accountinfo['reseller_id'] > 0) {
+        if (astpp_gt($accountinfo['reseller_id'], 0)) {
             if ($flag) {
                 $query = $this->db_model->getJionQuery('dids', 'dids.product_id as id,dids.number,dids.accountid,dids.country_id,dids.cost,dids.call_type,dids.leg_timeout,dids.maxchannels,dids.extensions,reseller_products.buy_cost,reseller_products.setup_fee,
 reseller_products.price,reseller_products.billing_type,reseller_products.billing_days,dids.province,dids.city
@@ -140,7 +141,7 @@ reseller_products.price,reseller_products.billing_type,reseller_products.billing
                 "product_id" => $did_info['product_id']
             );
             
-            if ($did_info['accountid'] > 0) {
+            if (astpp_gt($did_info['accountid'], 0)) {
                 unset($did_update_array['parent_id']);
                 $order_where['accountid']  =  $did_info['accountid'];       
             }
@@ -195,7 +196,7 @@ reseller_products.price,reseller_products.billing_type,reseller_products.billing
                 "accountid" => $did_info['accountid']
             );
         }
-        if($did_info['parent_id'] > 0 && $did_info['accountid'] == 0){
+        if(astpp_gt($did_info['parent_id'], 0) && astpp_eq0($did_info['accountid'])){
             
             $this->db->delete("reseller_products",array("product_id" => $did_info['product_id']));
         }
@@ -256,10 +257,10 @@ reseller_products.price,reseller_products.billing_type,reseller_products.billing
                 "billing_type" => isset($value['billing_type']) ? $value['billing_type'] : "1",
                 "billing_days" => isset($add_array['billing_days']) ? $add_array['billing_days'] : "0",
                 "free_minutes" => isset($add_array['free_minutes']) ? $add_array['free_minutes'] : "0",
-                "apply_on_rategroups" => isset($value['product_rate_group']) ? implode(",", $value['product_rate_group']) : "",
-                "destination_rategroups" => isset($value['destination_rategroups']) ? implode(",", $value['destination_rategroups']) : "",
-                "destination_countries" => isset($value['destination_countries']) ? implode(",", $value['destination_countries']) : "",
-                "destination_calltypes" => isset($value['destination_calltypes']) ? implode(",", $value['destination_calltypes']) : "",
+                "apply_on_rategroups" => isset($value['product_rate_group']) ? astpp_implode(",", $value['product_rate_group']) : "",
+                "destination_rategroups" => isset($value['destination_rategroups']) ? astpp_implode(",", $value['destination_rategroups']) : "",
+                "destination_countries" => isset($value['destination_countries']) ? astpp_implode(",", $value['destination_countries']) : "",
+                "destination_calltypes" => isset($value['destination_calltypes']) ? astpp_implode(",", $value['destination_calltypes']) : "",
                 "apply_on_existing_account" => isset($value['apply_on_existing_account']) ? $value['apply_on_existing_account'] : 1,
                 "applicable_for" => isset($value['applicable_for']) ? $value['applicable_for'] : 0,
                 "release_no_balance" => isset($value['release_no_balance']) ? $value['release_no_balance'] : "0",
@@ -291,7 +292,7 @@ reseller_products.price,reseller_products.billing_type,reseller_products.billing
             $this->db->insert("dids", $did_insert_array);
             $affected_row = $this->db->insert_id();
 
-            if ($value['accountid'] > 0) {
+            if (astpp_gt($value['accountid'], 0)) {
                 $add_array['is_parent_billing'] = 'true';
                 $add_array['product_id'] = $last_id;
                 $add_array['payment_by'] = "Account Balance";

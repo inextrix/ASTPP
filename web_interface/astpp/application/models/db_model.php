@@ -20,6 +20,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 // ##############################################################################
+#[\AllowDynamicProperties]
 class Db_model extends CI_Model {
 	public function __construct() {
 		parent::__construct ();
@@ -31,7 +32,7 @@ class Db_model extends CI_Model {
 	 * Function getCriteria(Where=Condition in Array Format)
 	 * ********************************************************
 	 */
-	function getCriteria($condition = "", $tableName) {
+	function getCriteria($condition, $tableName) {
 		if ($condition != "") {
 			$this->db->where ( $condition );
 		}
@@ -157,7 +158,7 @@ class Db_model extends CI_Model {
 	 * Function select for In query () take full complete perms
 	 * ********************************************************
 	 */
-	function select_by_in($select, $tableName, $where, $order_by, $order_type, $paging_limit, $start_limit, $groupby = '', $key, $where_in) {
+	function select_by_in($select, $tableName, $where, $order_by, $order_type, $paging_limit, $start_limit, $groupby, $key, $where_in) {
 		$this->db->select ( $select );
 		$this->db->from ( $tableName );
 		if ($where != "") {
@@ -194,7 +195,7 @@ class Db_model extends CI_Model {
 	 * Function countQuery for where in query() take table name and select field
 	 * ********************************************************
 	 */
-	function countQuery_by_in($select, $table, $where = "", $key, $where_in) {
+	function countQuery_by_in($select, $table, $where, $key, $where_in) {
 		$this->db->select ( $select );
 		if ($where != "") {
 			$this->db->where ( $where );
@@ -212,7 +213,7 @@ class Db_model extends CI_Model {
 	 * Function maxQuery() take table name and select field
 	 * ********************************************************
 	 */
-	function maxQuery($table, $select, $where = "", $name) {
+	function maxQuery($table, $select, $where, $name) {
 		$this->db->select ( $select );
 		$this->db->from ( $table );
 		if ($where != "") {
@@ -251,7 +252,7 @@ class Db_model extends CI_Model {
 	 * Function getJionQuery get result set on criteria
 	 * ********************************************************
 	 */
-	function getJionQuery($table, $field, $where = "", $jionTable, $jionCondition, $type = 'inner', $start = '', $end = '', $order_type = '', $order_by = '', $group_by = '') {
+	function getJionQuery($table, $field, $where, $jionTable, $jionCondition, $type = 'inner', $start = '', $end = '', $order_type = '', $order_by = '', $group_by = '') {
 
 		$start = ( int ) $start;
 		$end = ( int ) $end;
@@ -277,17 +278,19 @@ class Db_model extends CI_Model {
 		if ($group_by != '') {
 			$this->db->group_by ( $group_by );
 		}
-		if ($start != '' && $end != '') {
+		// PHP 8: $start/$end are ints - PHP 7 treated 0 == '' as true, PHP 8 does
+		// not, so calls without paging got LIMIT 0 (e.g. package assignment found no product).
+		if ($start != 0 && $end != 0) {
 			$this->db->limit ( $start, $end );
 		}
 
-		if ($start != '' && $end == '') {
+		if ($start != 0 && $end == 0) {
 			$this->db->limit ( $start );
 		}
 
 		 return $query = $this->db->get ();
 	}
-	function getJionQueryCount($table, $field, $where = "", $jionTable, $jionCondition, $type = 'inner', $start = '', $end = '', $order_type = '', $order_by = '', $group_by = '') {
+	function getJionQueryCount($table, $field, $where, $jionTable, $jionCondition, $type = 'inner', $start = '', $end = '', $order_type = '', $order_by = '', $group_by = '') {
 		$start = ( int ) $start;
 		$end = ( int ) $end;
 		$this->db->select ( $field );
@@ -304,21 +307,23 @@ class Db_model extends CI_Model {
 		if ($group_by != '') {
 			$this->db->group_by ( $group_by );
 		}
-		if ($start != '' && $end != '') {
+		// PHP 8: $start/$end are ints - PHP 7 treated 0 == '' as true, PHP 8 does
+		// not, so calls without paging got LIMIT 0 (e.g. package assignment found no product).
+		if ($start != 0 && $end != 0) {
 			$this->db->limit ( $start, $end );
 		}
-		if ($start != '' && $end == '') {
+		if ($start != 0 && $end == 0) {
 			$this->db->limit ( $start );
 		}
 		$query = $this->db->get ();
 		return $query->num_rows ();
 	}
-	function getAllJionQuery($table, $field, $where = "", $jionTable, $jionCondition, $type, $start = '', $end = '', $order_type = '', $order_by = '', $group_by = '') {
+	function getAllJionQuery($table, $field, $where, $jionTable, $jionCondition, $type, $start = '', $end = '', $order_type = '', $order_by = '', $group_by = '') {
 		$start = ( int ) $start;
 		$end = ( int ) $end;
 		$this->db->select ( $field );
 		$this->db->from ( $table );
-		$jion_table_count = count ( $jionTable );
+		$jion_table_count = astpp_count ( $jionTable );
 		for($i = 0; $i < $jion_table_count; $i ++) {
 			$this->db->join ( $jionTable [$i], $jionCondition [$i], $type [$i] );
 		}
@@ -336,20 +341,22 @@ class Db_model extends CI_Model {
 			$this->db->group_by ( $group_by );
 		}
 
-		if ($start != '' && $end != '') {
+		// PHP 8: $start/$end are ints - PHP 7 treated 0 == '' as true, PHP 8 does
+		// not, so calls without paging got LIMIT 0 (e.g. package assignment found no product).
+		if ($start != 0 && $end != 0) {
 			$this->db->limit ( $start, $end );
 		}
 
-		if ($start != '' && $end == '') {
+		if ($start != 0 && $end == 0) {
 			$this->db->limit ( $start );
 		}
 
 		return $query = $this->db->get ();
 	}
-	function getCountWithJion($table, $field, $where = "", $jionTable, $jionCondition, $type, $group_by = '') {
+	function getCountWithJion($table, $field, $where, $jionTable, $jionCondition, $type, $group_by = '') {
 		$this->db->select ( $field );
 		$this->db->from ( $table );
-		$jion_table_count = count ( $jionTable );
+		$jion_table_count = astpp_count ( $jionTable );
 		for($i = 0; $i < $jion_table_count; $i ++) {
 			$this->db->join ( $jionTable [$i], $jionCondition [$i], $type [$i] );
 		}
@@ -378,7 +385,7 @@ class Db_model extends CI_Model {
 		$this->db->from ( $table );
 		$this->db->where ( $where );
 		$this->db->order_by ( $order, $order_by );
-		if ($limit != 0) {
+		if ((!astpp_eq0($limit))) {
 			$this->db->limit ( $limit );
 		}
 		$query = $this->db->get ();
@@ -420,7 +427,7 @@ class Db_model extends CI_Model {
 			$this->db->select ( $select );
 			$this->db->from ( $table );
 			$this->db->where ( $where );
-			if ($limit != 0) {
+			if ((!astpp_eq0($limit))) {
 				$this->db->limit ( $limit );
 			}
 			$query = $this->db->get ();
@@ -430,7 +437,7 @@ class Db_model extends CI_Model {
 					$string .= $rows->{$select} . ',';
 				}
 
-				return substr ( $string, '', - 1 );
+				return substr ( $string, 0, - 1 ); // BUGFIX/PHP8: start was '' (PHP 7: NULL returned, PHP 8: TypeError)
 			} else {
 				if ($return_message == FALSE) {
 					return '';
@@ -604,12 +611,12 @@ class Db_model extends CI_Model {
 
 		$drp_list = array ();
 		foreach ( $drp_array as $drp_value ) {
-			if($drp_value->{$select_params [2]} >=0){
-				$time = gmdate("H:i",$drp_value->{$select_params [2]});
+			if(astpp_ge($drp_value->{$select_params [2]}, 0)){
+				$time = astpp_gmdate("H:i",$drp_value->{$select_params [2]});
 				$drp_value->{$select_params [2]} = "GMT +".$time;
 			}else{
 				$gmthour = str_replace("-","",$drp_value->{$select_params [2]});
-				$time = gmdate("H:i",$gmthour);
+				$time = astpp_gmdate("H:i",$gmthour);
 				$drp_value->{$select_params [2]} = "GMT -".$time;
 			}
 			$drp_list [$drp_value->{$select_params [0]}] = gettext($drp_value->{$select_params [1]}).' ('.$drp_value->{$select_params [2]}.')';
@@ -732,14 +739,14 @@ class Db_model extends CI_Model {
 				foreach ( $account_search as $key => $value ) {
 					if ($value != "") {
 						if (is_array ( $value )) {
-							if (array_key_exists ( $key . "-integer", $value )) {
+							if (astpp_array_key_exists ( $key . "-integer", $value )) {
 								if($key == 'debit_exchange_rate' || $key == 'credit_exchange_rate' ){
 									$this->get_interger_array_invoice_amount ( $table_name.$key, $value [$key . "-integer"], $value [$key]);
 								}else{
 								$this->get_interger_array ( $table_name.$key, $value [$key . "-integer"], $value [$key]);
 								}
 							}
-							if (array_key_exists ( $key . "-string", $value )) {
+							if (astpp_array_key_exists ( $key . "-string", $value )) {
 								$this->get_string_array ( $table_name.$key, $value [$key . "-string"], $value [$key]);
 							}
 							if ($key == 'callstart' || $key == 'date' || $key == 'order_date' || $key == 'timestamp' || $key == 'payment_date' || $key == 'first_used' || $key == 'creation' || $key == 'from_date' || $key == 'generate_date' || $key == 'expiry' || $key == 'created_date' || $key == 'to_date' || $key == 'triggered_date' || $key == 'last_triggered_date') {
@@ -767,22 +774,22 @@ class Db_model extends CI_Model {
 		if ($value != '') {
 			if (! empty ( $value [0] )) {
 				if ($field == 'generate_date') {
-					$this->db->where ( $field . ' >= ', gmdate ( "Y-m-d", strtotime ( $value ['0'] ) ) . " 00:00:01" );
-					$this->db->where ( $field . ' <= ', gmdate ( "Y-m-d", strtotime ( $value ['0'] ) ) . " 23:59:59" );
+					$this->db->where ( $field . ' >= ', astpp_gmdate ( "Y-m-d", strtotime ( $value ['0'] ) ) . " 00:00:01" );
+					$this->db->where ( $field . ' <= ', astpp_gmdate ( "Y-m-d", strtotime ( $value ['0'] ) ) . " 23:59:59" );
 				} else if ($field == 'to_date') {
-					$this->db->where ( $field . ' <= ', gmdate ( "Y-m-d", strtotime ( $value ['0'] ) ) . " 23:59:59" );
+					$this->db->where ( $field . ' <= ', astpp_gmdate ( "Y-m-d", strtotime ( $value ['0'] ) ) . " 23:59:59" );
 				}else if ($field == 'expiry'){
-					$this->db->where ( $field . ' >= ', gmdate ( "Y-m-d", strtotime ( $value ['0'] ) ) . " 00:00:01" );
-					$this->db->where ( $field . ' <= ', gmdate ( "Y-m-d", strtotime ( $value ['0'] ) ) . " 23:59:59" );
+					$this->db->where ( $field . ' >= ', astpp_gmdate ( "Y-m-d", strtotime ( $value ['0'] ) ) . " 00:00:01" );
+					$this->db->where ( $field . ' <= ', astpp_gmdate ( "Y-m-d", strtotime ( $value ['0'] ) ) . " 23:59:59" );
 				}else if ($field == 'creation'){
-					$this->db->where ( $field . ' >= ', gmdate ( "Y-m-d", strtotime ( $value ['0'] ) ) . " 00:00:01" );
-					$this->db->where ( $field . ' <= ', gmdate ( "Y-m-d", strtotime ( $value ['0'] ) ) . " 23:59:59" );
+					$this->db->where ( $field . ' >= ', astpp_gmdate ( "Y-m-d", strtotime ( $value ['0'] ) ) . " 00:00:01" );
+					$this->db->where ( $field . ' <= ', astpp_gmdate ( "Y-m-d", strtotime ( $value ['0'] ) ) . " 23:59:59" );
 				}else {
-					$this->db->where ( $field . ' >= ', gmdate ( 'Y-m-d H:i:s', strtotime ( $value [0] ) ) );
+					$this->db->where ( $field . ' >= ', astpp_gmdate ( 'Y-m-d H:i:s', strtotime ( $value [0] ) ) );
 				}
 			}
 			if (! empty ( $value [1] )) {
-				$this->db->where ( $field . ' <= ', gmdate ( 'Y-m-d H:i:s', strtotime ( $value [1] ) ) );
+				$this->db->where ( $field . ' <= ', astpp_gmdate ( 'Y-m-d H:i:s', strtotime ( $value [1] ) ) );
 			}
 		}
 	}
@@ -907,13 +914,13 @@ class Db_model extends CI_Model {
 				foreach ( $account_search as $key => $value ) {
 					if ($value != "") {
 						if (is_array ( $value )) {
-							if (array_key_exists ( $key . "-integer", $value )) {
+							if (astpp_array_key_exists ( $key . "-integer", $value )) {
 								$string = null;
 								$string = $this->build_interger_where ( $key, $value [$key . "-integer"], $value [$key] );
 								if ($string)
 									$where .= "$string AND ";
 							}
-							if (array_key_exists ( $key . "-string", $value )) {
+							if (astpp_array_key_exists ( $key . "-string", $value )) {
 								$string = null;
 								$string = $this->build_string_where ( $key, $value [$key . "-string"], $value [$key] );
 								if ($string)
@@ -1033,7 +1040,7 @@ class Db_model extends CI_Model {
 	}
 	function get_available_bal($account_info) {
 		$available_bal = 0;
-		$available_bal = ($account_info ["posttoexternal"] == 1) ? ($account_info ["credit_limit"] - $account_info ["balance"]) : ($account_info ["balance"]);
+		$available_bal = ($account_info ["posttoexternal"] == 1) ? (astpp_n($account_info ["credit_limit"]) - astpp_n($account_info ["balance"])) : ($account_info ["balance"]);
 
 		return $available_bal;
 	}
@@ -1103,10 +1110,10 @@ class Db_model extends CI_Model {
 			foreach ( $account_search as $key => $value ) {
 				if ($value != "") {
 					if (is_array ( $value )) {
-						if (array_key_exists ( $key . "-integer", $value )) {
+						if (astpp_array_key_exists ( $key . "-integer", $value )) {
 							$this->get_opensips_interger_array ( $opensips_db_obj, $key, $value [$key . "-integer"], $value [$key] );
 						}
-						if (array_key_exists ( $key . "-string", $value )) {
+						if (astpp_array_key_exists ( $key . "-string", $value )) {
 							$this->get_opensips_string_array ( $opensips_db_obj, $key, $value [$key . "-string"], $value [$key] );
 						}
 					} else {

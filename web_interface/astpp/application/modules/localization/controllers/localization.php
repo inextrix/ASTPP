@@ -21,6 +21,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 // ##############################################################################
+#[\AllowDynamicProperties]
 class Localization extends MX_Controller
 {
 
@@ -176,7 +177,7 @@ class Localization extends MX_Controller
             if (isset($data['details']['id']) != "") {
                 $query = $this->common_model->check_unique_data('edit', 'name', $data['details']['name'], 'localization');
                 $result = $query->result_array();
-                if (count($result) > 0) {
+                if (astpp_count($result) > 0) {
                     if ($result[0]['id'] != $data['details']['id'] && $result[0]['name'] == $data['details']['name']) {
                         $is_unique = '|is_unique[localization.name]';
                     }
@@ -185,7 +186,7 @@ class Localization extends MX_Controller
                 }
             } else {
                 $query = $this->common_model->check_unique_data('add', 'name', $data['details']['name'], 'localization');
-                if ($query > 0) {
+                if (astpp_gt($query, 0)) {
                     $is_unique = '|is_unique[localization.name]';
                 } else {
                     $is_unique = '';

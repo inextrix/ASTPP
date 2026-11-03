@@ -21,6 +21,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 // ##############################################################################
+#[\AllowDynamicProperties]
 class Siprouting extends MX_Controller {
 	function __construct() {
 		parent::__construct ();
@@ -229,7 +230,7 @@ class Siprouting extends MX_Controller {
 					'time_out_5'=>"",
 					);
 				}
-				$data['edit_array']=array_merge($sip_routing_data,$follow_me_destination);
+				$data['edit_array']=astpp_array_merge($sip_routing_data,$follow_me_destination);
 	      	}
 	      	else{
 	      		$data['edit_array']=array(

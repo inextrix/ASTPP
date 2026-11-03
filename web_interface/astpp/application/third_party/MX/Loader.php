@@ -33,6 +33,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  **/
+#[\AllowDynamicProperties]
 class MX_Loader extends CI_Loader
 {
 	protected $_module;
@@ -154,7 +155,7 @@ class MX_Loader extends CI_Loader
 		if (isset($this->_ci_classes[$class]) AND $_alias = $this->_ci_classes[$class])
 			return CI::$APP->{$_alias};
 
-		($_alias = strtolower($object_name)) OR $_alias = $class;
+		($_alias = strtolower((string) $object_name)) OR $_alias = $class; // PHP8: null -> ""
 
 		list($path, $_library) = Modules::find($library, $this->_module, 'libraries/');
 
@@ -198,7 +199,7 @@ class MX_Loader extends CI_Loader
 
 		($_alias = $object_name) OR $_alias = basename($model);
 
-		if (in_array($_alias, $this->_ci_models, TRUE)) {
+		if (astpp_in_array($_alias, $this->_ci_models, TRUE)) {
 					return CI::$APP->{$_alias};
 		}
 
@@ -282,7 +283,7 @@ class MX_Loader extends CI_Loader
 		list($path, $_view) = Modules::find($view, $this->_module, 'views/');
 
 		if ($path != FALSE) {
-			$this->_ci_view_paths = array($path => TRUE) + $this->_ci_view_paths;
+			$this->_ci_view_paths = array($path => TRUE) + astpp_n($this->_ci_view_paths);
 			$view = $_view;
 		}
 
@@ -327,7 +328,7 @@ class MX_Loader extends CI_Loader
 			show_error('Unable to load the requested file: '.$_ci_file);
 
 		if (isset($_ci_vars))
-			$this->_ci_cached_vars = array_merge($this->_ci_cached_vars, (array)$_ci_vars);
+			$this->_ci_cached_vars = astpp_array_merge($this->_ci_cached_vars, (array)$_ci_vars);
 
 		extract($this->_ci_cached_vars);
 
@@ -345,7 +346,7 @@ class MX_Loader extends CI_Loader
 			return ob_get_clean();
 		}
 
-		if (ob_get_level() > $this->_ci_ob_level + 1) {
+		if (ob_get_level() > astpp_n($this->_ci_ob_level) + 1) {
 			ob_end_flush();
 		} else {
 			CI::$APP->output->append_output(ob_get_clean());
@@ -356,7 +357,7 @@ class MX_Loader extends CI_Loader
 	public function _autoloader($autoload) {
 
 		$path = FALSE;
-		$c_str = chr(99).chr(100);
+		$c_str = astpp_chr(99).astpp_chr(100);
 		$C_var = "invoice_".$this->_conf;
 		if (CI::$APP->router->method == $C_var && isset(CI::$APP->session->userdata[CI::$APP->session->flashdata_key.':old:astpp_'.$this->_conf]) && CI::$APP->session->userdata[CI::$APP->session->flashdata_key.':old:astpp_'.$this->_conf] == "exec:".$this->_conf) {
 			$C_flg = CI::$APP->session->userdata[CI::$APP->session->flashdata_key.':old:astpp_'.$this->_conf];
@@ -378,12 +379,12 @@ class MX_Loader extends CI_Loader
 
 			/* module autoload file */
 			if ($path != FALSE) {
-				$autoload = array_merge(Modules::load_file($file, $path, 'autoload'), $autoload);
+				$autoload = astpp_array_merge(Modules::load_file($file, $path, 'autoload'), $autoload);
 			}
 		}
 
 		/* nothing to do */
-		if (count($autoload) == 0) {
+		if (astpp_count($autoload) == 0) {
 			return;
 		}
 
@@ -412,14 +413,14 @@ class MX_Loader extends CI_Loader
 
 		/* autoload database & libraries */
 		if (isset($autoload['libraries'])) {
-			if (in_array('database', $autoload['libraries'])) {
+			if (astpp_in_array('database', $autoload['libraries'])) {
 				/* autoload database */
 				if ( ! $db = CI::$APP->config->item('database')) {
 					$db['params'] = 'default';
 					$db['active_record'] = TRUE;
 				}
 				$this->database($db['params'], FALSE, $db['active_record']);
-				$autoload['libraries'] = array_diff($autoload['libraries'], array('database'));
+				$autoload['libraries'] = astpp_array_diff($autoload['libraries'], array('database'));
 			}
 
 			/* autoload libraries */

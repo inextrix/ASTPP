@@ -327,15 +327,15 @@ if ( ! function_exists('safe_mailto'))
 				$x[] = "|".$ordinal;
 			} else
 			{
-				if (count($temp) == 0)
+				if (astpp_count($temp) == 0)
 				{
 					$count = ($ordinal < 224) ? 2 : 3;
 				}
 
 				$temp[] = $ordinal;
-				if (count($temp) == $count)
+				if (astpp_count($temp) == $count)
 				{
-					$number = ($count == 3) ? (($temp['0'] % 16) * 4096) + (($temp['1'] % 64) * 64) + ($temp['2'] % 64) : (($temp['0'] % 32) * 64) + ($temp['1'] % 64);
+					$number = ($count == 3) ? ((astpp_n($temp['0']) % 16) * 4096) + ((astpp_n($temp['1']) % 64) * 64) + (astpp_n($temp['2']) % 64) : ((astpp_n($temp['0']) % 32) * 64) + (astpp_n($temp['1']) % 64);
 					$x[] = "|".$number;
 					$count = 1;
 					$temp = array();
@@ -393,7 +393,7 @@ if ( ! function_exists('auto_link'))
 			{
 				$pop = ($popup == TRUE) ? " target=\"_blank\" " : "";
 
-				for ($i = 0; $i < count($matches['0']); $i++)
+				for ($i = 0; $i < astpp_count($matches['0']); $i++)
 				{
 					$period = '';
 					if (preg_match("|\.$|", $matches['6'][$i]))
@@ -419,7 +419,7 @@ if ( ! function_exists('auto_link'))
 		{
 			if (preg_match_all("/([a-zA-Z0-9_\.\-\+]+)@([a-zA-Z0-9\-]+)\.([a-zA-Z0-9\-\.]*)/i", $str, $matches))
 			{
-				for ($i = 0; $i < count($matches['0']); $i++)
+				for ($i = 0; $i < astpp_count($matches['0']); $i++)
 				{
 					$period = '';
 					if (preg_match("|\.$|", $matches['3'][$i]))

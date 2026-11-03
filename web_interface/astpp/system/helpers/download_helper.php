@@ -57,7 +57,7 @@ if ( ! function_exists('force_download'))
 
 		// Grab the file extension
 		$x = explode('.', $filename);
-		$extension = end($x);
+		$extension = astpp_end($x);
 
 		// Load the mime types
 		if (defined('ENVIRONMENT') AND is_file(APPPATH.'config/'.ENVIRONMENT.'/mimes.php'))

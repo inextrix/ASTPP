@@ -21,6 +21,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###############################################################################
 
+#[\AllowDynamicProperties]
 class Lowcreditlimit extends CI_Controller {
 	function __construct()
 	{

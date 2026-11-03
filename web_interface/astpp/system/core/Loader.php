@@ -28,6 +28,7 @@
  * @category	Loader
  * @link		http://codeigniter.com/user_guide/libraries/loader.html
  */
+#[\AllowDynamicProperties]
 class CI_Loader {
 
 	// All these are set automatically. Don't mess with them.
@@ -252,10 +253,10 @@ class CI_Loader {
 		if (($last_slash = strrpos($model, '/')) !== FALSE)
 		{
 			// The path is in front of the last slash
-			$path = substr($model, 0, $last_slash + 1);
+			$path = substr($model, 0, astpp_n($last_slash) + 1);
 
 			// And the model name behind it
-			$model = substr($model, $last_slash + 1);
+			$model = substr($model, astpp_n($last_slash) + 1);
 		}
 
 		if ($name == '')
@@ -263,7 +264,7 @@ class CI_Loader {
 			$name = $model;
 		}
 
-		if (in_array($name, $this->_ci_models, TRUE))
+		if (astpp_in_array($name, $this->_ci_models, TRUE))
 		{
 			return;
 		}
@@ -458,7 +459,7 @@ class CI_Loader {
 
 		$vars = $this->_ci_object_to_array($vars);
 
-		if (is_array($vars) AND count($vars) > 0)
+		if (is_array($vars) AND astpp_count($vars) > 0)
 		{
 			foreach ($vars as $key => $val)
 			{
@@ -652,7 +653,7 @@ class CI_Loader {
 		array_unshift($this->_ci_model_paths, $path);
 		array_unshift($this->_ci_helper_paths, $path);
 
-		$this->_ci_view_paths = array($path.'views/' => $view_cascade) + $this->_ci_view_paths;
+		$this->_ci_view_paths = array($path.'views/' => $view_cascade) + astpp_n($this->_ci_view_paths);
 
 		// Add config file path
 		$config = & $this->_ci_get_component('config');
@@ -702,7 +703,7 @@ class CI_Loader {
 			$path = rtrim($path, '/').'/';
 			foreach (array('_ci_library_paths', '_ci_model_paths', '_ci_helper_paths') as $var)
 			{
-				if (($key = array_search($path, $this->{$var})) !== FALSE)
+				if (($key = astpp_array_search($path, $this->{$var})) !== FALSE)
 				{
 					unset($this->{$var}[$key]);
 				}
@@ -713,18 +714,18 @@ class CI_Loader {
 				unset($this->_ci_view_paths[$path.'views/']);
 			}
 
-			if (($key = array_search($path, $config->_config_paths)) !== FALSE)
+			if (($key = astpp_array_search($path, $config->_config_paths)) !== FALSE)
 			{
 				unset($config->_config_paths[$key]);
 			}
 		}
 
 		// make sure the application default paths are still in the array
-		$this->_ci_library_paths = array_unique(array_merge($this->_ci_library_paths, array(APPPATH, BASEPATH)));
-		$this->_ci_helper_paths = array_unique(array_merge($this->_ci_helper_paths, array(APPPATH, BASEPATH)));
-		$this->_ci_model_paths = array_unique(array_merge($this->_ci_model_paths, array(APPPATH)));
-		$this->_ci_view_paths = array_merge($this->_ci_view_paths, array(APPPATH.'views/' => TRUE));
-		$config->_config_paths = array_unique(array_merge($config->_config_paths, array(APPPATH)));
+		$this->_ci_library_paths = astpp_array_unique(astpp_array_merge($this->_ci_library_paths, array(APPPATH, BASEPATH)));
+		$this->_ci_helper_paths = astpp_array_unique(astpp_array_merge($this->_ci_helper_paths, array(APPPATH, BASEPATH)));
+		$this->_ci_model_paths = astpp_array_unique(astpp_array_merge($this->_ci_model_paths, array(APPPATH)));
+		$this->_ci_view_paths = astpp_array_merge($this->_ci_view_paths, array(APPPATH.'views/' => TRUE));
+		$config->_config_paths = astpp_array_unique(astpp_array_merge($config->_config_paths, array(APPPATH)));
 	}
 
 	// --------------------------------------------------------------------
@@ -753,7 +754,7 @@ class CI_Loader {
 		if ($_ci_path != '')
 		{
 			$_ci_x = explode('/', $_ci_path);
-			$_ci_file = end($_ci_x);
+			$_ci_file = astpp_end($_ci_x);
 		} else
 		{
 			$_ci_ext = pathinfo($_ci_view, PATHINFO_EXTENSION);
@@ -802,7 +803,7 @@ class CI_Loader {
 		 */
 		if (is_array($_ci_vars))
 		{
-			$this->_ci_cached_vars = array_merge($this->_ci_cached_vars, $_ci_vars);
+			$this->_ci_cached_vars = astpp_array_merge($this->_ci_cached_vars, $_ci_vars);
 		}
 		extract($this->_ci_cached_vars);
 
@@ -852,7 +853,7 @@ class CI_Loader {
 		 * template and any subsequent ones. Oy!
 		 *
 		 */
-		if (ob_get_level() > $this->_ci_ob_level + 1)
+		if (ob_get_level() > astpp_n($this->_ci_ob_level) + 1)
 		{
 			ob_end_flush();
 		} else
@@ -888,10 +889,10 @@ class CI_Loader {
 		if (($last_slash = strrpos($class, '/')) !== FALSE)
 		{
 			// Extract the path
-			$subdir = substr($class, 0, $last_slash + 1);
+			$subdir = substr($class, 0, astpp_n($last_slash) + 1);
 
 			// Get the filename from the path
-			$class = substr($class, $last_slash + 1);
+			$class = substr($class, astpp_n($last_slash) + 1);
 		}
 
 		// We'll test for both lowercase and capitalized versions of the file name
@@ -911,7 +912,7 @@ class CI_Loader {
 				}
 
 				// Safety:  Was the class already loaded by a previous call?
-				if (in_array($subclass, $this->_ci_loaded_files))
+				if (astpp_in_array($subclass, $this->_ci_loaded_files))
 				{
 					// Before we deem this to be a duplicate request, let's see
 					// if a custom object name is being supplied.  If so, we'll
@@ -950,7 +951,7 @@ class CI_Loader {
 				}
 
 				// Safety:  Was the class already loaded by a previous call?
-				if (in_array($filepath, $this->_ci_loaded_files))
+				if (astpp_in_array($filepath, $this->_ci_loaded_files))
 				{
 					// Before we deem this to be a duplicate request, let's see
 					// if a custom object name is being supplied.  If so, we'll
@@ -1131,7 +1132,7 @@ class CI_Loader {
 		}
 
 		// Load any custom config file
-		if (count($autoload['config']) > 0)
+		if (astpp_count($autoload['config']) > 0)
 		{
 			$CI = & get_instance();
 			foreach ($autoload['config'] as $key => $val)
@@ -1143,7 +1144,7 @@ class CI_Loader {
 		// Autoload helpers and languages
 		foreach (array('helper', 'language') as $type)
 		{
-			if (isset($autoload[$type]) AND count($autoload[$type]) > 0)
+			if (isset($autoload[$type]) AND astpp_count($autoload[$type]) > 0)
 			{
 				$this->{$type}($autoload[$type]);
 			}
@@ -1157,13 +1158,13 @@ class CI_Loader {
 		}
 
 		// Load libraries
-		if (isset($autoload['libraries']) AND count($autoload['libraries']) > 0)
+		if (isset($autoload['libraries']) AND astpp_count($autoload['libraries']) > 0)
 		{
 			// Load the database driver.
-			if (in_array('database', $autoload['libraries']))
+			if (astpp_in_array('database', $autoload['libraries']))
 			{
 				$this->database();
-				$autoload['libraries'] = array_diff($autoload['libraries'], array('database'));
+				$autoload['libraries'] = astpp_array_diff($autoload['libraries'], array('database'));
 			}
 
 			// Load all other libraries

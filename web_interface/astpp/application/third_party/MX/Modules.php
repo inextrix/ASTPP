@@ -45,6 +45,7 @@ spl_autoload_register('Modules::autoload');
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  **/
+#[\AllowDynamicProperties]
 class Modules
 {
 	public static $routes, $registry, $locations;
@@ -58,7 +59,7 @@ class Modules
 		$method = 'index';
 		
 		if (($pos = strrpos($module, '/')) != FALSE) {
-			$method = substr($module, $pos + 1);		
+			$method = substr($module, astpp_n($pos) + 1);		
 			$module = substr($module, 0, $pos);
 		}
 
@@ -67,7 +68,7 @@ class Modules
 			if (method_exists($class, $method)) {
 				ob_start();
 				$args = func_get_args();
-				$output = call_user_func_array(array($class, $method), array_slice($args, 1));
+				$output = call_user_func_array(array($class, $method), astpp_array_slice($args, 1));
 				$buffer = ob_get_clean();
 				return ($output !== NULL) ? $output : $buffer;
 			}
@@ -80,8 +81,8 @@ class Modules
 	public static function load($module) {
 		$params = NULL;
 		if(is_array($module)){
-			$params = current($module);
-			$module = key($module);
+			$params = astpp_current($module);
+			$module = astpp_key($module);
 		}
 		
 		/* get the requested controller class name */
@@ -180,11 +181,11 @@ class Modules
 		$file = array_pop($segments);
 		$file_ext = strpos($file, '.') ? $file : $file.EXT;
 		
-		$path = ltrim(implode('/', $segments).'/', '/');	
+		$path = ltrim(astpp_implode('/', $segments).'/', '/');	
 		$module ? $modules[$module] = $path : $modules = array();
 		
 		if ( ! empty($segments)) {
-			$modules[array_shift($segments)] = ltrim(implode('/', $segments).'/', '/');
+			$modules[array_shift($segments)] = ltrim(astpp_implode('/', $segments).'/', '/');
 		}	
 
 		foreach (Modules::$locations as $location => $offset) {					

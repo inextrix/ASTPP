@@ -63,7 +63,7 @@ $permissioninfo = $this->session->userdata('permissioninfo');
 			<div class="col-12">
 				<div class="col-12 mb-4" style="z-index: 9;">
 		<?php
-if ((isset($permissioninfo['freeswitch']['fssipdevices']['create']) && $permissioninfo['freeswitch']['fssipdevices']['create'] == 0 or ($permissioninfo['login_type'] == '-1' or $permissioninfo['login_type'] == '0' or $permissioninfo['login_type'] == '3'))) {
+if ((isset($permissioninfo['freeswitch']['fssipdevices']['create']) && astpp_eq0($permissioninfo['freeswitch']['fssipdevices']['create']) or ($permissioninfo['login_type'] == '-1' or $permissioninfo['login_type'] == '0' or $permissioninfo['login_type'] == '3'))) {
     ?>
 
                     <div class="float-left">
@@ -78,7 +78,7 @@ if ((isset($permissioninfo['freeswitch']['fssipdevices']['create']) && $permissi
 
 <?php
 }
-if ((isset($permissioninfo['freeswitch']['fssipdevices']['delete'])) && ($permissioninfo['freeswitch']['fssipdevices']['delete'] == 0) or ($permissioninfo['login_type'] == '-1' or $permissioninfo['login_type'] == '1' or $permissioninfo['login_type'] == '3')) {
+if ((isset($permissioninfo['freeswitch']['fssipdevices']['delete'])) && (astpp_eq0($permissioninfo['freeswitch']['fssipdevices']['delete'])) or ($permissioninfo['login_type'] == '-1' or $permissioninfo['login_type'] == '1' or $permissioninfo['login_type'] == '3')) {
     ?>
                     <div id="left_panel_delete"
 						class="pull-left margin-t-0 padding-x-4"

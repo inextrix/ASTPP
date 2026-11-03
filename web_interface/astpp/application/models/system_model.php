@@ -20,8 +20,9 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 // ##############################################################################
+#[\AllowDynamicProperties]
 class System_model extends CI_Model {
-	function System_model() {
+	function __construct() { // PHP 4 style constructor (System_model()) is no constructor since PHP 8
 		parent::__construct ();
 	}
 	function add_config($data) {

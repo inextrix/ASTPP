@@ -1,5 +1,6 @@
 <?php  (! defined('BASEPATH')) and exit('No direct script access allowed');
 
+#[\AllowDynamicProperties]
 class DepartmentMail extends CI_Controller
 {
 	public function __construct()
@@ -194,7 +195,7 @@ class DepartmentMail extends CI_Controller
 						}
 					}
 					$this->log("Additional Email ID2 :".json_encode($additional_email_arr));
-					$to_email_address_array=array_merge($admin_email_arr,$sub_admin_email_arr,$additional_email_arr);
+					$to_email_address_array=astpp_array_merge($admin_email_arr,$sub_admin_email_arr,$additional_email_arr);
 					$this->log("To email address array :".json_encode($to_email_address_array));
 					$support_ticket_id=ltrim($explode_ticket_details[1], '0');
 					$support_ticket_id = str_replace(' ','',$support_ticket_id);
@@ -348,7 +349,7 @@ class DepartmentMail extends CI_Controller
 							}
 						}
 					}
-					$to_email_address_array=array_merge($admin_email_arr,$sub_admin_email_arr,$additional_email_arr);
+					$to_email_address_array=astpp_array_merge($admin_email_arr,$sub_admin_email_arr,$additional_email_arr);
 					$this->log("To email address array ".json_encode($to_email_address_array));
 					$email_body = trim(imap_fetchbody($inbox, $email_number, 1));
 					$this->log("Email Body ".$email_body);
@@ -476,7 +477,7 @@ class DepartmentMail extends CI_Controller
 			fclose($fp);
 		}
 	}
-	private function _get_ticket_type_message($select = "", $table = "", $call_type) {
+	private function _get_ticket_type_message($select, $table, $call_type) {
         $call_type_array = array('0' => "Open", "1"=>"Answered", '2' =>  "Customer-Reply", '3' => "On-hold", '4'=>"Progress",'5'=>"Close");
         return $call_type_array[$call_type];
     }

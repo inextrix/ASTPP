@@ -33,6 +33,7 @@ defined ( 'BASEPATH' ) or exit ( 'No direct script access allowed' );
  * Included accounts api controller as that is having all functions belogs and accounts and we are validating account for each api request.
  */
 require APPPATH . '/controllers/api/account.php';
+#[\AllowDynamicProperties]
 class Common_function extends Account {
     function __construct() {
         parent::__construct ();

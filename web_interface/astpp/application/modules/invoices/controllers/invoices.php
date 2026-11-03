@@ -21,6 +21,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 // ##############################################################################
+#[\AllowDynamicProperties]
 class Invoices extends MX_Controller
 {
 
@@ -82,7 +83,7 @@ class Invoices extends MX_Controller
             $currency_id = $accountdata["currency_id"];
         }
         $grid_fields = json_decode($this->invoices_form->build_invoices_list_for_admin());
-        $url = ($logintype == 0 || $logintype == 3) ? "/user/user_invoice_download/" : '/invoices/invoice_download/';
+        $url = (astpp_eq0($logintype) || $logintype == 3) ? "/user/user_invoice_download/" : '/invoices/invoice_download/';
         if ($result_query->num_rows() > 0) {
             $query = $result_query->result_array();
             $total_value = 0;
@@ -97,7 +98,7 @@ class Invoices extends MX_Controller
                 $due_date = $this->common->convert_GMT_to_new('','',$value['due_date']);
                 $to_date = $this->common->convert_GMT_to_new('','',$from_date);
 
-                $outstanding = ($value['is_paid'] == 1) ? $value['debit'] - $value['credit'] : "0.00";
+                $outstanding = ($value['is_paid'] == 1) ? astpp_n($value['debit']) - astpp_n($value['credit']) : "0.00";
                 $invoice_total = '';
                 $accountinfo = $this->session->userdata('accountinfo');
                 $id = $accountinfo['id'];
@@ -107,7 +108,7 @@ class Invoices extends MX_Controller
 
                 $download = "<a  href=" . $url . $value['id'] . " class='btn btn-royelblue btn-sm'  title='Download Invoice' ><i class='fa fa-cloud-download fa-fw'></i></a>&nbsp";
                 if ($value['type'] == 'I') {
-                    if ($value['confirm'] == 0) {
+                    if (astpp_eq0($value['confirm'])) {
                         if ($value['generate_type'] == 1) {
                             $payment = '<a href="' . base_url() . 'invoices/invoice_manually_edit/' . $value['id'] . '" class="btn btn-royelblue btn-sm"  title="Edit"><i class="fa fa-pencil-square-o fa-fw"></i></a>';
                         } else {
@@ -117,7 +118,7 @@ class Invoices extends MX_Controller
                         $delete_button = "<a onclick='invoice_delete($id)' class='btn btn-royelblue btn-sm'  title='Delete' ><i class='fa fa-trash fa-fw'></i></a>&nbsp";
                     } else {
 
-                        if ($value['is_paid'] == 1 && $outstanding > 0) {
+                        if ($value['is_paid'] == 1 && astpp_gt($outstanding, 0)) {
                             $payment = "<a style='padding: 0 8px;' href='" . base_url() . "invoices/invoice_summary/" . $value["id"] . "' class='btn btn-warning'  title='Payment'>".gettext("Unpaid")."</i></a>";
                         } else {
                             $payment = "<button style='padding: 0 17px;' type='button'  class='btn btn-success'>".gettext("Paid")."</button>";
@@ -152,10 +153,10 @@ class Invoices extends MX_Controller
                 if (! isset($permissioninfo['invoices']['invoice_list']['download']) and ($permissioninfo['login_type'] == '1' or $permissioninfo['login_type'] == '2' or $permissioninfo['login_type'] == '4')) {
                     $download = '';
                 }
-                if ((! isset($permissioninfo['invoices']['invoice_list']['edit']) && $value['confirm'] == 0) and ($permissioninfo['login_type'] == '1' or $permissioninfo['login_type'] == '2' or $permissioninfo['login_type'] == '4')) {
+                if ((! isset($permissioninfo['invoices']['invoice_list']['edit']) && astpp_eq0($value['confirm'])) and ($permissioninfo['login_type'] == '1' or $permissioninfo['login_type'] == '2' or $permissioninfo['login_type'] == '4')) {
                     $payment = '';
                 }
-                if ((! isset($permissioninfo['invoices']['invoice_list']['payment']) && $value['confirm'] != 0) and ($permissioninfo['login_type'] == '1' or $permissioninfo['login_type'] == '2' or $permissioninfo['login_type'] == '4')) {
+                if ((! isset($permissioninfo['invoices']['invoice_list']['payment']) && (!astpp_eq0($value['confirm']))) and ($permissioninfo['login_type'] == '1' or $permissioninfo['login_type'] == '2' or $permissioninfo['login_type'] == '4')) {
                     $payment = '';
                 }
                 if (! isset($permissioninfo['invoices']['invoice_list']['delete']) and ($permissioninfo['login_type'] == '1' or $permissioninfo['login_type'] == '2' or $permissioninfo['login_type'] == '4')) {
@@ -165,30 +166,30 @@ class Invoices extends MX_Controller
                 $to_currency = $this->common->get_field_name('currency', 'currency', $accountinfo['currency_id']);
                 if ($from_currency != $to_currency) {
 			if($value['debit']  >  $value['credit']){
-                    		$outstanding = ($value['is_paid'] == 1) ? $value['debit'] - $value['credit'] : 0.00;
+                    		$outstanding = ($value['is_paid'] == 1) ? astpp_n($value['debit']) - astpp_n($value['credit']) : 0.00;
 			}else{
-				$outstanding = ($value['is_paid'] == 1) ? $value['credit'] - $value['debit'] : 0.00;
+				$outstanding = ($value['is_paid'] == 1) ? astpp_n($value['credit']) - astpp_n($value['debit']) : 0.00;
 			}
                     $outstanding = $this->common_model->calculate_currency($outstanding, "", "", true, false);
 		   if($charge_type == "REFILL" || $charge_type == "Voucher" || $charge_type == "COMMISSION" ){
 			    $amount = $value['credit'];
 		            $amount = $this->common_model->calculate_currency($amount, "", "", true, false);
 		    }else{
-		            $amount = ($value['debit'] > 0) ? $value['debit'] : $value['credit'];
+		            $amount = (astpp_gt($value['debit'], 0)) ? $value['debit'] : $value['credit'];
 		            $amount = $this->common_model->calculate_currency($amount, "", "", true, false);
 		    }
                 } else {
 
 		
                    if($value['debit']  >  $value['credit']){
-                    		$outstanding = ($value['is_paid'] == 1) ? $value['debit'] - $value['credit'] : 0.00;
+                    		$outstanding = ($value['is_paid'] == 1) ? astpp_n($value['debit']) - astpp_n($value['credit']) : 0.00;
 			}else{
-				$outstanding = ($value['is_paid'] == 1) ? $value['credit'] - $value['debit'] : 0.00;
+				$outstanding = ($value['is_paid'] == 1) ? astpp_n($value['credit']) - astpp_n($value['debit']) : 0.00;
 			}
 		    if($charge_type == "REFILL" || $charge_type == "Voucher" || $charge_type == "COMMISSION" ){
 			$amount = $value['credit'];
 		    }else{
-                    	$amount = ($value['debit'] > 0) ? $value['debit'] : $value['credit'];
+                    	$amount = (astpp_gt($value['debit'], 0)) ? $value['debit'] : $value['credit'];
 		    }
                 }
 
@@ -209,8 +210,8 @@ class Invoices extends MX_Controller
                         $download . '' . $payment . ' ' . $delete_button
                     )
                 );
-                $total_value = $total_value + $value['debit'];
-                $ountstanding_value = $ountstanding_value + $outstanding;
+                $total_value = astpp_n($total_value) + astpp_n($value['debit']);
+                $ountstanding_value = astpp_n($ountstanding_value) + astpp_n($outstanding);
             }
         }
 
@@ -227,7 +228,7 @@ class Invoices extends MX_Controller
             $invoicedata = $query->first_row();
             $data['invoicenumber'] = $invoicedata->number;
 	    $posttoexternal = $this->common->get_field_name("posttoexternal","accounts",array("id"=>$invoicedata->accountid));
-	    if($posttoexternal == 0 && $invoicedata->credit > 0 && $invoicedata->credit !=''  ){
+	    if(astpp_eq0($posttoexternal) && astpp_gt($invoicedata->credit, 0) && $invoicedata->credit !=''  ){
 			$data['all_total_count'] = ($invoicedata->credit );
 	    }else{
             		$data['all_total_count'] = ($invoicedata->debit);
@@ -235,11 +236,11 @@ class Invoices extends MX_Controller
 
 	  
 	   $data['this_month_recharges'] =$this->common->currency_decimal(0);
-	   if($posttoexternal == 0 && $invoicedata->credit != "" && $invoicedata->credit > 0 ){
-		        $data['this_month_recharges'] = ($invoicedata->credit - $invoicedata->debit) ; 
+	   if(astpp_eq0($posttoexternal) && $invoicedata->credit != "" && astpp_gt($invoicedata->credit, 0) ){
+		        $data['this_month_recharges'] = (astpp_n($invoicedata->credit) - astpp_n($invoicedata->debit)) ; 
 	   }
 		
-	   if($posttoexternal == 1 && $invoicedata->credit != "" && $invoicedata->credit > 0 ){
+	   if($posttoexternal == 1 && $invoicedata->credit != "" && astpp_gt($invoicedata->credit, 0) ){
 			$data['this_month_recharges'] = $invoicedata->credit; 
 	   }
 	
@@ -491,17 +492,17 @@ class Invoices extends MX_Controller
                 if ($value['is_tax'] == 1) {
                     $data['total_tax_dis'][$taxi] = $value['debit'];
                     $taxi ++;
-                    $data['totaltaxdis'] += $value['debit'];
+                    $data['totaltaxdis'] = astpp_n($data['totaltaxdis']) + astpp_n($value['debit']);
                 } else {
 
                     if ($i >= 5) {
-                        $data['row_count'] = $i + 1;
+                        $data['row_count'] = astpp_n($i) + 1;
                     }
                     $get_data['invoice_from_date_' . $i] = $value['created_date'];
                     $get_data['invoice_description_' . $i] = $value['description'];
                     $get_data['invoice_amount_' . $i] = $value['debit'];
                     $i ++;
-                    $data['total_credit_dis'] += $value['debit'];
+                    $data['total_credit_dis'] = astpp_n($data['total_credit_dis']) + astpp_n($value['debit']);
                 }
             }
             $data['get_data'] = $get_data;
@@ -544,14 +545,14 @@ class Invoices extends MX_Controller
                     $taxe_res = $taxe_res->result_array();
                     foreach ($taxe_res as $taxe_res_val) {
                         $data['taxes_to_accounts'][] = $taxe_res_val;
-                        $total_tax += $taxe_res_val['taxes_rate'];
+                        $total_tax = astpp_n($total_tax) + astpp_n($taxe_res_val['taxes_rate']);
                     }
                 }
             }
         }
 
         $system_config = common_model::$global_config['system_config'];
-        if ($system_config["paypal_mode"] == 0) {
+        if (astpp_eq0($system_config["paypal_mode"])) {
             $data["paypal_url"] = $system_config["paypal_url"];
             $data["paypal_email_id"] = $system_config["paypal_id"];
         } else {
@@ -559,7 +560,7 @@ class Invoices extends MX_Controller
             $data["paypal_email_id"] = $system_config["paypal_sandbox_id"];
         }
         $date = strtotime($result['generate_date']);
-        $data['time'] = date("Y-m-d h:i:s ", $date);
+        $data['time'] = astpp_date("Y-m-d h:i:s ", $date);
         $data["paypal_tax"] = $system_config["paypal_tax"];
 
         $data['total_tax'] = $total_tax;
@@ -623,20 +624,20 @@ class Invoices extends MX_Controller
                 $data['total_credit_sum'] = 0;
                 $data['total_credit_dis'] = 0;
                 foreach ($invoice_details as $invkey => $value) {
-                    $data['amount'] += $value['debit'];
+                    $data['amount'] = astpp_n($data['amount']) + astpp_n($value['debit']);
 
                     if ($value['generate_type'] == 1) {
                         if ($i >= 5) {
-                            $data['row_count'] = $i + 1;
+                            $data['row_count'] = astpp_n($i) + 1;
                         }
                         $get_data['invoice_from_date_' . $i] = $value['created_date'];
                         $get_data['invoice_description_' . $i] = $value['description'];
                         $get_data['invoice_amount_' . $i] = $value['debit'];
                         $i ++;
-                        $data['total_credit_dis'] += $value['debit'];
+                        $data['total_credit_dis'] = astpp_n($data['total_credit_dis']) + astpp_n($value['debit']);
                         unset($invoice_details[$invkey]);
                     }
-                    $data['total_credit_sum'] += $value['debit'];
+                    $data['total_credit_sum'] = astpp_n($data['total_credit_sum']) + astpp_n($value['debit']);
                 }
 
                 $data['get_data'] = $get_data;
@@ -651,7 +652,7 @@ class Invoices extends MX_Controller
                 if ($tax_details->num_rows > 0) {
                     $data['taxes_to_accounts'] = $tax_details->result_array();
                     foreach ($data['taxes_to_accounts'] as $taxkey => $tax_debit) {
-                        $data['total_tax'] += $tax_debit['debit'];
+                        $data['total_tax'] = astpp_n($data['total_tax']) + astpp_n($tax_debit['debit']);
                     }
                 }
 
@@ -670,7 +671,7 @@ class Invoices extends MX_Controller
                 $data['cancel_return'] = base_url() . "invoice/invoice_list_cancel";
                 $data['paypal_mode'] = 1;
                 $system_config = common_model::$global_config['system_config'];
-                if ($system_config["paypal_mode"] == 0) {
+                if (astpp_eq0($system_config["paypal_mode"])) {
                     $data["paypal_url"] = $system_config["paypal_url"];
                     $data["paypal_email_id"] = $system_config["paypal_id"];
                 } else {
@@ -750,8 +751,8 @@ class Invoices extends MX_Controller
         $response_arr['invoiceid'] = $invoice['id'];
         $response_arr['accountid'] = $invoice['accountid'];
         $response_arr['reseller_id'] = $invoice['reseller_id'];
-        $row_count = min(100, max(0, (int) (isset($response_arr['row_count']) ? $response_arr['row_count'] : 0)));
-        $taxes_count = min(20, max(0, (int) (isset($response_arr['taxes_count']) ? $response_arr['taxes_count'] : 0)));
+        $row_count = astpp_min(100, astpp_max(0, (int) (isset($response_arr['row_count']) ? $response_arr['row_count'] : 0)));
+        $taxes_count = astpp_min(20, astpp_max(0, (int) (isset($response_arr['taxes_count']) ? $response_arr['taxes_count'] : 0)));
         // check every amount before anything is deleted or written
         $amounts = array();
         for ($i = 1; $i <= $row_count; $i ++) {
@@ -790,7 +791,7 @@ class Invoices extends MX_Controller
                 'debit' => $tax_amounts[$a],
                 'created_date' => gmdate("Y-m-d H:i:s")
             );
-            $final_tax_bal += $tax_amounts[$a];
+            $final_tax_bal = astpp_n($final_tax_bal) + astpp_n($tax_amounts[$a]);
             $this->db->insert("invoice_details", $add_arr);
         }
 
@@ -808,7 +809,7 @@ class Invoices extends MX_Controller
                 );
 
                 $this->db->insert("invoice_details", $add_arr);
-                $final_bal += $amounts[$i];
+                $final_bal = astpp_n($final_bal) + astpp_n($amounts[$i]);
             }
         }
         $data = array(
@@ -825,7 +826,7 @@ class Invoices extends MX_Controller
             $account_data = $account_data->result_array();
 
             $account_balance = $this->common->get_field_name('balance', 'accounts', $response_arr['accountid']);
-            $account_balance = ($account_data[0]['posttoexternal'] == 1) ? ($account_data[0]['credit_limit'] - $account_balance) : $account_balance;
+            $account_balance = ($account_data[0]['posttoexternal'] == 1) ? (astpp_n($account_data[0]['credit_limit']) - astpp_n($account_balance)) : $account_balance;
 
             $invoice_details = $this->db_model->getSelect("*", "invoice_details", array(
                 "invoiceid" => $response_arr["invoiceid"]
@@ -835,15 +836,15 @@ class Invoices extends MX_Controller
                 $after_bal = 0;
 
                 foreach ($invoice_details_res as $details_key => $details_value) {
-                    if ($details_value['debit'] > 0) {
+                    if (astpp_gt($details_value['debit'], 0)) {
 
-                        $before_balance_add = $account_balance - $after_bal;
-                        $after_balance_add = $before_balance_add - $details_value['debit'];
-                        $after_bal += $details_value['debit'];
+                        $before_balance_add = astpp_n($account_balance) - astpp_n($after_bal);
+                        $after_balance_add = astpp_n($before_balance_add) - astpp_n($details_value['debit']);
+                        $after_bal = astpp_n($after_bal) + astpp_n($details_value['debit']);
                     } else {
-                        $before_balance_add = $account_balance - $after_bal;
-                        $after_balance_add = $before_balance_add + $details_value['credit'];
-                        $after_bal += $details_value['credit'];
+                        $before_balance_add = astpp_n($account_balance) - astpp_n($after_bal);
+                        $after_balance_add = astpp_n($before_balance_add) + astpp_n($details_value['credit']);
+                        $after_bal = astpp_n($after_bal) + astpp_n($details_value['credit']);
                     }
                     $balnace_update = array(
                         'before_balance' => $before_balance_add,
@@ -856,7 +857,7 @@ class Invoices extends MX_Controller
             }
             // total of the lines saved above (this debited the total computed in the browser,
             // total_val_final)
-            $amount = $final_bal + $final_tax_bal;
+            $amount = astpp_n($final_bal) + astpp_n($final_tax_bal);
             $query = "update accounts set balance =  IF(posttoexternal=1,balance+" . sprintf('%.5F', $amount) . ",balance-" . sprintf('%.5F', $amount) . ") where id =" . (int) $response_arr['accountid'];
             $this->db->query($query);
 
@@ -873,7 +874,7 @@ class Invoices extends MX_Controller
             $mail_array["due_date"] = $due_date;
             // Ashish ASTPPCOM-748 End
             $accountdata = $account_data[0];
-            $final_array = array_merge($accountdata, $mail_array);
+            $final_array = astpp_array_merge($accountdata, $mail_array);
             // Ashish ASTPPCOM-748
             $generate_date = (array)$this->db->get_where('invoices',array("id"=>$response_arr["invoiceid"]))->first_row();
             $final_array['generate_date'] = $generate_date['generate_date'];
@@ -894,8 +895,8 @@ class Invoices extends MX_Controller
         $response_arr['invoiceid'] = $invoice['id'];
         $response_arr['accountid'] = $invoice['accountid'];
         $response_arr['reseller_id'] = $invoice['reseller_id'];
-        $row_count = min(100, max(0, (int) (isset($response_arr['row_count']) ? $response_arr['row_count'] : 0)));
-        $taxes_count = min(20, max(0, (int) (isset($response_arr['taxes_count']) ? $response_arr['taxes_count'] : 0)));
+        $row_count = astpp_min(100, astpp_max(0, (int) (isset($response_arr['row_count']) ? $response_arr['row_count'] : 0)));
+        $taxes_count = astpp_min(20, astpp_max(0, (int) (isset($response_arr['taxes_count']) ? $response_arr['taxes_count'] : 0)));
         $auto = array();
         foreach ((array) (isset($response_arr['auto_invoice_date']) ? $response_arr['auto_invoice_date'] : array()) as $key => $val) {
             $auto[(int) $key] = $this->invoice_amount(isset($response_arr['auto_invoice_amount'][$key]) ? $response_arr['auto_invoice_amount'][$key] : '');
@@ -942,7 +943,7 @@ class Invoices extends MX_Controller
             $update_arr = array(
                 'debit' => $tax_amounts[$a]
             );
-            $final_tax_bal += $tax_amounts[$a];
+            $final_tax_bal = astpp_n($final_tax_bal) + astpp_n($tax_amounts[$a]);
             $arr_update = array(
                 'id' => (int) (isset($response_arr['description_total_tax_input_' . $a]) ? $response_arr['description_total_tax_input_' . $a] : 0),
                 'invoiceid' => $response_arr['invoiceid']
@@ -987,13 +988,13 @@ class Invoices extends MX_Controller
                 $after_bal = 0;
                 foreach ($invoice_details_res as $details_key => $details_value) {
                     if ($details_value['charge_type'] != 'STANDARD') {
-                        $before_balance_add = $account_balance - $after_bal;
-                        $after_balance_add = $before_balance_add - $details_value['debit'];
+                        $before_balance_add = astpp_n($account_balance) - astpp_n($after_bal);
+                        $after_balance_add = astpp_n($before_balance_add) - astpp_n($details_value['debit']);
                         $balnace_update = array(
                             'before_balance' => $before_balance_add,
                             'after_balance' => $after_balance_add
                         );
-                        $after_bal += $details_value['debit'];
+                        $after_bal = astpp_n($after_bal) + astpp_n($details_value['debit']);
                         $this->db->where("id", $details_value['id']);
                         $this->db->update("invoice_details", $balnace_update);
                     }
@@ -1015,8 +1016,8 @@ class Invoices extends MX_Controller
             }
 
             if ($account_data[0]['posttoexternal'] == 1) {
-                $finaldeduct_bal = $invoice_total - $standard_call_balance;
-                $bal_data = $account_data[0]['balance'] - $finaldeduct_bal;
+                $finaldeduct_bal = astpp_n($invoice_total) - astpp_n($standard_call_balance);
+                $bal_data = astpp_n($account_data[0]['balance']) - astpp_n($finaldeduct_bal);
             } else {
                 $bal_data = 0;
             }
@@ -1039,7 +1040,7 @@ class Invoices extends MX_Controller
         $invoicedata = $invoicedata->result_array();
         $invoicedata = $invoicedata[0];
         $invoice_conf = array();
-        if ($accountdata['reseller_id'] == 0) {
+        if (astpp_eq0($accountdata['reseller_id'])) {
             $where = array(
                 "accountid" => 1
             );
@@ -1069,7 +1070,7 @@ class Invoices extends MX_Controller
     function currency_decimal($amount)
     {
         $decimal_amount = Common_model::$global_config['system_config']['decimalpoints'];
-        $number_convert = number_format((float) $amount, $decimal_amount, '.', '');
+        $number_convert = astpp_number_format((float) $amount, $decimal_amount, '.', '');
         return $number_convert;
     }
 
@@ -1102,7 +1103,7 @@ class Invoices extends MX_Controller
                 $data['accountdata'] = $accountdata;
             }
             $system_config = common_model::$global_config['system_config'];
-            if ($system_config["paypal_mode"] == 0) {
+            if (astpp_eq0($system_config["paypal_mode"])) {
                 $data["paypal_url"] = $system_config["paypal_url"];
                 $data["paypal_email_id"] = $system_config["paypal_id"];
             } else {
@@ -1157,7 +1158,7 @@ class Invoices extends MX_Controller
     function convert_amount($amount)
     {
         $amount = $this->common_model->add_calculate_currency($amount, "", "", true, false);
-        echo number_format($amount, 2);
+        echo astpp_number_format($amount, 2);
     }
 
     /*
@@ -1182,7 +1183,7 @@ class Invoices extends MX_Controller
             $amount = order::amount(isset($response_arr['amount']) ? $response_arr['amount'] : '', 999999999);
             $invoice_id = (int) (isset($response_arr['item_number']) ? $response_arr['item_number'] : 0);
             $invoice_row = $this->db->get_where('invoices', array('id' => $invoice_id))->row_array();
-            if ($amount === false || $amount <= 0 || empty($invoice_row)) {
+            if ($amount === false || astpp_le($amount, 0) || empty($invoice_row)) {
                 $this->session->set_flashdata('astpp_notification', gettext('Please enter valid amount.'));
                 redirect(base_url() . 'invoices/invoice_list/');
             }
@@ -1202,7 +1203,7 @@ class Invoices extends MX_Controller
                 $invoice_total_query = $invoice_total_query->result_array();
                 $total_debit = $invoice_total_query[0]['credit'];
             }
-            $credit_total = $total_debit + $amount;
+            $credit_total = astpp_n($total_debit) + astpp_n($amount);
             if ($debit >= $credit_total) {
                 $this->db->where('id', $invoice_id);
                 $this->db->update("invoices", array(
@@ -1239,7 +1240,7 @@ class Invoices extends MX_Controller
                 }
                 $paymnet_insert_array = array(
                     "accountid" => $response_arr["custom"],
-                    "reseller_id" => ($account_data['reseller_id'] > 0) ? $account_data['reseller_id'] : 0,
+                    "reseller_id" => (astpp_gt($account_data['reseller_id'], 0)) ? $account_data['reseller_id'] : 0,
                     "amount" => $credit_total,
                     "tax" => 0,
                     'payment_method' => "Mannual",
@@ -1256,7 +1257,7 @@ class Invoices extends MX_Controller
                 $payment_last_id = $this->db->insert_id();
                 $invoice_insert_array = array(
                     "accountid" => $response_arr["custom"],
-                    "reseller_id" => ($account_data['reseller_id'] > 0) ? $account_data['reseller_id'] : 0,
+                    "reseller_id" => (astpp_gt($account_data['reseller_id'], 0)) ? $account_data['reseller_id'] : 0,
                     "invoiceid" => $invoice_id,
                     "order_item_id" => 0,
                     "charge_type" => "INVPAY",
@@ -1272,7 +1273,7 @@ class Invoices extends MX_Controller
                     // "item_type" => "INVPAY",
                     "created_date" => $date,
                     'before_balance' => $account_balance,
-                    'after_balance' => $account_balance + $amount,
+                    'after_balance' => astpp_n($account_balance) + astpp_n($amount),
                     'quantity' => 1
                 );
                 $this->db->insert("invoice_details", $invoice_insert_array);
@@ -1328,7 +1329,7 @@ class Invoices extends MX_Controller
                 if (isset($_FILES['file']['name']) && $_FILES['file']['name'] != '') {
                     $files = $_FILES['file'];
 
-                    if ($files['size'] < 0 && $files['size'] > 1024) {
+                    if (astpp_lt($files['size'], 0) && $files['size'] > 1024) {
                         $error_file = gettext("The Logo file size shoud not exceed 1MB!");
                     } else {
 
@@ -1361,7 +1362,7 @@ class Invoices extends MX_Controller
                 if (isset($_FILES['file_fav']['name']) && $_FILES['file_fav']['name'] != '') {
                     $files = $_FILES['file_fav'];
                     $error = '';
-                    if ($files['size'] < 0 && $files['size'] > 1024) {
+                    if (astpp_lt($files['size'], 0) && $files['size'] > 1024) {
 
                         $error_fav = gettext("The Favicon file size shoud not exceed 1MB!");
                     } else {
@@ -1428,7 +1429,7 @@ class Invoices extends MX_Controller
 
                         // Extension whitelist (was taken from the 2nd dot-segment, e.g. "x.php.png")
                         $file_name_extention[1] = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
-                        if (! in_array($file_name_extention[1], array('png', 'jpg', 'jpeg'), true)) {
+                        if (! astpp_in_array($file_name_extention[1], array('png', 'jpg', 'jpeg'), true)) {
                             $file_name_extention[1] = 'png';
                         }
                         $file_name = crc32($file_name) . '.' . $file_name_extention[1];
@@ -1446,7 +1447,7 @@ class Invoices extends MX_Controller
                         $file_name_fav_exten = explode(".", $file_name_fav);
                         // Extension whitelist
                         $file_name_fav_exten[1] = strtolower(pathinfo($file_name_fav, PATHINFO_EXTENSION));
-                        if (! in_array($file_name_fav_exten[1], array('png', 'jpg', 'jpeg', 'ico'), true)) {
+                        if (! astpp_in_array($file_name_fav_exten[1], array('png', 'jpg', 'jpeg', 'ico'), true)) {
                             $file_name_fav_exten[1] = 'ico';
                         }
                         $file_name_fav = crc32($file_name_fav) . '.' . $file_name_fav_exten[1];
@@ -1648,7 +1649,7 @@ class Invoices extends MX_Controller
         }
         $grid_fields = json_decode($this->invoices_form->build_invoices_list_for_admin());
         $logintype = $this->session->userdata('logintype');
-        $url = ($logintype == 0 || $logintype == 3) ? "/user/user_invoice_download/" : '/invoices/invoice_download/';
+        $url = (astpp_eq0($logintype) || $logintype == 3) ? "/user/user_invoice_download/" : '/invoices/invoice_download/';
         $currency = $this->common->get_field_name("currency_id", "accounts", array(
             "id" => $accountid
         ));
@@ -1659,21 +1660,21 @@ class Invoices extends MX_Controller
 
             foreach ($query as $key => $value) {
                 $date = strtotime($value['to_date']);
-                $invoice_date = date("Y-m-d", $date);
+                $invoice_date = astpp_date("Y-m-d", $date);
                 $fromdate = strtotime($value['from_date']);
-                $from_date = date("Y-m-d", $fromdate);
+                $from_date = astpp_date("Y-m-d", $fromdate);
                 $duedate = strtotime($value['due_date']);
-                $due_date = date("Y-m-d", $duedate);
+                $due_date = astpp_date("Y-m-d", $duedate);
                 $from_currency = Common_model::$global_config['system_config']['base_currency'];
                 $to_currency = $this->common->get_field_name('currency', 'currency', $accountinfo['currency_id']);
                 if ($from_currency != $to_currency) {
-                    $outstanding = ($value['is_paid'] == 1) ? $value['debit_exchange_rate'] - $value['credit_exchange_rate'] : 0.00;
+                    $outstanding = ($value['is_paid'] == 1) ? astpp_n($value['debit_exchange_rate']) - astpp_n($value['credit_exchange_rate']) : 0.00;
 
-                    $amount = ($value['debit_exchange_rate'] > 0) ? $value['debit_exchange_rate'] : $value['credit_exchange_rate'];
+                    $amount = (astpp_gt($value['debit_exchange_rate'], 0)) ? $value['debit_exchange_rate'] : $value['credit_exchange_rate'];
                 } else {
-                    $outstanding = ($value['is_paid'] == 1) ? $value['debit'] - $value['credit'] : 0.00;
+                    $outstanding = ($value['is_paid'] == 1) ? astpp_n($value['debit']) - astpp_n($value['credit']) : 0.00;
 
-                    $amount = ($value['debit'] > 0) ? $value['debit'] : $value['credit'];
+                    $amount = (astpp_gt($value['debit'], 0)) ? $value['debit'] : $value['credit'];
                 }
                 $last_payment_date = '';
 
@@ -1686,7 +1687,7 @@ class Invoices extends MX_Controller
                     $last_payment_date = $invoice_total_query[0]['created_date'];
                     if ($last_payment_date) {
                         $payment_date = strtotime($last_payment_date);
-                        $payment_last = date("Y-m-d", $payment_date);
+                        $payment_last = astpp_date("Y-m-d", $payment_date);
                     } else {
                         $payment_last = '';
                     }
@@ -1710,7 +1711,7 @@ class Invoices extends MX_Controller
                     $credit_total = $credit_query->result_array();
 
                     $grand_credit_total = $credit_total[0]['grand_credit'];
-                    $grandcredit = $grand_total - $grand_credit_total;
+                    $grandcredit = astpp_n($grand_total) - astpp_n($grand_credit_total);
                     $grand_credit = $this->common->currency_decimal($grandcredit) . ' ' . $currency_id;
                 }
 
@@ -1720,7 +1721,7 @@ class Invoices extends MX_Controller
                     $payment_last = $invoice_date;
                     $outstanding = 0;
                 } else {
-                    if ($outstanding > 0) {
+                    if (astpp_gt($outstanding, 0)) {
                         $payment = "<a style='padding: 0 8px;' href='" . base_url() . "invoices/invoice_summary/" . $value["id"] . "' class='btn btn-warning'  title='Payment'>".gettext("Unpaid")."</i></a>";
                     } else {
                         $payment = " <button style='padding: 0 8px;' type='button'  class='btn btn-success'>".gettext("Paid")."</button>";
@@ -1758,8 +1759,8 @@ class Invoices extends MX_Controller
                         $download . '' . $payment
                     )
                 );
-                $total_value = $total_value + $value['credit'];
-                $ountstanding_value = $ountstanding_value + $outstanding;
+                $total_value = astpp_n($total_value) + astpp_n($value['credit']);
+                $ountstanding_value = astpp_n($ountstanding_value) + astpp_n($outstanding);
             }
         }
 
@@ -1780,23 +1781,23 @@ class Invoices extends MX_Controller
         $created_date = '';
         foreach ($query as $key => $value) {
             $date = strtotime($value['invoice_date']);
-            $invoice_date = date("d/m/Y", $date);
+            $invoice_date = astpp_date("d/m/Y", $date);
             $fromdate = strtotime($value['from_date']);
-            $from_date = date("d/m/Y", $fromdate);
+            $from_date = astpp_date("d/m/Y", $fromdate);
             $duedate = strtotime($value['due_date']);
-            $due_date = date("d/m/Y", $duedate);
+            $due_date = astpp_date("d/m/Y", $duedate);
             $outstanding = $value['amount'];
             $invoice_total_query = $this->db_model->select("sum(debit) as debit,sum(credit) as credit,created_date", "invoice_details", array(
                 "invoiceid" => $value['id']
             ), "created_date", "DESC", "1", "0");
             if ($invoice_total_query->num_rows() > 0) {
                 $invoice_total_query = $invoice_total_query->result_array();
-                $outstanding -= $invoice_total_query[0]['credit'];
+                $outstanding = astpp_n($outstanding) - astpp_n($invoice_total_query[0]['credit']);
 
                 $last_payment_date = $invoice_total_query[0]['created_date'];
                 if ($last_payment_date) {
                     $payment_date = strtotime($last_payment_date);
-                    $payment_last = date("d/m/Y", $payment_date);
+                    $payment_last = astpp_date("d/m/Y", $payment_date);
                 } else {
                     $payment_last = '';
                 }
@@ -1823,11 +1824,11 @@ class Invoices extends MX_Controller
             if ($credit_query->num_rows() > 0) {
                 $credit_total = $credit_query->result_array();
                 $grand_credit_total = $credit_total[0]['grand_credit'];
-                $grandcredit = $grand_total - $grand_credit_total;
+                $grandcredit = astpp_n($grand_total) - astpp_n($grand_credit_total);
                 $grand_credit = $this->common->currency_decimal($grandcredit) . ' ' . $currency_id;
             }
             $download = '<a href="' . base_url() . '/user/user_invoice_download/' . $value['id'] . '/00' . $value['invoice_prefix'] . $value['invoiceid'] . '" class="btn btn-royelblue btn-sm"  title="Download Invoice" ><i class="fa fa-cloud-download fa-fw"></i></a>&nbsp';
-            if ($outstanding > 0) {
+            if (astpp_gt($outstanding, 0)) {
                 $payment = " <a style='padding: 0 8px;' href='" . base_url() . "user/user_invoice_payment/" . $value["id"] . "' class='btn btn-warning'  title='Payment'>".gettext("Unpaid")."</a>";
             } else {
                 $payment = " <button style='padding: 0 8px;' class='btn btn-success' type='button'>".gettext("Paid")."</button>";
@@ -1838,7 +1839,7 @@ class Invoices extends MX_Controller
             $account_array = $account_arr->result_array();
             $date = strtotime($value['invoice_date']);
             $date = strtotime("+7 day", $date);
-            $time = date("Y-m-d h:i:s ", $date);
+            $time = astpp_date("Y-m-d h:i:s ", $date);
             $json_data['rows'][] = array(
                 'cell' => array(
                     $value['invoice_prefix'] . $value['invoiceid'] . ' (' . $value['type'] . ')',
@@ -1899,7 +1900,7 @@ class Invoices extends MX_Controller
         $cdr_list = array();
         if ($cdrs_query->num_rows() > 0) {
             foreach ($cdrs_query->result_array() as $cdr) {
-                $cdr['charge'] = $this->common_model->calculate_currency($cdr['debit'] - $cdr['credit']);
+                $cdr['charge'] = $this->common_model->calculate_currency(astpp_n($cdr['debit']) - astpp_n($cdr['credit']));
                 array_push($cdr_list, $cdr);
             }
         }
@@ -1945,10 +1946,10 @@ class Invoices extends MX_Controller
                         $this->session->set_userdata('invoice_note', $data['notes']);
                     }
                     $date = date('Y-m-d');
-                    $feture_date = date('Y-m-d', strtotime($date));
+                    $feture_date = astpp_date('Y-m-d', strtotime($date));
                     $from_date = $data['fromdate'];
                     $genrated_date = $data['todate'];
-                    $to_date = date('Y-m-d', strtotime($genrated_date));
+                    $to_date = astpp_date('Y-m-d', strtotime($genrated_date));
                     if ($to_date > $feture_date) {
                         $this->session->set_flashdata('astpp_notification', gettext('To date should not be greater than current date.'));
                         redirect(base_url() . "invoices/invoice_list/");
@@ -1965,7 +1966,7 @@ class Invoices extends MX_Controller
                         astpp_cron_background('BroadcastEmail');
                         $invoice_data_count = 0;
                         $invoice_conf = array();
-                        if ($accountdata['reseller_id'] == 0) {
+                        if (astpp_eq0($accountdata['reseller_id'])) {
                             $where = array(
                                 "accountid" => 1
                             );
@@ -1988,21 +1989,21 @@ class Invoices extends MX_Controller
 
                         $last_invoice_ID = $this->get_invoice_date("number");
 
-                        if ($last_invoice_ID && $last_invoice_ID > 0) {
-                            $last_invoice_ID = ($last_invoice_ID + 1);
+                        if ($last_invoice_ID && astpp_gt($last_invoice_ID, 0)) {
+                            $last_invoice_ID = (astpp_n($last_invoice_ID) + 1);
                         } else {
                             $last_invoice_ID = $invoice_conf['invoice_start_from'];
                         }
                         $last_invoice_ID = str_pad($last_invoice_ID, (strlen($last_invoice_ID) + 4), '0', STR_PAD_LEFT);
                         if ($accountdata['posttoexternal'] == 1) {
-                            $balance = ($accountdata['credit_limit'] - $accountdata['balance']);
+                            $balance = (astpp_n($accountdata['credit_limit']) - astpp_n($accountdata['balance']));
                         } else {
                             $balance = $accountdata['balance'];
                         }
-                        if ($invoice_conf['interval'] > 0) {
-                            $due_date = gmdate("Y-m-d H:i:s", strtotime(gmdate("Y-m-d H:i:s") . " +" . $invoice_conf['interval'] . " days"));
+                        if (astpp_gt($invoice_conf['interval'], 0)) {
+                            $due_date = astpp_gmdate("Y-m-d H:i:s", strtotime(gmdate("Y-m-d H:i:s") . " +" . $invoice_conf['interval'] . " days"));
                         } else {
-                            $due_date = gmdate("Y-m-d H:i:s", strtotime(gmdate("Y-m-d H:i:s") . " +7 days"));
+                            $due_date = astpp_gmdate("Y-m-d H:i:s", strtotime(gmdate("Y-m-d H:i:s") . " +7 days"));
                         }
 
                         $invoice_data = array(
@@ -2082,7 +2083,7 @@ class Invoices extends MX_Controller
 
     function Sec2Minutes($seconds)
     {
-        return sprintf("%02.2d:%02.2d", floor($seconds / 60), $seconds % 60);
+        return sprintf("%02.2d:%02.2d", astpp_floor(astpp_n($seconds) / 60), astpp_n($seconds) % 60);
     }
 
     function calculate_currency($amount, $accountdata)
@@ -2099,7 +2100,7 @@ class Invoices extends MX_Controller
             $to_currency = $from_currency;
         }
 
-        $cal_amount = ($amount * $to_currency) / $from_currency;
+        $cal_amount = astpp_div(astpp_n($amount) * astpp_n($to_currency), $from_currency);
         return $cal_amount;
     }
 
@@ -2109,9 +2110,11 @@ class Invoices extends MX_Controller
             "name" => "decimalpoints"
         ));
         $dp = $dp->result_array();
-        $dp = $dp[0]["value"];
+        // PHP8: money_format() was removed. In the default "C" monetary locale
+        // money_format('%.Nn') printed the plain number with N decimals (2 if N is empty).
+        $dp = (isset($dp[0]["value"]) && $dp[0]["value"] !== '') ? (int) $dp[0]["value"] : 2;
 
-        return money_format('%.' . $dp . 'n', $amount);
+        return astpp_number_format((float) $amount, $dp, '.', '');
     }
 
     function date_diff_custom($end = '2020-06-09 10:30:00', $out_in_array = false)
@@ -2167,7 +2170,7 @@ class Invoices extends MX_Controller
                         $query = $query->result_array();
                         $sub_total = $query["0"]["total"];
                     }
-                    $tax_total = (($sub_total * ($tax_value['taxes_rate'] / 100)) + $tax_value['taxes_amount']);
+                    $tax_total = ((astpp_n($sub_total) * (astpp_n($tax_value['taxes_rate']) / 100)) + astpp_n($tax_value['taxes_amount']));
                     $tax_array = array(
                         "invoiceid" => $invoiceid,
                         "title" => "TAX",

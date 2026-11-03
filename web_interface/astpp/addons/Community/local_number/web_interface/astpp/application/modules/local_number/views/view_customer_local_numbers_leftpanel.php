@@ -147,7 +147,7 @@
                         <span class="btn btn-line-warning"> <i class="fa fa-plus-circle fa-lg"></i>Add</span>
                     </div>
                     <?php } ?>
-                    <?php  if((isset($permissioninfo['local_number']['local_number_list']['search'])) && ($permissioninfo['local_number']['local_number_list']['search']==0)  && ($permissioninfo['login_type'] == '2' or $permissioninfo['login_type'] == '-1' or $permissioninfo['login_type'] == '0' or $permissioninfo['login_type'] == '3')){ ?>
+                    <?php  if((isset($permissioninfo['local_number']['local_number_list']['search'])) && (astpp_eq0($permissioninfo['local_number']['local_number_list']['search']))  && ($permissioninfo['login_type'] == '2' or $permissioninfo['login_type'] == '-1' or $permissioninfo['login_type'] == '0' or $permissioninfo['login_type'] == '3')){ ?>
                     <div id="show_search" class="float-right col-md-4 p-0">
                         <input type="text" name="left_panel_quick_search" id="left_panel_quick_search" class="form-control form-control-lg m-0" value="<?php echo $this->session->userdata('left_panel_search_'.$accounttype.'_animap')?>" placeholder="Search"/>
                     </div>

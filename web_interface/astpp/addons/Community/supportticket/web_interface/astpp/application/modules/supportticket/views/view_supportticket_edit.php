@@ -397,7 +397,7 @@ p {
 													<div class="col-md-4 h-100">				
 
 
-														<h5 class="float-right">  <?php if($support_ticket['priority'] ==0){echo '<span class="btn badge-danger p-2">'.gettext("High").'</span>';}elseif($support_ticket['priority'] ==1){echo '<span class="btn badge-warning">'.gettext("Normal").'</span>';}else{ echo '<span class="btn badge-success p-2" >'.gettext("Low").'</span>';} ?> </h5> 
+														<h5 class="float-right">  <?php if(astpp_eq0($support_ticket['priority'])){echo '<span class="btn badge-danger p-2">'.gettext("High").'</span>';}elseif($support_ticket['priority'] ==1){echo '<span class="btn badge-warning">'.gettext("Normal").'</span>';}else{ echo '<span class="btn badge-success p-2" >'.gettext("Low").'</span>';} ?> </h5> 
 
 													</div>
 
@@ -405,7 +405,7 @@ p {
 													<select class='selectpicker form-control form-control-lg' data-live-search="true" name="ticket_type">
 
 															<!-- Manish Issue 694 -->
-															<?php if($support_ticket['ticket_type'] == 0 || $support_ticket['ticket_type'] == 1 || $support_ticket['ticket_type'] == 2 || $support_ticket['ticket_type'] == 3 || $support_ticket['ticket_type'] == 4 || $support_ticket['ticket_type'] == 5){?>
+															<?php if(astpp_eq0($support_ticket['ticket_type']) || $support_ticket['ticket_type'] == 1 || $support_ticket['ticket_type'] == 2 || $support_ticket['ticket_type'] == 3 || $support_ticket['ticket_type'] == 4 || $support_ticket['ticket_type'] == 5){?>
 																	<option value="1" <?php if($support_ticket['ticket_type'] == 1){ echo "selected" ;} ?>><?php echo gettext("Answerd"); ?></option>
 															<?php }?>
 															<option value="0"><?php echo gettext("Open"); ?></option>
@@ -554,7 +554,7 @@ p {
 						if($login_type == 1){ ?>
 						
 						<table align="center" style="width:100%;   color:#000;" class="table table-bordered m-0">
-						<?php }else if($login_type == 0){
+						<?php }else if(astpp_eq0($login_type)){
 							  
 							 ?>
 						<table align="center" style="width:100%;   color:#000;" class="table table-bordered m-0">
@@ -569,7 +569,7 @@ p {
 									<p style="padding-right: 10px;color: black;" >	<?php 
 										if($login_type == 1){
 											echo gettext("Reseller");
-										}else if($login_type == 0){
+										}else if(astpp_eq0($login_type)){
 											echo gettext("Customer");
 										}else{
 											echo gettext("Admin");

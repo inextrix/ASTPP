@@ -1,6 +1,7 @@
 <?php
 
 defined ( 'BASEPATH' ) or exit ( 'No direct script access allowed' );
+#[\AllowDynamicProperties]
 abstract class API_Controller extends CI_Controller {
 	
 	/**
@@ -144,7 +145,7 @@ abstract class API_Controller extends CI_Controller {
 		}
 		
 		// Set up our GET variables
-		$this->_get_args = array_merge ( $this->_get_args, $this->uri->ruri_to_assoc () );
+		$this->_get_args = astpp_array_merge ( $this->_get_args, $this->uri->ruri_to_assoc () );
 		
 		// $this->load->library('security');
 		
@@ -167,7 +168,7 @@ abstract class API_Controller extends CI_Controller {
 		}
 		
 		// Merge both for one mega-args variable
-		$this->_args = array_merge ( $this->_get_args, $this->_put_args, $this->_post_args, $this->_delete_args, $this->{'_' . $this->request->method . '_args'} );
+		$this->_args = astpp_array_merge ( $this->_get_args, $this->_put_args, $this->_post_args, $this->_delete_args, $this->{'_' . $this->request->method . '_args'} );
 		
 		// Which format should the data be returned in?
 		$this->response = new stdClass ();
@@ -204,7 +205,7 @@ abstract class API_Controller extends CI_Controller {
 	 *        	The arguments passed to the controller method.
 	 */
 	public function _remap($object_called, $arguments) {
-		$pattern = '/^(.*)\.(' . implode ( '|', array_keys ( $this->_supported_formats ) ) . ')$/';
+		$pattern = '/^(.*)\.(' . astpp_implode ( '|', astpp_array_keys ( $this->_supported_formats ) ) . ')$/';
 		if (preg_match ( $pattern, $object_called, $matches )) {
 			$object_called = $matches [1];
 		}
@@ -368,7 +369,7 @@ abstract class API_Controller extends CI_Controller {
 			// Check all formats against the HTTP_ACCEPT header
 			foreach ( $this->_supported_formats as $format => $mime ) {
 				if (strpos ( $match = $this->input->server ( 'CONTENT_TYPE' ), ';' )) {
-					$match = current ( explode ( ';', $match ) );
+					$match = astpp_current ( explode ( ';', $match ) );
 				}
 				
 				if ($match == $mime) {
@@ -388,7 +389,7 @@ abstract class API_Controller extends CI_Controller {
 	 * @return string The output format.
 	 */
 	protected function _detect_output_format() {
-		$pattern = '/\.(' . implode ( '|', array_keys ( $this->_supported_formats ) ) . ')$/';
+		$pattern = '/\.(' . astpp_implode ( '|', astpp_array_keys ( $this->_supported_formats ) ) . ')$/';
 		
 		// Check if a file extension is used
 		if (preg_match ( $pattern, $this->uri->uri_string (), $matches )) {
@@ -396,9 +397,9 @@ abstract class API_Controller extends CI_Controller {
 		}		
 
 		// Check if a file extension is used
-		elseif ($this->_get_args and ! is_array ( end ( $this->_get_args ) ) and preg_match ( $pattern, end ( $this->_get_args ), $matches )) {
+		elseif ($this->_get_args and ! is_array ( astpp_end ( $this->_get_args ) ) and preg_match ( $pattern, astpp_end ( $this->_get_args ), $matches )) {
 			// The key of the last argument
-			$last_key = end ( array_keys ( $this->_get_args ) );
+			$last_key = astpp_end ( astpp_array_keys ( $this->_get_args ) );
 			
 			// Remove the extension from arguments too
 			$this->_get_args [$last_key] = preg_replace ( $pattern, '', $this->_get_args [$last_key] );
@@ -408,14 +409,14 @@ abstract class API_Controller extends CI_Controller {
 		}
 		
 		// A format has been passed as an argument in the URL and it is supported
-		if (isset ( $this->_get_args ['format'] ) and array_key_exists ( $this->_get_args ['format'], $this->_supported_formats )) {
+		if (isset ( $this->_get_args ['format'] ) and astpp_array_key_exists ( $this->_get_args ['format'], $this->_supported_formats )) {
 			return $this->_get_args ['format'];
 		}
 		
 		// Otherwise, check the HTTP_ACCEPT (if it exists and we are allowed)
 		if ($this->config->item ( 'api_ignore_http_accept' ) === FALSE and $this->input->server ( 'HTTP_ACCEPT' )) {
 			// Check all formats against the HTTP_ACCEPT header
-			foreach ( array_keys ( $this->_supported_formats ) as $format ) {
+			foreach ( astpp_array_keys ( $this->_supported_formats ) as $format ) {
 				// Has this format been requested?
 				if (strpos ( $this->input->server ( 'HTTP_ACCEPT' ), $format ) !== FALSE) {
 					// If not HTML or XML assume its right and send it on its way
@@ -467,7 +468,7 @@ abstract class API_Controller extends CI_Controller {
 			}
 		}
 		
-		if (in_array ( $method, $this->allowed_http_methods ) && method_exists ( $this, '_parse_' . $method )) {
+		if (astpp_in_array ( $method, $this->allowed_http_methods ) && method_exists ( $this, '_parse_' . $method )) {
 			return $method;
 		}
 		
@@ -559,7 +560,7 @@ abstract class API_Controller extends CI_Controller {
 		parse_str ( parse_url ( $_SERVER ['REQUEST_URI'], PHP_URL_QUERY ), $get );
 		
 		// Merge both the URI segments and GET params
-		$this->_get_args = array_merge ( $this->_get_args, $get );
+		$this->_get_args = astpp_array_merge ( $this->_get_args, $get );
 	}
 	
 	/**
@@ -587,7 +588,7 @@ abstract class API_Controller extends CI_Controller {
 			return $this->_get_args;
 		}
 		
-		return array_key_exists ( $key, $this->_get_args ) ? $this->_xss_clean ( $this->_get_args [$key], $xss_clean ) : FALSE;
+		return astpp_array_key_exists ( $key, $this->_get_args ) ? $this->_xss_clean ( $this->_get_args [$key], $xss_clean ) : FALSE;
 	}
 	
 	/**
@@ -604,7 +605,7 @@ abstract class API_Controller extends CI_Controller {
 			return $this->_post_args;
 		}
 		
-		return array_key_exists ( $key, $this->_post_args ) ? $this->_xss_clean ( $this->_post_args [$key], $xss_clean ) : FALSE;
+		return astpp_array_key_exists ( $key, $this->_post_args ) ? $this->_xss_clean ( $this->_post_args [$key], $xss_clean ) : FALSE;
 	}
 	
 	/**
@@ -638,7 +639,7 @@ abstract class API_Controller extends CI_Controller {
 			$ip = trim ( $ip );
 		}
 		
-		if (! in_array ( $this->input->ip_address (), $whitelist )) {
+		if (! astpp_in_array ( $this->input->ip_address (), $whitelist )) {
 			$this->response ( array (
 					'status' => false,
 					'error' => 'Not authorized' 

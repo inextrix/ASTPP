@@ -59,7 +59,7 @@ $_cr = array(
 );
 foreach ($_cr as $_r) {
 	for ($i = $_r[0]; $i <= $_r[1]; $i++) {
-		$cw[$i + 31] = $_r[2];
+		$cw[astpp_n($i) + 31] = $_r[2];
 	}
 }
 ?>

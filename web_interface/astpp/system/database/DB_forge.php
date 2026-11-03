@@ -24,6 +24,7 @@
  * @author		ExpressionEngine Dev Team
  * @link		http://codeigniter.com/user_guide/database/
  */
+#[\AllowDynamicProperties]
 class CI_DB_forge {
 
 	var $fields = array();
@@ -164,7 +165,7 @@ class CI_DB_forge {
 
 		if (is_array($field))
 		{
-			$this->fields = array_merge($this->fields, $field);
+			$this->fields = astpp_array_merge($this->fields, $field);
 		}
 
 	}
@@ -185,7 +186,7 @@ class CI_DB_forge {
 			show_error('A table name is required for that operation.');
 		}
 
-		if (count($this->fields) == 0)
+		if (astpp_count($this->fields) == 0)
 		{
 			show_error('Field information is required.');
 		}
@@ -263,7 +264,7 @@ class CI_DB_forge {
 		{
 			$this->add_field(array($k => $field[$k]));
 
-			if (count($this->fields) == 0)
+			if (astpp_count($this->fields) == 0)
 			{
 				show_error('Field information is required.');
 			}
@@ -341,7 +342,7 @@ class CI_DB_forge {
 
 			$this->add_field(array($k => $field[$k]));
 
-			if (count($this->fields) == 0)
+			if (astpp_count($this->fields) == 0)
 			{
 				show_error('Field information is required.');
 			}

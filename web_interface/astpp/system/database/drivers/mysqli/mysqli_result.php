@@ -26,6 +26,7 @@
  * @author		ExpressionEngine Dev Team
  * @link		http://codeigniter.com/user_guide/database/
  */
+#[\AllowDynamicProperties]
 class CI_DB_mysqli_result extends CI_DB_result {
 
 	/**
@@ -90,8 +91,8 @@ class CI_DB_mysqli_result extends CI_DB_result {
 		{
 			preg_match('/([a-zA-Z]+)(\(\d+\))?/', $field->Type, $matches);
 
-			$type = (array_key_exists(1, $matches)) ? $matches[1] : NULL;
-			$length = (array_key_exists(2, $matches)) ? preg_replace('/[^\d]/', '', $matches[2]) : NULL;
+			$type = (astpp_array_key_exists(1, $matches)) ? $matches[1] : NULL;
+			$length = (astpp_array_key_exists(2, $matches)) ? preg_replace('/[^\d]/', '', $matches[2]) : NULL;
 
 			$F				= new stdClass();
 			$F->name		= $field->Field;

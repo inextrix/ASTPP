@@ -188,7 +188,7 @@ $(document).ready(function(){
 											data-live-search='true'
 											onchange="login_type_change(this.value);">
 											<option value='0'
-												<?php if (isset($login_type) && $login_type == 0) { echo "selected"; } ?>><?php echo gettext("Admin")?></option>
+												<?php if (isset($login_type) && astpp_eq0($login_type)) { echo "selected"; } ?>><?php echo gettext("Admin")?></option>
 											<option value='1'
 												<?php if (isset($login_type) && $login_type == 1) { echo "selected"; } ?>><?php echo gettext("Reseller")?></option>
 										</select>
@@ -248,10 +248,10 @@ foreach ($permission_main_array as $module_key => $module_value) {
 													id="<?=$first_sub_module_key."_".$sub_module_key."_main_table";?>">
 													<tr>
 		<?php
-            $array_count = count($sub_module_value);
+            $array_count = astpp_count($sub_module_value);
             for ($i = 0; $i < $array_count; $i ++) {
                 if ($sub_module_value[$i] != 'main') {
-                    $loop_flag = $i / 4;
+                    $loop_flag = astpp_n($i) / 4;
                     $loop_value_explode = explode('.', $loop_flag);
                     ?>
 			<td class="text-dark"

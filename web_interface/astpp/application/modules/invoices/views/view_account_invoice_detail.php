@@ -125,7 +125,7 @@ Addres : <?=$accountinfo['address_1']?>
 				</tr>
      
       <?php
-    if (sizeof($invoice_cdr_list) > 0) {
+    if (astpp_sizeof($invoice_cdr_list) > 0) {
         foreach ($invoice_cdr_list as $key => $value) {
             ?>
             <TR>
@@ -153,7 +153,7 @@ Addres : <?=$accountinfo['address_1']?>
 				</tr>
     
       <?php
-    if (sizeof($invoice_total_list) > 0) {
+    if (astpp_sizeof($invoice_total_list) > 0) {
         foreach ($invoice_total_list as $key => $value) {
             ?>
             <TR>

@@ -26,6 +26,7 @@
  * @author		ExpressionEngine Dev Team
  * @link		http://codeigniter.com/user_guide/libraries/file_uploading.html
  */
+#[\AllowDynamicProperties]
 class CI_Upload {
 
 	public $max_size = 0;
@@ -63,7 +64,7 @@ class CI_Upload {
 	 */
 	public function __construct($props = array())
 	{
-		if (count($props) > 0)
+		if (astpp_count($props) > 0)
 		{
 			$this->initialize($props);
 		}
@@ -235,9 +236,9 @@ class CI_Upload {
 		}
 
 		// Convert the file size to kilobytes
-		if ($this->file_size > 0)
+		if (astpp_gt($this->file_size, 0))
 		{
-			$this->file_size = round($this->file_size / 1024, 2);
+			$this->file_size = astpp_round(astpp_n($this->file_size) / 1024, 2);
 		}
 
 		// Is the file size within the allowed maximum?
@@ -259,7 +260,7 @@ class CI_Upload {
 		$this->file_name = $this->clean_file_name($this->file_name);
 
 		// Truncate the file name if it's too long
-		if ($this->max_filename > 0)
+		if (astpp_gt($this->max_filename, 0))
 		{
 			$this->file_name = $this->limit_filename_length($this->file_name, $this->max_filename);
 		}
@@ -556,12 +557,12 @@ class CI_Upload {
 		$png_mimes  = array('image/x-png');
 		$jpeg_mimes = array('image/jpg', 'image/jpe', 'image/jpeg', 'image/pjpeg');
 
-		if (in_array($this->file_type, $png_mimes))
+		if (astpp_in_array($this->file_type, $png_mimes))
 		{
 			$this->file_type = 'image/png';
 		}
 
-		if (in_array($this->file_type, $jpeg_mimes))
+		if (astpp_in_array($this->file_type, $jpeg_mimes))
 		{
 			$this->file_type = 'image/jpeg';
 		}
@@ -572,7 +573,7 @@ class CI_Upload {
 							'image/png',
 						);
 
-		return (in_array($this->file_type, $img_mimes, TRUE)) ? TRUE : FALSE;
+		return (astpp_in_array($this->file_type, $img_mimes, TRUE)) ? TRUE : FALSE;
 	}
 
 	// --------------------------------------------------------------------
@@ -589,7 +590,7 @@ class CI_Upload {
 			return TRUE;
 		}
 
-		if (count($this->allowed_types) == 0 OR ! is_array($this->allowed_types))
+		if (astpp_count($this->allowed_types) == 0 OR ! is_array($this->allowed_types))
 		{
 			$this->set_error('upload_no_file_types');
 			return FALSE;
@@ -597,7 +598,7 @@ class CI_Upload {
 
 		$ext = strtolower(ltrim($this->file_ext, '.'));
 
-		if ( ! in_array($ext, $this->allowed_types))
+		if ( ! astpp_in_array($ext, $this->allowed_types))
 		{
 			return FALSE;
 		}
@@ -605,7 +606,7 @@ class CI_Upload {
 		// Images get some additional checks
 		$image_types = array('gif', 'jpg', 'jpeg', 'png', 'jpe');
 
-		if (in_array($ext, $image_types))
+		if (astpp_in_array($ext, $image_types))
 		{
 			if (getimagesize($this->file_temp) === FALSE)
 			{
@@ -622,7 +623,7 @@ class CI_Upload {
 
 		if (is_array($mime))
 		{
-			if (in_array($this->file_type, $mime, TRUE))
+			if (astpp_in_array($this->file_type, $mime, TRUE))
 			{
 				return TRUE;
 			}
@@ -643,7 +644,7 @@ class CI_Upload {
 	 */
 	public function is_allowed_filesize()
 	{
-		if ($this->max_size != 0 AND $this->file_size > $this->max_size)
+		if ((!astpp_eq0($this->max_size)) AND $this->file_size > $this->max_size)
 		{
 			return FALSE;
 		} else
@@ -670,12 +671,12 @@ class CI_Upload {
 		{
 			$D = @getimagesize($this->file_temp);
 
-			if ($this->max_width > 0 AND $D['0'] > $this->max_width)
+			if (astpp_gt($this->max_width, 0) AND $D['0'] > $this->max_width)
 			{
 				return FALSE;
 			}
 
-			if ($this->max_height > 0 AND $D['1'] > $this->max_height)
+			if (astpp_gt($this->max_height, 0) AND $D['1'] > $this->max_height)
 			{
 				return FALSE;
 			}
@@ -737,7 +738,7 @@ class CI_Upload {
 	public function get_extension($filename)
 	{
 		$x = explode('.', $filename);
-		return '.'.end($x);
+		return '.'.astpp_end($x);
 	}
 
 	// --------------------------------------------------------------------
@@ -807,10 +808,10 @@ class CI_Upload {
 		{
 			$parts = explode('.', $filename);
 			$ext = '.'.array_pop($parts);
-			$filename = implode('.', $parts);
+			$filename = astpp_implode('.', $parts);
 		}
 
-		return substr($filename, 0, ($length - strlen($ext))).$ext;
+		return substr($filename, 0, (astpp_n($length) - strlen($ext))).$ext;
 	}
 
 	// --------------------------------------------------------------------
@@ -835,13 +836,13 @@ class CI_Upload {
 
 		if (function_exists('memory_get_usage') && memory_get_usage() && ini_get('memory_limit') != '')
 		{
-			$current = ini_get('memory_limit') * 1024 * 1024;
+			$current = astpp_n(ini_get('memory_limit')) * 1024 * 1024;
 
 			// There was a bug/behavioural change in PHP 5.2, where numbers over one million get output
 			// into scientific notation.  number_format() ensures this number is an integer
 			// http://bugs.php.net/bug.php?id=43053
 
-			$new_memory = number_format(ceil(filesize($file) + $current), 0, '.', '');
+			$new_memory = astpp_number_format(astpp_ceil(filesize($file) + astpp_n($current)), 0, '.', '');
 
 			ini_set('memory_limit', $new_memory); // When an integer is used, the value is measured in bytes. - PHP.net
 		}
@@ -951,7 +952,7 @@ class CI_Upload {
 	{
 		global $mimes;
 
-		if (count($this->mimes) == 0)
+		if (astpp_count($this->mimes) == 0)
 		{
 			if (defined('ENVIRONMENT') AND is_file(APPPATH.'config/'.ENVIRONMENT.'/mimes.php'))
 			{
@@ -995,7 +996,7 @@ class CI_Upload {
 
 		foreach ($parts as $part)
 		{
-			if ( ! in_array(strtolower($part), $this->allowed_types) OR $this->mimes_types(strtolower($part)) === FALSE)
+			if ( ! astpp_in_array(strtolower($part), $this->allowed_types) OR $this->mimes_types(strtolower($part)) === FALSE)
 			{
 				$filename .= '.'.$part.'_';
 			} else

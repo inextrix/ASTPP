@@ -33,6 +33,7 @@ defined ( 'BASEPATH' ) or exit ( 'No direct script access allowed' );
  * Included accounts api controller as that is having all functions belogs and accounts and we are validating account for each api request.
  */
 require APPPATH . '/libraries/API_Controller.php';
+#[\AllowDynamicProperties]
 class Account extends API_Controller {
 	/**
 	 * Define blank variable to get post value
@@ -123,7 +124,7 @@ class Account extends API_Controller {
 		$function = isset ( $this->postdata ['action'] ) ? $this->postdata ['action'] : '';
 		if ($function != '') {
 			$function = '_profile_' . $function;
-			if (( int ) method_exists ( $this, $function ) > 0) {
+			if (astpp_gt(( int ) method_exists ( $this, $function ), 0)) {
 				$this->$function ();
 			} else {
 				$this->api_log->write_log ('ERROR',"Unknown Method.");
@@ -300,7 +301,7 @@ class Account extends API_Controller {
 				$password_update_flag=true;
 				$password_updated_fields.= 'Sip Device ';
 			}else{
-				$incorrect_password+=$incorrect_password+1;
+				$incorrect_password = astpp_n($incorrect_password) + astpp_n(astpp_n($incorrect_password)+1);
 				$this->api_log->write_log ( 'info',"sip device password is not match with old password.");
 			}
 		}else{
@@ -321,7 +322,7 @@ class Account extends API_Controller {
 				$password_update_flag=true;
 				$password_updated_fields.= 'accounts,';	
 			}else{
-				$incorrect_password = $incorrect_password + 1;
+				$incorrect_password = astpp_n($incorrect_password) + 1;
 				$this->api_log->write_log ( 'info',"Account password is not matched with old_password.");
 			}
 		}else{
@@ -438,13 +439,13 @@ class Account extends API_Controller {
     		}
 	}
 	protected function _authorize_account($account_info, $balance = true, $credit_limit = true) {
-		if (@$account_info ['sd_status'] > 0) {
+		if (@astpp_gt($account_info ['sd_status'], 0)) {
 			$this->response ( array (
 				'status'=> false,
 				'error' => $this->lang->line ( 'error_status' ) 
 			), 400 );
 		}
-		if ($account_info ['deleted'] > 0) {
+		if (astpp_gt($account_info ['deleted'], 0)) {
 			$this->response ( array (
 				'status'=> false,
 				'error' => $this->lang->line ( 'error_status' ) 
@@ -458,7 +459,7 @@ class Account extends API_Controller {
 		$account_info ['expiry']     = $this->common->convert_GMT_to ( '', '', $account_info ['expiry'], $account_info ['timezone_id'] );
 		
 		if (@$account_info ['balance'] != '' && @$account_info ['credit_limit'] != '' && @$account_info ['posttoexternal'] != '') {
-			$account_info ['display_balance'] = ($account_info ['balance']) + ($account_info ['credit_limit'] * $account_info ['posttoexternal']);
+			$account_info ['display_balance'] = (astpp_n($account_info ['balance'])) + (astpp_n($account_info ['credit_limit']) * astpp_n($account_info ['posttoexternal']));
 			$account_info ['display_balance'] = $this->common_model->calculate_currency ( $account_info ['display_balance'], '', $account_info ['currency_code'], TRUE, TRUE );
 		}
 		if (isset ( $account_info ['credit_limit'] )) {
@@ -497,7 +498,7 @@ class Account extends API_Controller {
 		$template_info = $template [0];
 		$this->api_log->write_log ( 'info', $this->db->last_query () );
 		// Getting parent invoice configuration information
-		$accountinfo ['reseller_id'] = ($accountinfo ['reseller_id'] > 0) ? $accountinfo ['reseller_id'] : 1;
+		$accountinfo ['reseller_id'] = (astpp_gt($accountinfo ['reseller_id'], 0)) ? $accountinfo ['reseller_id'] : 1;
 		$invoice_conf_query = $this->db_model->getSelect ( "*", "invoice_conf", array (
 			'accountid' => $accountinfo ['reseller_id'] 
 		) );
@@ -616,7 +617,7 @@ class Account extends API_Controller {
 					'error'  => $this->lang->line ( 'something_wrong_contact_admin' )
 				), 400 );
 		}
-		$new_count  = $string_cnt - 3 ;
+		$new_count  = astpp_n($string_cnt) - 3 ;
 		$sip_number = substr($string, 0, $new_count);
 		$this->db->where(array("username"=>$sip_number));
 		$sip_devices_res = (array) $this->db->get('sip_devices')->first_row();

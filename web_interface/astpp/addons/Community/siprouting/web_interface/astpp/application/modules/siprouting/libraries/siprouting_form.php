@@ -23,6 +23,7 @@
 // ##############################################################################
 if (! defined ( 'BASEPATH' ))
 	exit ( 'No direct script access allowed' );
+#[\AllowDynamicProperties]
 class Siprouting_form extends common {
 	function __construct() {
 		$this->CI = & get_instance ();
@@ -32,7 +33,7 @@ class Siprouting_form extends common {
         $path_file = '';
         $action ='';
 
-        if($status > 0){
+        if(astpp_gt($status, 0)){
             $user_data = ( array ) $this->CI->db->get_where( 'pbx_recording',array("id"=>$status) )->first_row();
             $recording='';
             $path_file = FCPATH.'upload/pbx/'.$user_data['file_name'];

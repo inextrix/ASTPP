@@ -24,6 +24,7 @@
  * @author		ExpressionEngine Dev Team
  * @link		http://codeigniter.com/user_guide/database/
  */
+#[\AllowDynamicProperties]
 class CI_DB_mysql_utility extends CI_DB_utility {
 
 	/**
@@ -118,7 +119,7 @@ class CI_DB_mysql_utility extends CI_DB_utility {
 			$result = $query->result_array();
 			foreach ($result[0] as $val)
 			{
-				if ($i++ % 2)
+				if (astpp_n($i++) % 2)
 				{
 					$output .= $val.';'.$newline.$newline;
 				}

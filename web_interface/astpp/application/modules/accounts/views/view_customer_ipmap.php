@@ -122,7 +122,7 @@ label.error {
             $permissioninfo = $this->session->userdata('permissioninfo');
             $currnet_url = current_url();
 
-            if ((isset($permissioninfo['ipmap']['ipmap_detail']['create'])) && ($permissioninfo['ipmap']['ipmap_detail']['create'] == 0) || ($permissioninfo['login_type'] == '-1' or $permissioninfo['login_type'] == '0' or $permissioninfo['login_type'] == '3' or $permissioninfo['login_type'] == '1') or ($permissioninfo['login_type'] == '-1')) {
+            if ((isset($permissioninfo['ipmap']['ipmap_detail']['create'])) && (astpp_eq0($permissioninfo['ipmap']['ipmap_detail']['create'])) || ($permissioninfo['login_type'] == '-1' or $permissioninfo['login_type'] == '0' or $permissioninfo['login_type'] == '3' or $permissioninfo['login_type'] == '1') or ($permissioninfo['login_type'] == '-1')) {
                 ?>
               <div class="float-left" id="left_panel_add">
 						<span class="btn btn-line-warning"> <i
@@ -130,7 +130,7 @@ label.error {
 					</div>
               <?php
             }
-            if ((isset($permissioninfo['freeswitch']['fssipdevices']['delete'])) && ($permissioninfo['freeswitch']['fssipdevices']['delete'] == 0) || ($permissioninfo['login_type'] == '-1' or $permissioninfo['login_type'] == '0' or $permissioninfo['login_type'] == '3' or $permissioninfo['login_type'] == '1') or ($permissioninfo['login_type'] == '-1')) {
+            if ((isset($permissioninfo['freeswitch']['fssipdevices']['delete'])) && (astpp_eq0($permissioninfo['freeswitch']['fssipdevices']['delete'])) || ($permissioninfo['login_type'] == '-1' or $permissioninfo['login_type'] == '0' or $permissioninfo['login_type'] == '3' or $permissioninfo['login_type'] == '1') or ($permissioninfo['login_type'] == '-1')) {
                 ?>
               <div id="left_panel_delete"
 						class="pull-left margin-t-0 padding-x-4"
@@ -143,7 +143,7 @@ label.error {
             <?php
 
 }
-            if ((isset($permissioninfo['ipmap']['ipmap_detail']['search'])) && ($permissioninfo['ipmap']['ipmap_detail']['search'] == 0) && ($permissioninfo['login_type'] == '-1' or $permissioninfo['login_type'] == '0' or $permissioninfo['login_type'] == '3' or $permissioninfo['login_type'] == '1') or ($permissioninfo['login_type'] == '-1')) {
+            if ((isset($permissioninfo['ipmap']['ipmap_detail']['search'])) && (astpp_eq0($permissioninfo['ipmap']['ipmap_detail']['search'])) && ($permissioninfo['login_type'] == '-1' or $permissioninfo['login_type'] == '0' or $permissioninfo['login_type'] == '3' or $permissioninfo['login_type'] == '1') or ($permissioninfo['login_type'] == '-1')) {
                 ?>
               <div id="show_search" class="float-right col-md-4 p-0">
 						<input type="text" name="left_panel_quick_search"

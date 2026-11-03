@@ -119,7 +119,7 @@
 				 <?php 
 				$product_rate_group =explode(',',$product_info['apply_on_rategroups']);
 				$selected = '';
-				if ( in_array($key, $product_rate_group)) {
+				if ( astpp_in_array($key, $product_rate_group)) {
 				$selected = 'selected = selected';
 				}
 

@@ -22,6 +22,7 @@
 // ##############################################################################
 if (! defined ( 'BASEPATH' ))
 	exit ( 'No direct script access allowed' );
+#[\AllowDynamicProperties]
 class Signup_lib {
 	function __construct($library_name = '') {
 		$this->CI = & get_instance ();
@@ -36,7 +37,7 @@ class Signup_lib {
 			$accountinfo['expiry'] = "0000-00-00 00:00:00";
 			$invoice_config = $accountinfo ['invoice_config_flag'];
 		}
-		if($accountinfo['type'] ==0 || $accountinfo['type'] ==3){
+		if(astpp_eq0($accountinfo['type']) || $accountinfo['type'] ==3){
 			$accountinfo['permission_id'] =0;
 		}
 		$sip_flag = isset ( $accountinfo ['sip_device_flag'] ) ? $accountinfo ['sip_device_flag'] :Common_model::$global_config ['system_config'] ['create_sipdevice'];
@@ -50,11 +51,11 @@ class Signup_lib {
 		unset($accountinfo['tax_id']);
 		$accountinfo ['creation'] = $current_date;
 		$accountinfo ['last_bill_date'] = $current_date; 
-		if ($accountinfo ['posttoexternal'] == 0) {
+		if (astpp_eq0($accountinfo ['posttoexternal'])) {
 			$accountinfo['credit_limit'] = 0;
 		}
 		$accountinfo['balance'] = 0;
-		$accountinfo=array_map('trim',$accountinfo);
+		$accountinfo=astpp_array_map('trim',$accountinfo);
 		$result = $this->CI->db->insert ( 'accounts', $accountinfo );
 		$last_id = $this->CI->db->insert_id ();
 		/*if($accountinfo['type'] ==1){
@@ -96,11 +97,11 @@ class Signup_lib {
 			);
 			$this->CI->db->insert_batch('system', $system_arr);	
 		}*/
-		if($accountinfo['type'] == 0 || $accountinfo['type'] ==1 || $accountinfo['type'] ==3 || $accountinfo['type'] ==5){
+		if(astpp_eq0($accountinfo['type']) || $accountinfo['type'] ==1 || $accountinfo['type'] ==3 || $accountinfo['type'] ==5){
 			$accountinfo['id']=$last_id;
-			if(Common_model::$global_config ['system_config'] ['balance'] > 0){
-				$balance = $accountinfo ['posttoexternal'] == 0 ? Common_model::$global_config ['system_config'] ['balance']: 0;
-				if($accountinfo['posttoexternal'] == 0){
+			if(astpp_gt(Common_model::$global_config ['system_config'] ['balance'], 0)){
+				$balance = astpp_eq0($accountinfo ['posttoexternal']) ? Common_model::$global_config ['system_config'] ['balance']: 0;
+				if(astpp_eq0($accountinfo['posttoexternal'])){
 					$this->generate_receipt($accountinfo,$balance);
 				}
 			}
@@ -118,7 +119,7 @@ class Signup_lib {
 			if ($accountinfo ['id'] == "") {
 				$accountinfo ['id'] = $last_id;
 			}
-			if($accountinfo['notifications'] == 0){
+			if(astpp_eq0($accountinfo['notifications'])){
 				$this->_send_email($accountinfo);
 			}
 		}
@@ -156,7 +157,7 @@ class Signup_lib {
 		$this->CI->db->where ( 'name', 'default' );
 		$sipprofile_result = ( array ) $this->CI->db->get ( 'sip_profiles' )->first_row ();
 		$digits=5;
-		$random_password = random_int((int) pow(10, $digits - 1), (int) pow(10, $digits) - 1);
+		$random_password = random_int((int) pow(10, astpp_n($digits) - 1), (int) pow(10, $digits) - 1);
 		$sipdevice_array = array (
 				'username' => $accountinfo ['number'],
 				'sip_profile_id' => $sip_profile_info ['id'],
@@ -192,8 +193,8 @@ class Signup_lib {
 		$accountinfo['notify_flag']  = Common_model::$global_config ['system_config'] ['notify_flag'];
 		$accountinfo['validfordays'] = Common_model::$global_config ['system_config'] ['validfordays'];
 		$days=Common_model::$global_config ['system_config'] ['validfordays'];
-		$days=$days>0?$days:7300;
-		$accountinfo ['expiry'] = gmdate ( 'Y-m-d H:i:s', strtotime ($current_date. '+'.$days.' days' ) );
+		$days=astpp_gt($days, 0)?$days:7300;
+		$accountinfo ['expiry'] = astpp_gmdate ( 'Y-m-d H:i:s', strtotime ($current_date. '+'.$days.' days' ) );
 		$accountinfo['reseller_id'] = isset($accountinfo['reseller_id']) ? $accountinfo['reseller_id'] : 0;
 		$accountinfo['generate_invoice'] = isset($accountinfo['generate_invoice']) ? $accountinfo['generate_invoice'] : Common_model::$global_config ['system_config'] ['generate_invoice'];
 		$accountinfo['paypal_permission'] = isset($accountinfo['paypal_permission']) ? $accountinfo['paypal_permission'] : Common_model::$global_config ['system_config'] ['paypal_permission'];
@@ -290,11 +291,11 @@ class Signup_lib {
 		$account_length = $add_array ['account_length'];
 		
 		$length = strlen ( $prefix );
-		$number_length = ($length != 0) ? $account_length - $length : $account_length;
+		$number_length = ((!astpp_eq0($length))) ? astpp_n($account_length) - astpp_n($length) : $account_length;
 
 		$numberlength = common_model::$global_config ['system_config']['pinlength'];
 		$numberlength=($numberlength < 6 ) ? 6:common_model::$global_config ['system_config']['pinlength'];
-		$pin = $add_array ['pin'] ==0  ? $this->CI->common->find_uniq_rendno_accno ($numberlength, 'pin', 'accounts', '', $count ) : '';
+		$pin = astpp_eq0($add_array ['pin'])  ? $this->CI->common->find_uniq_rendno_accno ($numberlength, 'pin', 'accounts', '', $count ) : '';
 		$number = $this->CI->common->find_uniq_rendno_accno ( $number_length, 'number', 'accounts', $prefix, $count );
 		$add_array = $this->_localization($add_array);
 		
@@ -305,7 +306,7 @@ class Signup_lib {
 		
 		$default_settings = $this->default_signup_configuration($default_settings,$current_date);
 		$default_taxes = $default_settings['tax_id'];
-		$add_array ['expiry'] = gmdate ( 'Y-m-d H:i:s', strtotime ($current_date. '+'.$add_array ['validfordays'].' days' ) );
+		$add_array ['expiry'] = astpp_gmdate ( 'Y-m-d H:i:s', strtotime ($current_date. '+'.$add_array ['validfordays'].' days' ) );
 		for($i = 0; $i < $count; $i ++) {
 			$acc_num = $number [$i];
 			$email="$acc_num"."@gmail.com";
@@ -325,7 +326,7 @@ class Signup_lib {
 			$insert_array['reseller_id'] =$add_array ['reseller_id'];
 			$insert_array['status'] = "0";
 			$insert_array['credit_limit'] = $add_array ['posttoexternal'] == 1 ? $add_array ['credit_limit'] : 0;
-			$insert_array['balance'] = $add_array ['posttoexternal'] == 0 ? $add_array ['balance'] : 0;
+			$insert_array['balance'] = astpp_eq0($add_array ['posttoexternal']) ? $add_array ['balance'] : 0;
 			$insert_array['currency_id'] =$add_array ['currency_id'];
 			$insert_array['country_id'] =$add_array ['country_id'];
 			$insert_array['timezone_id'] =$add_array ['timezone_id'];
@@ -334,10 +335,10 @@ class Signup_lib {
 			$insert_array['localization_id'] = $add_array['localization_id'];
 			$insert_array['creation'] =$current_date;
 			$insert_array['sweep_id'] =$add_array ['sweep_id'];
-			$insert_array['invoice_day'] =date ( 'Y', strtotime ( $current_date) );
+			$insert_array['invoice_day'] =astpp_date ( 'Y', strtotime ( $current_date) );
 			$insert_array['expiry'] =$add_array ['expiry'];
 			$insert_array['posttoexternal'] = $add_array ['posttoexternal'];
-			if ($add_array ['pin'] == 0) {
+			if (astpp_eq0($add_array ['pin'])) {
 				$insert_array ['pin'] = $pin [$i];
 			}
 			$balance=$insert_array['balance'];
@@ -348,7 +349,7 @@ class Signup_lib {
 			if ($sip_device_flag == '0') {
 				$this->_create_sip_device($insert_array,$sip_profile_info);
 			}
-			if($balance > 0){
+			if(astpp_gt($balance, 0)){
 				$this->generate_receipt($insert_array,$balance);
 			}
 			$this->account_taxes($tax_id,$insert_array['id'],$current_date);
@@ -364,9 +365,9 @@ class Signup_lib {
 		$result = $result->result_array ();
 		$count = $result [0] ['count'];
 		$remaining_length = 0;
-		$remaining_length = $add_array ['account_length'] - strlen ( $add_array ['prefix'] );
+		$remaining_length = astpp_n($add_array ['account_length']) - strlen ( $add_array ['prefix'] );
 		$currentlength = pow ( 10, $remaining_length );
-		$currentlength = $currentlength - $count;
+		$currentlength = astpp_n($currentlength) - astpp_n($count);
 		return $currentlength;
 	}
 }

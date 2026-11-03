@@ -22,6 +22,7 @@
 // ##############################################################################
 if (! defined ( 'BASEPATH' ))
 	exit ( 'No direct script access allowed' );
+#[\AllowDynamicProperties]
 class local_number_form extends common {
 	function get_local_number_form_fields($id=false) {
 		$form ['forms'] = array (
@@ -32,7 +33,7 @@ class local_number_form extends common {
 						'name' => 'local_number_form' 
 				) 
 		);
-		$val = $id > 0 ? 'local_number.number.' . $id : 'local_number.number';
+		$val = astpp_gt($id, 0) ? 'local_number.number.' . $id : 'local_number.number';
 		$form [gettext ( 'Information' )] = array (
 				array (
 						'',
@@ -144,7 +145,7 @@ class local_number_form extends common {
 						'name' => 'local_number_form' 
 				) 
 		);
-		$val = $id > 0 ? 'local_number_destination.destination_number.' . $id : 'local_number_destination.destination_number';
+		$val = astpp_gt($id, 0) ? 'local_number_destination.destination_number.' . $id : 'local_number_destination.destination_number';
 		$form [gettext ( 'Information' )] = array (
 				array (
 						'',
@@ -939,7 +940,7 @@ class local_number_form extends common {
 						'name' => 'local_number_form' 
 				) 
 		);
-		$val = $id > 0 ? 'local_number_destination.destination_number.' . $id : 'local_number_destination.destination_number';
+		$val = astpp_gt($id, 0) ? 'local_number_destination.destination_number.' . $id : 'local_number_destination.destination_number';
 		$form [gettext ( 'Information' )] = array (
 				array (
 						'',
@@ -1004,7 +1005,7 @@ class local_number_form extends common {
 						'name' => 'local_number_form' 
 				) 
 		);
-		$val = $id > 0 ? 'local_number_destination.destination_number.' . $id : 'local_number_destination.destination_number';
+		$val = astpp_gt($id, 0) ? 'local_number_destination.destination_number.' . $id : 'local_number_destination.destination_number';
 		$form [gettext ( 'Information' )] = array (
 				array (
 						'',

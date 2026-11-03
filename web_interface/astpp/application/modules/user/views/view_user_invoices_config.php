@@ -93,7 +93,7 @@ $(function() {
 								<div class='col-md-4 form-group'>
 									<label class="p-0 control-label"><?php echo gettext('Invoice Due Notification'); ?></label>
 									<select name="invoice_due_notification" value="<?= $account_data['invoice_due_notification'] ?>" class="form-control selectpicker">
-										<option value=0 <?=$account_data['invoice_due_notification'] == 0 ? 'selected' : ''; ?>><?php echo gettext('Enable');?></option>
+										<option value=0 <?=astpp_eq0($account_data['invoice_due_notification']) ? 'selected' : ''; ?>><?php echo gettext('Enable');?></option>
 										<option value=1 <?=$account_data['invoice_due_notification'] == 1 ? 'selected' : ''; ?>><?php echo gettext('Disable');?></option>
 									</select>
 								</div>
@@ -108,7 +108,7 @@ $(function() {
 								<div class='col-md-4 form-group'>
 									<label class="p-0 control-label"><?php echo gettext('Invoice Notification');?></label>
 									<select name="invoice_notification" value="<?= $account_data['invoice_notification'] ?>" class="selectpicker form-control">
-										<option value=0 <?=$account_data['invoice_notification'] == 0 ? 'selected' : ''; ?> ><?php echo gettext('Enable');?></option>
+										<option value=0 <?=astpp_eq0($account_data['invoice_notification']) ? 'selected' : ''; ?> ><?php echo gettext('Enable');?></option>
 										<option value=1 <?=$account_data['invoice_notification'] == 1 ? 'selected' : ''; ?> ><?php echo gettext('Disable');?></option>
 									</select>
 								</div>

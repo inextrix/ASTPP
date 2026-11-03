@@ -44,7 +44,7 @@ ob_start ();
 require (CRON_CI_INDEX); // main CI index.php file
 $output = ob_get_contents ();
 
-if (CRON_FLUSH_BUFFERS === TRUE)
+if (defined ( 'CRON_FLUSH_BUFFERS' ) && CRON_FLUSH_BUFFERS === TRUE) // PHP8: was an undefined constant (PHP 7: string, always false)
 	while ( @ob_end_flush () )
 		; // display buffer contents
 else

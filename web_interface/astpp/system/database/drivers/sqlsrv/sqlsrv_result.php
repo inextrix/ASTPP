@@ -26,6 +26,7 @@
  * @author		ExpressionEngine Dev Team
  * @link		http://codeigniter.com/user_guide/database/
  */
+#[\AllowDynamicProperties]
 class CI_DB_sqlsrv_result extends CI_DB_result {
 
 	/**

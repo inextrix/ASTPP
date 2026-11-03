@@ -35,6 +35,7 @@
  *         @file: run_cron.php
  *         @date: 10.03.2011 - 11:53:06 [Michael Pope]
  */
+#[\AllowDynamicProperties]
 class Run_CRON extends CI_Controller {
 	function __construct() {
 		parent::__construct ();

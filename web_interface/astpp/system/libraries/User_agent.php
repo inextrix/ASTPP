@@ -28,6 +28,7 @@
  * @author		ExpressionEngine Dev Team
  * @link		http://codeigniter.com/user_guide/libraries/user_agent.html
  */
+#[\AllowDynamicProperties]
 class CI_User_agent {
 
 	var $agent = NULL;
@@ -161,7 +162,7 @@ class CI_User_agent {
 	 */
 	private function _set_platform()
 	{
-		if (is_array($this->platforms) AND count($this->platforms) > 0)
+		if (is_array($this->platforms) AND astpp_count($this->platforms) > 0)
 		{
 			foreach ($this->platforms as $key => $val)
 			{
@@ -185,7 +186,7 @@ class CI_User_agent {
 	 */
 	private function _set_browser()
 	{
-		if (is_array($this->browsers) AND count($this->browsers) > 0)
+		if (is_array($this->browsers) AND astpp_count($this->browsers) > 0)
 		{
 			foreach ($this->browsers as $key => $val)
 			{
@@ -212,7 +213,7 @@ class CI_User_agent {
 	 */
 	private function _set_robot()
 	{
-		if (is_array($this->robots) AND count($this->robots) > 0)
+		if (is_array($this->robots) AND astpp_count($this->robots) > 0)
 		{
 			foreach ($this->robots as $key => $val)
 			{
@@ -237,7 +238,7 @@ class CI_User_agent {
 	 */
 	private function _set_mobile()
 	{
-		if (is_array($this->mobiles) AND count($this->mobiles) > 0)
+		if (is_array($this->mobiles) AND astpp_count($this->mobiles) > 0)
 		{
 			foreach ($this->mobiles as $key => $val)
 			{
@@ -262,14 +263,14 @@ class CI_User_agent {
 	 */
 	private function _set_languages()
 	{
-		if ((count($this->languages) == 0) AND isset($_SERVER['HTTP_ACCEPT_LANGUAGE']) AND $_SERVER['HTTP_ACCEPT_LANGUAGE'] != '')
+		if ((astpp_count($this->languages) == 0) AND isset($_SERVER['HTTP_ACCEPT_LANGUAGE']) AND $_SERVER['HTTP_ACCEPT_LANGUAGE'] != '')
 		{
 			$languages = preg_replace('/(;q=[0-9\.]+)/i', '', strtolower(trim($_SERVER['HTTP_ACCEPT_LANGUAGE'])));
 
 			$this->languages = explode(',', $languages);
 		}
 
-		if (count($this->languages) == 0)
+		if (astpp_count($this->languages) == 0)
 		{
 			$this->languages = array('Undefined');
 		}
@@ -285,14 +286,14 @@ class CI_User_agent {
 	 */
 	private function _set_charsets()
 	{
-		if ((count($this->charsets) == 0) AND isset($_SERVER['HTTP_ACCEPT_CHARSET']) AND $_SERVER['HTTP_ACCEPT_CHARSET'] != '')
+		if ((astpp_count($this->charsets) == 0) AND isset($_SERVER['HTTP_ACCEPT_CHARSET']) AND $_SERVER['HTTP_ACCEPT_CHARSET'] != '')
 		{
 			$charsets = preg_replace('/(;q=.+)/i', '', strtolower(trim($_SERVER['HTTP_ACCEPT_CHARSET'])));
 
 			$this->charsets = explode(',', $charsets);
 		}
 
-		if (count($this->charsets) == 0)
+		if (astpp_count($this->charsets) == 0)
 		{
 			$this->charsets = array('Undefined');
 		}
@@ -320,7 +321,7 @@ class CI_User_agent {
 		}
 
 		// Check for a specific browser
-		return array_key_exists($key, $this->browsers) AND $this->browser === $this->browsers[$key];
+		return astpp_array_key_exists($key, $this->browsers) AND $this->browser === $this->browsers[$key];
 	}
 
 	// --------------------------------------------------------------------
@@ -345,7 +346,7 @@ class CI_User_agent {
 		}
 
 		// Check for a specific robot
-		return array_key_exists($key, $this->robots) AND $this->robot === $this->robots[$key];
+		return astpp_array_key_exists($key, $this->robots) AND $this->robot === $this->robots[$key];
 	}
 
 	// --------------------------------------------------------------------
@@ -370,7 +371,7 @@ class CI_User_agent {
 		}
 
 		// Check for a specific robot
-		return array_key_exists($key, $this->mobiles) AND $this->mobile === $this->mobiles[$key];
+		return astpp_array_key_exists($key, $this->mobiles) AND $this->mobile === $this->mobiles[$key];
 	}
 
 	// --------------------------------------------------------------------
@@ -490,7 +491,7 @@ class CI_User_agent {
 	 */
 	public function languages()
 	{
-		if (count($this->languages) == 0)
+		if (astpp_count($this->languages) == 0)
 		{
 			$this->_set_languages();
 		}
@@ -508,7 +509,7 @@ class CI_User_agent {
 	 */
 	public function charsets()
 	{
-		if (count($this->charsets) == 0)
+		if (astpp_count($this->charsets) == 0)
 		{
 			$this->_set_charsets();
 		}
@@ -526,7 +527,7 @@ class CI_User_agent {
 	 */
 	public function accept_lang($lang = 'en')
 	{
-		return (in_array(strtolower($lang), $this->languages(), TRUE));
+		return (astpp_in_array(strtolower($lang), $this->languages(), TRUE));
 	}
 
 	// --------------------------------------------------------------------
@@ -539,7 +540,7 @@ class CI_User_agent {
 	 */
 	public function accept_charset($charset = 'utf-8')
 	{
-		return (in_array(strtolower($charset), $this->charsets(), TRUE));
+		return (astpp_in_array(strtolower($charset), $this->charsets(), TRUE));
 	}
 
 }

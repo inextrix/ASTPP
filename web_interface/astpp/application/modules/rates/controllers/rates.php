@@ -21,6 +21,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 // ##############################################################################
+#[\AllowDynamicProperties]
 class Rates extends MX_Controller
 {
 
@@ -117,7 +118,7 @@ class Rates extends MX_Controller
             if ((isset($extension[1])) && (! isset($extension[2]))) {
                 if (isset($_FILES['termination_rate_import']['name']) && $_FILES['termination_rate_import']['name'] != "" && isset($_POST['trunk_id']) && $_POST['trunk_id'] != '') {
                     list ($txt, $ext) = explode(".", $_FILES['termination_rate_import']['name']);
-                    if ($ext == "csv" && $_FILES['termination_rate_import']['size'] > 0) {
+                    if ($ext == "csv" && astpp_gt($_FILES['termination_rate_import']['size'], 0)) {
                         $error = $_FILES['termination_rate_import']['error'];
                         $finfo = finfo_open(FILEINFO_MIME_TYPE);
                         $mime_type = finfo_file($finfo, $_FILES["termination_rate_import"]["tmp_name"]);
@@ -130,15 +131,15 @@ class Rates extends MX_Controller
                             'text/tab-separated-values',
                             'text/plain'
                         );
-                        if (! in_array($mime_type, $acceptable_mime_types)) {
+                        if (! astpp_in_array($mime_type, $acceptable_mime_types)) {
                             $data['error'] = gettext("Invalid file format : Only CSV file allows to import records(Can't import empty file)");
                         } else {
-                            if ($error == 0) {
+                            if (astpp_eq0($error)) {
                                 $uploadedFile = $_FILES["termination_rate_import"]["tmp_name"];
 
                                 $file_data = $this->csv_to_array($uploadedFile);
 
-                                $field_select = (array_keys($file_data[0]));
+                                $field_select = (astpp_array_keys($file_data[0]));
 
                                 $data['file_data'] = $field_select;
 
@@ -235,7 +236,7 @@ class Rates extends MX_Controller
         }
 
         unlink($full_path . $terminationrate_file_name);
-        $count = count($invalid_array);
+        $count = astpp_count($invalid_array);
         if ($count > 0) {
             $session_id = "-1";
             $fp = fopen($full_path . $session_id . '.csv', 'w');
@@ -246,20 +247,20 @@ class Rates extends MX_Controller
                 $custom_array[0][$key] = ucwords($key);
             }
             $custom_array[0]['error'] = "Error";
-            $invalid_array = array_merge($custom_array, $invalid_array);
+            $invalid_array = astpp_array_merge($custom_array, $invalid_array);
             foreach ($invalid_array as $err_data) {
-                fputcsv($fp, $err_data);
+                fputcsv($fp, $err_data, ',', '"', '\\');
             }
             fclose($fp);
             $this->session->set_userdata('import_termination_rate_csv_error', $session_id . ".csv");
             $data["error"] = $invalid_array;
             $data['trunkid'] = $trunkID;
-            $data['impoted_count'] = count($new_final_arr);
-            $data['failure_count'] = count($invalid_array) - 1;
+            $data['impoted_count'] = astpp_count($new_final_arr);
+            $data['failure_count'] = astpp_count($invalid_array) - 1;
             $data['page_title'] = gettext('Termination Rates Import Error');
             $this->load->view('view_import_error', $data);
         } else {
-            $this->session->set_flashdata('astpp_errormsg', gettext('Total').' '. count($new_final_arr) .' '. gettext('Termination Rates Imported Successfully!'));
+            $this->session->set_flashdata('astpp_errormsg', gettext('Total').' '. astpp_count($new_final_arr) .' '. gettext('Termination Rates Imported Successfully!'));
             redirect(base_url() . "rates/termination_rates_list/");
         }
     }
@@ -323,7 +324,7 @@ class Rates extends MX_Controller
             if (isset($_FILES['origination_rate_import']['name']) && $_FILES['origination_rate_import']['name'] != "" && isset($_POST['pricelist_id']) && $_POST['pricelist_id'] != '') {
                 list ($txt, $ext) = explode(".", $_FILES['origination_rate_import']['name']);
 
-                if ($ext == "csv" && $_FILES['origination_rate_import']['size'] > 0) {
+                if ($ext == "csv" && astpp_gt($_FILES['origination_rate_import']['size'], 0)) {
                     $finfo = finfo_open(FILEINFO_MIME_TYPE);
                     $mime_type = finfo_file($finfo, $_FILES["origination_rate_import"]["tmp_name"]);
                     $acceptable_mime_types = array(
@@ -336,10 +337,10 @@ class Rates extends MX_Controller
                         'text/plain'
                     );
                     $error = $_FILES['origination_rate_import']['error'];
-                    if (! in_array($mime_type, $acceptable_mime_types)) {
+                    if (! astpp_in_array($mime_type, $acceptable_mime_types)) {
                         $data['error'] = gettext("Invalid file format : Only CSV file allows to import records(Can't import empty file)");
                     } else {
-                        if ($error == 0) {
+                        if (astpp_eq0($error)) {
                             $uploadedFile = $_FILES["origination_rate_import"]["tmp_name"];
                             $csv_data = $this->csvreader->parse_file($uploadedFile, $new_final_arr_key, $check_header);
                             if (! empty($csv_data)) {
@@ -347,7 +348,7 @@ class Rates extends MX_Controller
                                 $actual_file_name = "ASTPP-ORIGIN-RATES-" . date("Y-m-d H:i:s") . "." . $ext;
                                 if (move_uploaded_file($uploadedFile, $full_path . $actual_file_name)) {
                                     $flag = false;
-                                    $data['trunkid'] = isset($_POST['trunk_id']) && $_POST['trunk_id'] > 0 ? $_POST['trunk_id'] : 0;
+                                    $data['trunkid'] = isset($_POST['trunk_id']) && astpp_gt($_POST['trunk_id'], 0) ? $_POST['trunk_id'] : 0;
                                     $data['csv_tmp_data'] = $csv_data;
                                     $data['pricelistid'] = $_POST['pricelist_id'];
                                     $data['page_title'] = gettext("Origination Rates Preview");
@@ -471,7 +472,7 @@ class Rates extends MX_Controller
             $this->rates_model->bulk_insert_origination_rate($new_final_arr, $row_count);
         }
         unlink($full_path . $originationrate_file_name);
-        $count = count($invalid_array);
+        $count = astpp_count($invalid_array);
         if ($count > 0) {
             $session_id = "-1";
             $fp = fopen($full_path . $session_id . '.csv', 'w');
@@ -482,20 +483,20 @@ class Rates extends MX_Controller
                 $custom_array[0][$key] = ucwords($key);
             }
             $custom_array[0]['error'] = "Error";
-            $invalid_array = array_merge($custom_array, $invalid_array);
+            $invalid_array = astpp_array_merge($custom_array, $invalid_array);
             foreach ($invalid_array as $err_data) {
-                fputcsv($fp, $err_data);
+                fputcsv($fp, $err_data, ',', '"', '\\');
             }
             fclose($fp);
             $this->session->set_userdata('import_origination_rate_csv_error', $session_id . ".csv");
             $data["error"] = $invalid_array;
             $data['pricelistid'] = $pricelistID;
-            $data['impoted_count'] = count($new_final_arr);
-            $data['failure_count'] = count($invalid_array) - 1;
+            $data['impoted_count'] = astpp_count($new_final_arr);
+            $data['failure_count'] = astpp_count($invalid_array) - 1;
             $data['page_title'] = gettext('Origination Rates Import Error');
             $this->load->view('view_import_error', $data);
         } else {
-            $this->session->set_flashdata('astpp_errormsg', gettext('Total').' '.count($new_final_arr).' '.gettext('Origination Rate Imported Successfully!'));
+            $this->session->set_flashdata('astpp_errormsg', gettext('Total').' '.astpp_count($new_final_arr).' '.gettext('Origination Rate Imported Successfully!'));
             redirect(base_url() . "rates/origination_rates_list/");
         }
     }
@@ -512,19 +513,19 @@ class Rates extends MX_Controller
            
             $str .= preg_match("/^([\d+0-9])+$/i", $csvdata['pattern']) ? null : 'Code,';
 
-            $str .= ! empty($csvdata['connectcost']) && is_numeric($csvdata['connectcost']) && ($csvdata['connectcost'] >= 0) ? null : (empty($csvdata['connectcost']) ? null : 'Connection Cost,');
+            $str .= ! empty($csvdata['connectcost']) && is_numeric($csvdata['connectcost']) && (astpp_ge($csvdata['connectcost'], 0)) ? null : (empty($csvdata['connectcost']) ? null : 'Connection Cost,');
             $str .= ! empty($csvdata['includedseconds']) && is_numeric($csvdata['includedseconds']) ? null : (empty($csvdata['includedseconds']) ? null : 'Grace Time,');
-            $str .= ! empty($csvdata['cost']) && is_numeric($csvdata['cost']) && ($csvdata['cost'] >= 0) ? null : (empty($csvdata['cost']) ? null : 'Cost / Min,');
-            $str .= ! empty($csvdata['init_inc']) && is_numeric($csvdata['init_inc']) && filter_var($csvdata['init_inc'], FILTER_VALIDATE_INT) && ($csvdata['init_inc'] >= 0) ? null : (empty($csvdata['init_inc']) ? null : 'Initial Increment,');
-            $str .= ! empty($csvdata['inc']) && is_numeric($csvdata['inc']) && filter_var($csvdata['inc'], FILTER_VALIDATE_INT) && ($csvdata['inc'] >= 0) ? null : (empty($csvdata['inc']) ? null : 'Increment,');
-            $str .= ! empty($csvdata['strip']) && is_numeric($csvdata['strip']) && ($csvdata['strip'] >= -1) ? null : (empty($csvdata['strip']) ? null : 'Strip,');
-            $str .= ! empty($csvdata['prepend']) && is_numeric($csvdata['prepend']) && ($csvdata['prepend'] >= -1) ? null : (empty($csvdata['prepend']) ? null : 'Prepend');
+            $str .= ! empty($csvdata['cost']) && is_numeric($csvdata['cost']) && (astpp_ge($csvdata['cost'], 0)) ? null : (empty($csvdata['cost']) ? null : 'Cost / Min,');
+            $str .= ! empty($csvdata['init_inc']) && is_numeric($csvdata['init_inc']) && filter_var($csvdata['init_inc'], FILTER_VALIDATE_INT) && (astpp_ge($csvdata['init_inc'], 0)) ? null : (empty($csvdata['init_inc']) ? null : 'Initial Increment,');
+            $str .= ! empty($csvdata['inc']) && is_numeric($csvdata['inc']) && filter_var($csvdata['inc'], FILTER_VALIDATE_INT) && (astpp_ge($csvdata['inc'], 0)) ? null : (empty($csvdata['inc']) ? null : 'Increment,');
+            $str .= ! empty($csvdata['strip']) && is_numeric($csvdata['strip']) && (astpp_ge($csvdata['strip'], -1)) ? null : (empty($csvdata['strip']) ? null : 'Strip,');
+            $str .= ! empty($csvdata['prepend']) && is_numeric($csvdata['prepend']) && (astpp_ge($csvdata['prepend'], -1)) ? null : (empty($csvdata['prepend']) ? null : 'Prepend');
 
 
             if ($str) {
                 $str = rtrim($str, ',');
                 $error_field = explode(',', $str);
-                $count = count($error_field);
+                $count = astpp_count($error_field);
                 $str .= $count > 1 ? ' are not valid' : ' is not Valid';
                 return $str;
             } else {
@@ -533,7 +534,7 @@ class Rates extends MX_Controller
         } else {
             $str = rtrim($str, ',');
             $error_field = explode(',', $str);
-            $count = count($error_field);
+            $count = astpp_count($error_field);
             $str .= $count > 1 ? ' are required' : ' is Required';
             return $str;
         }
@@ -586,7 +587,7 @@ class Rates extends MX_Controller
             }
 
             $reseller_id = $edit_data['reseller_id'];
-            if ($edit_data['reseller_id'] == 0) {
+            if (astpp_eq0($edit_data['reseller_id'])) {
                 $edit_data['reseller_id'] = 'Admin';
             } else {
                 $edit_data['reseller_id'] = $this->common->get_field_name('number', 'accounts', array(
@@ -653,7 +654,7 @@ class Rates extends MX_Controller
 
             
                     $trunk_array = array();
-                    $add_array['trunk_id'] = ($add_array['trunk_id'] > 0)?$add_array['trunk_id']:0;
+                    $add_array['trunk_id'] = (astpp_gt($add_array['trunk_id'], 0))?$add_array['trunk_id']:0;
 
                     $this->db->where('routes_id', $add_array['id']);
                     $this->db->delete('routing');
@@ -683,10 +684,10 @@ class Rates extends MX_Controller
                     $add_array['connectcost'] = isset($add_array['connectcost']) && ($add_array['connectcost'] != "") ? $this->common_model->add_calculate_currency($add_array['connectcost'], '', '', false, false) : 0;
                     $add_array['cost'] = isset($add_array['cost']) && ($add_array['cost'] != "") ? $this->common_model->add_calculate_currency($add_array['cost'], '', '', false, false) : 0;
  
-		    $add_array['trunk_id'] = (isset($add_array['trunk_id']) && $add_array['trunk_id'] > 0)?$add_array['trunk_id']:0;
+		    $add_array['trunk_id'] = (isset($add_array['trunk_id']) && astpp_gt($add_array['trunk_id'], 0))?$add_array['trunk_id']:0;
                     $last_id = $this->rates_model->add_origination_rate($add_array);
 
-                    if ($last_id > 0) {
+                    if (astpp_gt($last_id, 0)) {
                         if (isset($add_array['routing_type']) && $add_array['routing_type'] == 1) {
                             $this->origination_set_force_routing($add_array, $last_id);
                         }
@@ -708,9 +709,9 @@ class Rates extends MX_Controller
     {
         $trunk_id = explode(",", $add_array['trunk_id']);
         $percentage = explode(",", $add_array['percentage']);
-        $trunk_count = count($trunk_id);
+        $trunk_count = astpp_count($trunk_id);
         foreach ($trunk_id as $key => $value) {
-            if ($value != 0) {
+            if ((!astpp_eq0($value))) {
                 $insert_array = array(
                     "routes_id" => $routes_id,
                     "pricelist_id" => 0,
@@ -932,7 +933,7 @@ class Rates extends MX_Controller
         $markup = $this->common->get_field_name('markup', 'pricelists', array(
             'id' => $account_data["pricelist_id"]
         ));
-        $markup = ($markup > 0) ? $markup : 1;
+        $markup = (astpp_gt($markup, 0)) ? $markup : 1;
 
         $count_all = $this->rates_model->get_origination_rate_list_for_user(false);
         $paging_data = $this->form->load_grid_config($count_all, $_GET['rp'], $_GET['page']);
@@ -946,7 +947,7 @@ class Rates extends MX_Controller
                     $this->common->get_only_numeric_val("", "", $value["pattern"]),
                     $value['comment'],
                     $value['inc'],
-                    $this->common_model->calculate_currency(($value['cost'] + ($value['cost'] * $markup) / 100), '', '', '', true),
+                    $this->common_model->calculate_currency((astpp_n($value['cost']) + (astpp_n($value['cost']) * astpp_n($markup)) / 100), '', '', '', true),
                     $this->common_model->calculate_currency($value['connectcost'], '', '', '', true),
                     $value['includedseconds']
                 )
@@ -1138,7 +1139,7 @@ class Rates extends MX_Controller
     {
         $account_info = $accountinfo = $this->session->userdata('accountinfo');
         $currency_id = $account_info['currency_id'];
-        $reseller_id = $accountinfo['reseller_id'] > 0 ? $accountinfo['reseller_id'] : 0;
+        $reseller_id = astpp_gt($accountinfo['reseller_id'], 0) ? $accountinfo['reseller_id'] : 0;
         $currency = $this->common->get_field_name('currency', 'currency', $currency_id);
         $query = $this->rates_model->get_origination_rate(true, '', '', false);
 
@@ -1195,7 +1196,7 @@ class Rates extends MX_Controller
 
                         $row['inc'],
                         $this->common->get_field_name('name', 'pricelists', $row['pricelist_id']),
-                        $row['reseller_id'] == 0 ? 'Admin' : $this->common->build_concat_string("first_name,last_name,number", "accounts", $row['reseller_id']),
+                        astpp_eq0($row['reseller_id']) ? 'Admin' : $this->common->build_concat_string("first_name,last_name,number", "accounts", $row['reseller_id']),
                         $this->common->convert_GMT_to('', '', $row['creation_date']),
                         $this->common->convert_GMT_to('', '', $row['last_modified_date']),
                         $this->common->get_status('export', '', $row['status'])
@@ -1357,8 +1358,8 @@ class Rates extends MX_Controller
         $grid_fields = json_decode($this->rates_form->build_rates_list_for_reseller());
         foreach ($query->result_array() as $key => $value) {
             $cost = 0;
-            if (isset($value['cost']) && $value['cost'] > 0) {
-                $cost = $this->common_model->calculate_currency(($value['cost'] + ($value['cost'] * $markup) / 100), '', '', 'true', true);
+            if (isset($value['cost']) && astpp_gt($value['cost'], 0)) {
+                $cost = $this->common_model->calculate_currency((astpp_n($value['cost']) + (astpp_n($value['cost']) * astpp_n($markup)) / 100), '', '', 'true', true);
             }
             $json_data['rows'][] = array(
                 'cell' => array(
@@ -1486,12 +1487,12 @@ class Rates extends MX_Controller
         $header = NULL;
         $data = array();
         if (($handle = fopen($filename, 'r')) !== FALSE) {
-            while (($row = fgetcsv($handle, 1000, $delimiter)) !== FALSE) {
+            while (($row = fgetcsv($handle, 1000, $delimiter, '"', '\\')) !== FALSE) {
 
                 if (! $header)
                     $header = $row;
                 else
-                    $data[] = array_combine($header, $row);
+                    $data[] = astpp_array_combine($header, $row);
             }
 
             fclose($handle);
@@ -1504,7 +1505,7 @@ class Rates extends MX_Controller
     {
         array_walk_recursive($array, function (&$item, $key) {
             if (! mb_detect_encoding($item, 'utf-8', true)) {
-                $item = utf8_encode($item);
+                $item = mb_convert_encoding($item, 'UTF-8', 'ISO-8859-1') /* PHP8: utf8_encode() is deprecated */;
             }
         });
         return $array;
@@ -1537,7 +1538,7 @@ class Rates extends MX_Controller
             if ((isset($extension[1])) && (! isset($extension[2]))) {
                 if (isset($_FILES['termination_rate_import_mapper']['name']) && $_FILES['termination_rate_import_mapper']['name'] != "" && isset($_POST['trunk_id']) && $_POST['trunk_id'] != '') {
                     list ($txt, $ext) = explode(".", $_FILES['termination_rate_import_mapper']['name']);
-                    if ($ext == "csv" && $_FILES['termination_rate_import_mapper']['size'] > 0) {
+                    if ($ext == "csv" && astpp_gt($_FILES['termination_rate_import_mapper']['size'], 0)) {
                         $finfo = finfo_open(FILEINFO_MIME_TYPE);
                         $mime_type = finfo_file($finfo, $_FILES["termination_rate_import_mapper"]["tmp_name"]);
                         $acceptable_mime_types = array(
@@ -1550,15 +1551,15 @@ class Rates extends MX_Controller
                             'text/plain'
                         );
                         $error = $_FILES['termination_rate_import_mapper']['error'];
-                        if (! in_array($mime_type, $acceptable_mime_types)) {
+                        if (! astpp_in_array($mime_type, $acceptable_mime_types)) {
                             $data['error'] = gettext("Invalid file format : Only CSV file allows to import records(Can't import empty file)");
                         } else {
-                            if ($error == 0) {
+                            if (astpp_eq0($error)) {
                                 $uploadedFile = $_FILES["termination_rate_import_mapper"]["tmp_name"];
 
                                 $file_data = $this->csv_to_array($uploadedFile);
 
-                                $field_select = (array_keys($file_data[0]));
+                                $field_select = (astpp_array_keys($file_data[0]));
 
                                 $data['file_data'] = $field_select;
 
@@ -1702,7 +1703,7 @@ class Rates extends MX_Controller
         }
 
         unlink($full_path . $terminationrate_file_name);
-        $count = count($invalid_array);
+        $count = astpp_count($invalid_array);
 
         if ($count > 0) {
             $session_id = "-1";
@@ -1712,21 +1713,21 @@ class Rates extends MX_Controller
             }
 
             $custom_array[0]['error'] = "Error";
-            $invalid_array = array_merge($custom_array, $invalid_array);
+            $invalid_array = astpp_array_merge($custom_array, $invalid_array);
             foreach ($invalid_array as $err_data) {
-                fputcsv($fp, $err_data);
+                fputcsv($fp, $err_data, ',', '"', '\\');
             }
 
             fclose($fp);
             $this->session->set_userdata('import_termination_rate_mapper_csv_error', $session_id . ".csv");
             $data["error"] = $invalid_array;
             $data['trunkid'] = $trunkID;
-            $data['impoted_count'] = count($new_final_arr);
-            $data['failure_count'] = count($invalid_array) - 1;
+            $data['impoted_count'] = astpp_count($new_final_arr);
+            $data['failure_count'] = astpp_count($invalid_array) - 1;
             $data['page_title'] = gettext('Termination Rates Import Error');
             $this->load->view('view_import_error', $data);
         } else {
-            $this->session->set_flashdata('astpp_errormsg', 'Total ' . count($new_final_arr) . ' Termination Rates Imported Successfully!');
+            $this->session->set_flashdata('astpp_errormsg', 'Total ' . astpp_count($new_final_arr) . ' Termination Rates Imported Successfully!');
 
             redirect(base_url() . "rates/termination_rates_list/");
         }
@@ -1752,7 +1753,7 @@ class Rates extends MX_Controller
         if ($pricelist_result->num_rows() > 0) {
             $pricelist_result_array = $pricelist_result->result_array();
 
-            if (count($pricelist_result_array) > 0) {
+            if (astpp_count($pricelist_result_array) > 0) {
                 echo json_encode($pricelist_result_array[0]);
             }
         }

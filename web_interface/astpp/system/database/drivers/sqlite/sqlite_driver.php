@@ -32,6 +32,7 @@
  * @author		ExpressionEngine Dev Team
  * @link		http://codeigniter.com/user_guide/database/
  */
+#[\AllowDynamicProperties]
 class CI_DB_sqlite_driver extends CI_DB {
 
 	var $dbdriver = 'sqlite';

@@ -20,6 +20,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 // ##############################################################################
+#[\AllowDynamicProperties]
 class Voice_broadcast extends CI_Controller {
 	function __construct() {
 		parent::__construct ();
@@ -51,7 +52,7 @@ class Voice_broadcast extends CI_Controller {
 					$domain = $this->common->get_field_name('value','system',array('name'=>'voice_broadcast_host'));
 					$domain_explode = explode(',',$domain);
 
-					if (count($domain_explode) > 1){
+					if (astpp_count($domain_explode) > 1){
 						$freeswitch_key=array_rand($domain_explode);
 						$fs_server = ( array ) $this->db->get_where ( "freeswich_servers",array ("status"=>0,"freeswitch_host" => $domain_explode[$freeswitch_key]))->first_row ();
 						$host = $fs_server['freeswitch_host'];

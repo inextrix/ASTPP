@@ -28,6 +28,7 @@
  * @author		ExpressionEngine Dev Team
  * @link		http://codeigniter.com/user_guide/libraries/calendar.html
  */
+#[\AllowDynamicProperties]
 class CI_Calendar {
 
 	var $CI;
@@ -49,14 +50,14 @@ class CI_Calendar {
 	{
 		$this->CI = & get_instance();
 
-		if ( ! in_array('calendar_lang.php', $this->CI->lang->is_loaded, TRUE))
+		if ( ! astpp_in_array('calendar_lang.php', $this->CI->lang->is_loaded, TRUE))
 		{
 			$this->CI->lang->load('calendar');
 		}
 
 		$this->local_time = time();
 
-		if (count($config) > 0)
+		if (astpp_count($config) > 0)
 		{
 			$this->initialize($config);
 		}
@@ -101,11 +102,11 @@ class CI_Calendar {
 	{
 		// Set and validate the supplied month/year
 		if ($year == '') {
-					$year  = date("Y", $this->local_time);
+					$year  = astpp_date("Y", $this->local_time);
 		}
 
 		if ($month == '') {
-					$month = date("m", $this->local_time);
+					$month = astpp_date("m", $this->local_time);
 		}
 
 		if (strlen($year) == 1) {
@@ -135,18 +136,18 @@ class CI_Calendar {
 		// Set the starting day number
 		$local_date = mktime(12, 0, 0, $month, 1, $year);
 		$date = getdate($local_date);
-		$day  = $start_day + 1 - $date["wday"];
+		$day  = astpp_n($start_day) + 1 - astpp_n($date["wday"]);
 
 		while ($day > 1)
 		{
-			$day -= 7;
+			$day = astpp_n($day) - 7;
 		}
 
 		// Set the current month/year/day
 		// We use this to determine the "today" date
-		$cur_year = date("Y", $this->local_time);
-		$cur_month = date("m", $this->local_time);
-		$cur_day = date("j", $this->local_time);
+		$cur_year = astpp_date("Y", $this->local_time);
+		$cur_month = astpp_date("m", $this->local_time);
+		$cur_day = astpp_date("j", $this->local_time);
 
 		$is_current_month = ($cur_year == $year AND $cur_month == $month) ? TRUE : FALSE;
 
@@ -167,7 +168,7 @@ class CI_Calendar {
 			// Add a trailing slash to the  URL if needed
 			$this->next_prev_url = preg_replace("/(.+?)\/*$/", "\\1/", $this->next_prev_url);
 
-			$adjusted_date = $this->adjust_date($month - 1, $year);
+			$adjusted_date = $this->adjust_date(astpp_n($month) - 1, $year);
 			$out .= str_replace('{previous_url}', $this->next_prev_url.$adjusted_date['year'].'/'.$adjusted_date['month'], $this->temp['heading_previous_cell']);
 			$out .= "\n";
 		}
@@ -184,7 +185,7 @@ class CI_Calendar {
 		// "next" month link
 		if ($this->show_next_prev == TRUE)
 		{
-			$adjusted_date = $this->adjust_date($month + 1, $year);
+			$adjusted_date = $this->adjust_date(astpp_n($month) + 1, $year);
 			$out .= str_replace('{next_url}', $this->next_prev_url.$adjusted_date['year'].'/'.$adjusted_date['month'], $this->temp['heading_next_cell']);
 		}
 
@@ -201,7 +202,7 @@ class CI_Calendar {
 
 		for ($i = 0; $i < 7; $i++)
 		{
-			$out .= str_replace('{week_day}', $day_names[($start_day + $i) % 7], $this->temp['week_day_cell']);
+			$out .= str_replace('{week_day}', $day_names[(astpp_n($start_day) + astpp_n($i)) % 7], $this->temp['week_day_cell']);
 		}
 
 		$out .= "\n";
@@ -219,7 +220,7 @@ class CI_Calendar {
 			{
 				$out .= ($is_current_month == TRUE AND $day == $cur_day) ? $this->temp['cal_cell_start_today'] : $this->temp['cal_cell_start'];
 
-				if ($day > 0 AND $day <= $total_days)
+				if (astpp_gt($day, 0) AND $day <= $total_days)
 				{
 					if (isset($data[$day]))
 					{
@@ -346,13 +347,13 @@ class CI_Calendar {
 
 		while ($date['month'] > 12)
 		{
-			$date['month'] -= 12;
+			$date['month'] = astpp_n($date['month']) - 12;
 			$date['year']++;
 		}
 
-		while ($date['month'] <= 0)
+		while (astpp_le($date['month'], 0))
 		{
-			$date['month'] += 12;
+			$date['month'] = astpp_n($date['month']) + 12;
 			$date['year']--;
 		}
 
@@ -386,13 +387,13 @@ class CI_Calendar {
 		// Is the year a leap year?
 		if ($month == 2)
 		{
-			if ($year % 400 == 0 OR ($year % 4 == 0 AND $year % 100 != 0))
+			if (astpp_n($year) % 400 == 0 OR (astpp_n($year) % 4 == 0 AND astpp_n($year) % 100 != 0))
 			{
 				return 29;
 			}
 		}
 
-		return $days_in_month[$month - 1];
+		return $days_in_month[astpp_n($month) - 1];
 	}
 
 	// --------------------------------------------------------------------
@@ -461,7 +462,7 @@ class CI_Calendar {
 				$this->temp[$val] = $match['1'];
 			} else
 			{
-				if (in_array($val, $today, TRUE))
+				if (astpp_in_array($val, $today, TRUE))
 				{
 					$this->temp[$val] = $this->temp[str_replace('_today', '', $val)];
 				}

@@ -105,7 +105,7 @@ if ( ! function_exists('ol'))
  */
 if ( ! function_exists('_list'))
 {
-	function _list($type = 'ul', $list, $attributes = '', $depth = 0)
+	function _list($type, $list, $attributes = '', $depth = 0)
 	{
 		// If an array wasn't submitted there's nothing to do...
 		if ( ! is_array($list))
@@ -114,7 +114,7 @@ if ( ! function_exists('_list'))
 		}
 
 		// Set the indentation based on the depth
-		$out = str_repeat(" ", $depth);
+		$out = astpp_str_repeat(" ", $depth);
 
 		// Were any attributes submitted?  If so generate a string
 		if (is_array($attributes))
@@ -141,7 +141,7 @@ if ( ! function_exists('_list'))
 		{
 			$_last_list_item = $key;
 
-			$out .= str_repeat(" ", $depth + 2);
+			$out .= astpp_str_repeat(" ", astpp_n($depth) + 2);
 			$out .= "<li>";
 
 			if ( ! is_array($val))
@@ -150,15 +150,15 @@ if ( ! function_exists('_list'))
 			} else
 			{
 				$out .= $_last_list_item."\n";
-				$out .= _list($type, $val, '', $depth + 4);
-				$out .= str_repeat(" ", $depth + 2);
+				$out .= _list($type, $val, '', astpp_n($depth) + 4);
+				$out .= astpp_str_repeat(" ", astpp_n($depth) + 2);
 			}
 
 			$out .= "</li>\n";
 		}
 
 		// Set the indentation for the closing tag
-		$out .= str_repeat(" ", $depth);
+		$out .= astpp_str_repeat(" ", $depth);
 
 		// Write the closing list tag
 		$out .= "</".$type.">\n";
@@ -180,7 +180,7 @@ if ( ! function_exists('br'))
 {
 	function br($num = 1)
 	{
-		return str_repeat("<br />", $num);
+		return astpp_str_repeat("<br />", $num);
 	}
 }
 
@@ -422,7 +422,7 @@ if ( ! function_exists('nbs'))
 {
 	function nbs($num = 1)
 	{
-		return str_repeat("&nbsp;", $num);
+		return astpp_str_repeat("&nbsp;", $num);
 	}
 }
 

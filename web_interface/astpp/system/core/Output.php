@@ -28,6 +28,7 @@
  * @author		ExpressionEngine Dev Team
  * @link		http://codeigniter.com/user_guide/libraries/output.html
  */
+#[\AllowDynamicProperties]
 class CI_Output {
 
 	/**
@@ -222,7 +223,7 @@ class CI_Output {
 
 				if (is_array($mime_type))
 				{
-					$mime_type = current($mime_type);
+					$mime_type = astpp_current($mime_type);
 				}
 			}
 		}
@@ -348,7 +349,7 @@ class CI_Output {
 		// Do we need to write a cache file?  Only if the controller does not have its
 		// own _output() method and we are not dealing with a cache file, which we
 		// can determine by the existence of the $CI object above
-		if ($this->cache_expiration > 0 && isset($CI) && ! method_exists($CI, '_output'))
+		if (astpp_gt($this->cache_expiration, 0) && isset($CI) && ! method_exists($CI, '_output'))
 		{
 			$this->_write_cache($output);
 		}
@@ -362,9 +363,9 @@ class CI_Output {
 
 		if ($this->parse_exec_vars === TRUE)
 		{
-			$memory = ( ! function_exists('memory_get_usage')) ? '0' : round(memory_get_usage() / 1024 / 1024, 2).'MB';
+			$memory = ( ! function_exists('memory_get_usage')) ? '0' : astpp_round(memory_get_usage() / 1024 / 1024, 2).'MB';
 
-			$output = str_replace('{elapsed_time}', $elapsed, $output);
+			$output = str_replace('{elapsed_time}', $elapsed, (string) $output); // PHP8: null subject
 			$output = str_replace('{memory_usage}', $memory, $output);
 		}
 
@@ -385,7 +386,7 @@ class CI_Output {
 		// --------------------------------------------------------------------
 
 		// Are there any server headers to send?
-		if (count($this->headers) > 0)
+		if (astpp_count($this->headers) > 0)
 		{
 			foreach ($this->headers as $header)
 			{
@@ -483,7 +484,7 @@ class CI_Output {
 			return;
 		}
 
-		$expire = time() + ($this->cache_expiration * 60);
+		$expire = time() + (astpp_n($this->cache_expiration) * 60);
 
 		if (flock($fp, LOCK_EX))
 		{

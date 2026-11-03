@@ -21,6 +21,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 // ##############################################################################
+#[\AllowDynamicProperties]
 class Summary_model extends CI_Model
 {
 
@@ -29,7 +30,7 @@ class Summary_model extends CI_Model
         parent::__construct();
     }
 
-    function get_resellersummary_report_list($flag, $start = 0, $limit = 0, $group_by, $select, $order, $export = false)
+    function get_resellersummary_report_list($flag, $start, $limit, $group_by, $select, $order, $export = false)
     {
         $this->db_model->build_search('summary_reseller_search');
         $accountinfo = $this->session->userdata('accountinfo');
@@ -71,7 +72,7 @@ class Summary_model extends CI_Model
         if ($flag) {
             $this->db->select($select . ",COUNT(*) AS attempts, AVG(billseconds) AS acd,MAX(billseconds) AS mcd,SUM(billseconds) AS duration,SUM(CASE WHEN calltype !='free' THEN billseconds ELSE 0 END) as billable,SUM(CASE WHEN billseconds > 0 THEN 1 ELSE 0 END) as completed,SUM(debit) AS debit,SUM(cost) AS cost", false);
             $this->db->order_by($order, "ASC");
-            if (! $export && $limit > 0) {
+            if (! $export && astpp_gt($limit, 0)) {
                 $this->db->limit($limit, $start);
             }
             $this->db->from($table_name);
@@ -87,7 +88,7 @@ class Summary_model extends CI_Model
         return $result;
     }
 
-    function get_providersummary_report_list($flag, $start = 0, $limit = 0, $group_by, $select, $order, $export = false)
+    function get_providersummary_report_list($flag, $start, $limit, $group_by, $select, $order, $export = false)
     {
         $this->db_model->build_search('summary_provider_search');
         $where['provider_id >'] = 0;
@@ -110,7 +111,7 @@ class Summary_model extends CI_Model
             $this->db->select($select . ",COUNT(*) AS attempts, AVG(billseconds) AS acd,MAX(billseconds) AS mcd,SUM(billseconds) AS duration,SUM(CASE WHEN calltype !='free' THEN billseconds ELSE 0 END) as billable,SUM(CASE WHEN billseconds > 0 THEN 1 ELSE 0 END) as completed,SUM(cost) AS cost", false);
 
             $this->db->order_by($order, "ASC");
-            if (! $export && $limit > 0) {
+            if (! $export && astpp_gt($limit, 0)) {
                 $this->db->limit($limit, $start);
             }
 
@@ -128,7 +129,7 @@ class Summary_model extends CI_Model
         return $result;
     }
 
-    function get_customersummary_report_list($flag, $start = 0, $limit = 0, $group_by, $select, $order, $export)
+    function get_customersummary_report_list($flag, $start, $limit, $group_by, $select, $order, $export)
     {
         $this->db_model->build_search('summary_customer_search');
         $accountinfo = $this->session->userdata('accountinfo');
@@ -175,7 +176,7 @@ class Summary_model extends CI_Model
         if ($flag) {
             $this->db->select($select . ",COUNT(*) AS attempts, AVG(billseconds) AS acd,MAX(billseconds) AS mcd,SUM(billseconds) AS duration,SUM(CASE WHEN calltype !='free' THEN billseconds ELSE 0 END) as billable,SUM(CASE WHEN billseconds > 0 THEN 1 ELSE 0 END) as completed,SUM(debit) AS debit,SUM(cost) AS cost", false);
             $this->db->order_by($order, "ASC");
-            if (! $export && $limit > 0) {
+            if (! $export && astpp_gt($limit, 0)) {
                 $this->db->limit($limit, $start);
             }
 
@@ -194,7 +195,7 @@ class Summary_model extends CI_Model
         return $result;
     }
 
-  function get_productsummary_report_list($flag, $start = 0, $limit = 0, $group_by, $select, $order, $export)
+  function get_productsummary_report_list($flag, $start, $limit, $group_by, $select, $order, $export)
     {
         $this->db_model->build_search('summary_product_search');
         $accountinfo = $this->session->userdata('accountinfo');
@@ -231,7 +232,7 @@ class Summary_model extends CI_Model
         $this->db->select($select . ",orders.id,orders.payment_status,orders.order_date,order_items.product_category,order_items.product_id,order_items.product_id as productid,order_items.order_id,sum(order_items.quantity) as quantity,sum(order_items.price) as price,sum(setup_fee) as setup_fee,sum(order_items.free_minutes) as free_minutes,order_items.billing_type,sum(order_items.billing_days) as billing_days,order_items.accountid", false);
 
         $this->db->order_by($order, "ASC");
-        if (! $export && $limit > 0) {
+        if (! $export && astpp_gt($limit, 0)) {
             $this->db->limit($limit, $start);
         }
         $this->db->from($table_name);

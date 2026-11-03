@@ -21,6 +21,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 // ##############################################################################
+#[\AllowDynamicProperties]
 class ProcessInvoice extends MX_Controller
 {
 
@@ -45,7 +46,8 @@ class ProcessInvoice extends MX_Controller
 	$this->load->model("common_model");
 
 
-	error_reporting("E_ALL");
+	// BUGFIX/PHP8: was error_reporting("E_ALL") - PHP 7 turned the string into 0 (no error
+	// logging at all), PHP 8 throws a TypeError. The level set in index.php applies.
 	ini_set("memory_limit", "2048M");
 	ini_set("max_execution_time", "259200");
 
@@ -91,7 +93,7 @@ class ProcessInvoice extends MX_Controller
 
     function generate_invoices($accountinfo){
 	$this->StartDate = ($accountinfo['last_bill_date'] == '0000-00-00 00:00:00')?$accountinfo['creation']:$accountinfo['last_bill_date'];
-	$this->StartDate = date ( "Y-m-d 00:00:01", strtotime ( $this->StartDate ) );
+	$this->StartDate = astpp_date ( "Y-m-d 00:00:01", strtotime ( $this->StartDate ) );
 //	$this->StartDate = $accountinfo ['last_bill_date'];
 /*	$this->StartDate = gmdate("Y-m-01 00:00:01");
 	$this->EndDate = gmdate("Y-m-30 23:59:59");
@@ -105,12 +107,12 @@ class ProcessInvoice extends MX_Controller
 				
 		case 0 :
 			if (Strtotime ( $this->StartDate ) > strtotime ( $this->CurrentDate )) {
-				$this->StartDate = date ( "Y-m-d 00:00:01", strtotime ( $this->CurrentDate . " - 1 days" ) );
+				$this->StartDate = astpp_date ( "Y-m-d 00:00:01", strtotime ( $this->CurrentDate . " - 1 days" ) );
 			}
-			$this->EndDate = date ( "Y-m-d 23:59:59", strtotime ( $this->CurrentDate . " - 1 days" ) );
+			$this->EndDate = astpp_date ( "Y-m-d 23:59:59", strtotime ( $this->CurrentDate . " - 1 days" ) );
 			if($this->EndDate != ''){
 				$invoiceid = $this->create_invoice($accountinfo);
-				if($invoiceid > 0){
+				if(astpp_gt($invoiceid, 0)){
 					$this->bill_calls($accountinfo,$invoiceid);
 					$this->apply_taxes($accountinfo,$invoiceid);
 				}
@@ -119,16 +121,16 @@ class ProcessInvoice extends MX_Controller
 			break;
 		case 2 :
 			// Ashish ASTPPCOM-820
-			if (date ( "d", strtotime ( $this->CurrentDate) ) == $accountinfo ['invoice_day']){
+			if (astpp_date ( "d", strtotime ( $this->CurrentDate) ) == $accountinfo ['invoice_day']){
 			// Ashish 820 End
-				$this->EndDate = date ( "Y-m-" . $accountinfo ['invoice_day'] . " 23:59:59", strtotime ( $this->StartDate . " + 1 month" ) );
+				$this->EndDate = astpp_date ( "Y-m-" . $accountinfo ['invoice_day'] . " 23:59:59", strtotime ( $this->StartDate . " + 1 month" ) );
 				$accountinfo['last_bill_date'] = ($accountinfo['last_bill_date'] > $accountinfo['creation']) ? $accountinfo['last_bill_date'] : $accountinfo['creation'];
 				if (Strtotime ( $this->EndDate ) > strtotime ( $this->CurrentDate )) {
 					$this->EndDate = $this->CurrentDate;
 				}
-				$this->EndDate=date ( "Y-m-d H:i:s", strtotime ( $this->EndDate." -2 second" ) );
+				$this->EndDate=astpp_date ( "Y-m-d H:i:s", strtotime ( $this->EndDate." -2 second" ) );
 				$invoiceid = $this->create_invoice($accountinfo);
-				if($invoiceid > 0){
+				if(astpp_gt($invoiceid, 0)){
 					$this->bill_calls($accountinfo,$invoiceid);
 					$this->apply_taxes($accountinfo,$invoiceid);
 				}
@@ -146,16 +148,16 @@ class ProcessInvoice extends MX_Controller
     { 
         $invoiceconf = $this->common->Get_Invoice_configuration($accountinfo);
        	if($invoiceconf != ''){
-			if ($invoiceconf['interval'] > 0) {
-			    $DueDate = date("Y-m-d 23:59:59", strtotime($this->CurrentDate . " +" . $invoiceconf['interval'] . " days"));
+			if (astpp_gt($invoiceconf['interval'], 0)) {
+			    $DueDate = astpp_date("Y-m-d 23:59:59", strtotime($this->CurrentDate . " +" . $invoiceconf['interval'] . " days"));
 			} else {
-			    $DueDate = date("Y-m-d 23:59:59", strtotime($this->CurrentDate . " +7 days"));
+			    $DueDate = astpp_date("Y-m-d 23:59:59", strtotime($this->CurrentDate . " +7 days"));
 			}
 
 			$last_invoice_ID = $this->common->get_invoice_date("number", "", $accountinfo['reseller_id']);
 			
-			if ($last_invoice_ID && $last_invoice_ID > 0) {
-			    $last_invoice_ID = ($last_invoice_ID + 1);
+			if ($last_invoice_ID && astpp_gt($last_invoice_ID, 0)) {
+			    $last_invoice_ID = (astpp_n($last_invoice_ID) + 1);
 				
 			    if ($last_invoice_ID < $invoiceconf['invoice_start_from'])
 				$last_invoice_ID = $invoiceconf['invoice_start_from'];
@@ -166,7 +168,7 @@ class ProcessInvoice extends MX_Controller
 			$automatic_flag = self::$global_config['system_config']['automatic_invoice'] == 1 ? '0' : '1';
 
 
-				   if($invoiceconf['no_usage_invoice'] == 0){
+				   if(astpp_eq0($invoiceconf['no_usage_invoice'])){
 
 				
 					    $InvoiceData = array(
@@ -191,10 +193,10 @@ class ProcessInvoice extends MX_Controller
 			$amount = $this->db_model->getSelect("debit,credit","invoice_details",array("invoiceid"=>$invoiceid));
 			if($amount->num_rows > 0){
 				$amount = $amount->result_array()[0];
-				$InvoiceData ['amount'] = ( $amount['credit'] - $amount['debit']);
-				$InvoiceData ['amount'] = ($InvoiceData ['amount'] < 0)?($InvoiceData ['amount']*-1):$InvoiceData ['amount'];
+				$InvoiceData ['amount'] = ( astpp_n($amount['credit']) - astpp_n($amount['debit']));
+				$InvoiceData ['amount'] = (astpp_lt($InvoiceData ['amount'], 0))?(astpp_n($InvoiceData ['amount'])*-1):$InvoiceData ['amount'];
 				$InvoiceData['invoice_number']=$invoiceconf['invoice_prefix'].$last_invoice_ID;
-				$final_array = array_merge($accountinfo,$InvoiceData);
+				$final_array = astpp_array_merge($accountinfo,$InvoiceData);
 				$this->common->mail_to_users("new_invoice",$final_array);
 			}
 			return $invoiceid;
@@ -214,13 +216,13 @@ class ProcessInvoice extends MX_Controller
 
 	    $tax_calculation=$this->common_model->calculate_taxes($accountinfo,$total_billable_item["debit"]);
 
-	    if(isset($tax_calculation['tax']) && !empty($tax_calculation['tax'] && $total_billable_item["debit"] > 0)){
+	    if(isset($tax_calculation['tax']) && !empty($tax_calculation['tax'] && astpp_gt($total_billable_item["debit"], 0))){
 
 		$base_currency = Common_model::$global_config ['system_config'] ['base_currency'];
-		$account_balance = $accountinfo ['posttoexternal'] == 1 ? $accountinfo ['credit_limit'] - ($accountinfo ['balance']) : $accountinfo ['balance'];
+		$account_balance = $accountinfo ['posttoexternal'] == 1 ? astpp_n($accountinfo ['credit_limit']) - (astpp_n($accountinfo ['balance'])) : $accountinfo ['balance'];
 		$debit = isset($tax_calculation['total_tax'])?$tax_calculation['total_tax']:"0.00";
 		$credit = "0.00";
-		$after_balance = $account_balance - $debit;
+		$after_balance = astpp_n($account_balance) - astpp_n($debit);
 
 		$account_currency_info = $this->db_model->getSelect("*","currency",array("id"=>$accountinfo['currency_id']));
 		if($account_currency_info->num_rows > 0){
@@ -280,8 +282,8 @@ class ProcessInvoice extends MX_Controller
 
 
 		$seconds = $calls['duration'];
-		$minutes = floor($seconds/60);
-		$secondsleft = $seconds%60;
+		$minutes = astpp_floor(astpp_n($seconds)/60);
+		$secondsleft = astpp_n($seconds)%60;
 		if($minutes<10)
 			$minutes = "0" . $minutes;
 		if($secondsleft<10)
@@ -351,10 +353,10 @@ order_items.reseller_id,order_items.accountid,order_items.setup_fee,order_items.
 				    $user_product_info->setup_fee= $ordervalue['setup_fee'];
 				    $user_product_info->billing_days= $ordervalue['billing_days'];
 				    $product_info = (array)$user_product_info;
-					$total_amt = ($ordervalue['price']*$ordervalue['quantity']);
-					$account_balance = $accountdata ['posttoexternal'] == 1 ? $accountdata ['credit_limit'] - ($accountdata ['balance']) : $accountdata ['balance'];
+					$total_amt = (astpp_n($ordervalue['price'])*astpp_n($ordervalue['quantity']));
+					$account_balance = $accountdata ['posttoexternal'] == 1 ? astpp_n($accountdata ['credit_limit']) - (astpp_n($accountdata ['balance'])) : $accountdata ['balance'];
 					//$product_info['product_name']=$product_info['name'];
-			     		$final_array = array_merge($accountdata,$product_info);
+			     		$final_array = astpp_array_merge($accountdata,$product_info);
 			     		$acc_id='';
 			     		$order_id='';
 
@@ -369,7 +371,7 @@ order_items.reseller_id,order_items.accountid,order_items.setup_fee,order_items.
 						$did_update_array  = array("accountid"=>0,"call_type"=>0,"extensions"=>"","always"=>0,"always_destination"=>"","user_busy"=>0,"user_busy_destination"
 =>"","user_not_registered"=>0,"user_not_registered_destination"=>"","no_answer"=>0,"no_answer_destination"=>"","call_type_vm_flag"=>1,
 "failover_call_type"=>1,"always_vm_flag"=>1,"user_busy_vm_flag"=>1,"user_not_registered_vm_flag"=>1,"no_answer_vm_flag"=>1,"failover_extensions"=>"");
-					if($product_info['status'] == 1 ||  $ordervalue['billing_type'] == 0){
+					if($product_info['status'] == 1 ||  astpp_eq0($ordervalue['billing_type'])){
 							$is_process = false;  
 							$this->db->update("order_items",$update_order_arr,array("id"=>$ordervalue['id']));
 						if($product_info['product_category'] == 4){ 
@@ -378,7 +380,7 @@ order_items.reseller_id,order_items.accountid,order_items.setup_fee,order_items.
 						$final_array['next_billing_date'] = $update_order_arr['termination_date'];
 						$this->common->mail_to_users ( "product_release", $final_array );
 		
-					} if(($product_info['can_purchase'] == 1 ||$product_info['can_resell'] == 1) && ($product_info['reseller_id'] == $ordervalue['reseller_id'] && $ordervalue['reseller_id'] > 0)){   
+					} if(($product_info['can_purchase'] == 1 ||$product_info['can_resell'] == 1) && ($product_info['reseller_id'] == $ordervalue['reseller_id'] && astpp_gt($ordervalue['reseller_id'], 0))){   
 							$is_process = false;
 							$this->db->update("order_items",$update_order_arr,array("id"=>$ordervalue['id']));
 						if($product_info['product_category'] == 4){
@@ -388,7 +390,7 @@ order_items.reseller_id,order_items.accountid,order_items.setup_fee,order_items.
 						$this->common->mail_to_users ( "product_release", $final_array );
 				     } 
 
-					if($product_info['release_no_balance'] == 0){  
+					if(astpp_eq0($product_info['release_no_balance'])){  
 					 	if($account_balance < $total_amt){
 							$is_process = false;  
 							$this->db->update("order_items",$update_order_arr,array("id"=>$ordervalue['id']));
@@ -402,7 +404,7 @@ order_items.reseller_id,order_items.accountid,order_items.setup_fee,order_items.
 				if($is_process == true){ 
 					$parentdata = $this->db_model->getSelect("*", "accounts", array("id"=>$ordervalue["reseller_id"]));
 					$parentdata = $parentdata->first_row();	
-			    		if((isset($parentdata->is_distributor) && $parentdata->is_distributor == 1 && $parentdata->type == 1 && $ordervalue["reseller_id"]>0)){
+			    		if((isset($parentdata->is_distributor) && $parentdata->is_distributor == 1 && $parentdata->type == 1 && astpp_gt($ordervalue["reseller_id"], 0))){
 						$parent_array[$parentdata->id] = $parentdata;
 						$parent_key_arr[] = $parentdata->id;
 						$parent_array[$parentdata->id]->currecny_info = $account_currency_info;
@@ -410,23 +412,23 @@ order_items.reseller_id,order_items.accountid,order_items.setup_fee,order_items.
 						$parent_array[$parentdata->id]->order_item_id= $ordervalue['id'];
 						$parent_array[$parentdata->id]->product_id= $user_product_info->product_id;
 						$parent_array[$parentdata->id]->description= "Product (".$user_product_info->name.") commission has been credited";
-						if($parentdata->reseller_id > 0){ 
+						if(astpp_gt($parentdata->reseller_id, 0)){ 
 
 							$tempcomm = 0.00;
 							$parent_reseller = $this->common->get_parent_info($parentdata->id, 0);
-							$max_count = (count((explode(",",rtrim($parent_reseller,",")))));
+							$max_count = (astpp_count((explode(",",rtrim($parent_reseller,",")))));
 
 							$comm_rate = $product_info['commission'];
-							$product_amount = ($product_info['price']*$ordervalue['quantity']);
+							$product_amount = (astpp_n($product_info['price'])*astpp_n($ordervalue['quantity']));
 
 							for($i=1; $i<=$max_count; $i++){
-								$tempcomm = (($product_amount*$comm_rate)/100);
+								$tempcomm = ((astpp_n($product_amount)*astpp_n($comm_rate))/100);
 								$product_amount =  $tempcomm;
 							}
 							$parent_array[$parentdata->id]->commission = $tempcomm;
 							$parent_array[$parentdata->id]->reseller_id = 0;
 						}else{  
-							$parent_commission = (($product_info['price']*$ordervalue['quantity']*$product_info['commission'])/100);
+							$parent_commission = ((astpp_n($product_info['price'])*astpp_n($ordervalue['quantity'])*astpp_n($product_info['commission']))/100);
 
 							$parent_array[$parentdata->id]->commission = $parent_commission;
 						}
@@ -473,10 +475,10 @@ order_items.billing_type,order_items.billing_days,order_items.free_minutes,order
 			   	 $product_info['description']= $product_info['charge_type']." (".$product_info['name'].") has been renewed."; 
 
 		    		$update_order_arr = array("billing_date"=>$this->CurrentDate,
-						      "next_billing_date"=>($ordervalue['billing_days'] == 0)?gmdate("Y-m-d 23:59:59",strtotime($ordervalue['next_billing_date']."+10 years")):gmdate("Y-m-d 23:59:59",strtotime($ordervalue['next_billing_date']." + ".($ordervalue['billing_days'])." days")));
+						      "next_billing_date"=>(astpp_eq0($ordervalue['billing_days']))?astpp_gmdate("Y-m-d 23:59:59",strtotime($ordervalue['next_billing_date']."+10 years")):astpp_gmdate("Y-m-d 23:59:59",strtotime($ordervalue['next_billing_date']." + ".($ordervalue['billing_days'])." days")));
 
 				$last_payment_id=$this->payment->add_payments_transcation($product_info,$accountdata,$account_currency_info);
-				$final_array = array_merge($accountdata,$product_info);
+				$final_array = astpp_array_merge($accountdata,$product_info);
 				// ASTPPCOM-1112_kinjal_start
 				$final_array['last_id'] = $accountdata['id'];
 				// ASTPPCOM-1112_kinjal_end
@@ -507,14 +509,14 @@ order_items.billing_type,order_items.billing_days,order_items.free_minutes,order
 				}
 
 				
-					if($product_info['is_optin'] == '0' && $accountdata["reseller_id"] > 0 && $accountdata["is_distributor"] == 1  && $product_info['product_category'] != '4' && $is_apply_commission == "true"){ 
+					if($product_info['is_optin'] == '0' && astpp_gt($accountdata["reseller_id"], 0) && $accountdata["is_distributor"] == 1  && $product_info['product_category'] != '4' && $is_apply_commission == "true"){ 
 
 					$parent_array[$accountdata['id']] = (object)$accountdata;
 					$parent_array[$accountdata['id']]->product_info->price = $product_info['price'];
 					$parent_key_arr[] = $accountdata['id'];	
 					$this->order->product_commission($parent_array,$parent_key_arr);
 						$product_info['amount'] = $parent_array[$parentdata->id]->commission;
-						$final_array = array_merge($accountdata,$product_info);
+						$final_array = astpp_array_merge($accountdata,$product_info);
 						$this->common->mail_to_users ( "product_commission", $final_array );
 					
 
@@ -551,20 +553,20 @@ order_items.billing_type,order_items.billing_days,order_items.free_minutes,order
 			$product_info = $this->db_model->getSelect("name,status,price,can_purchase,billing_days,billing_type,can_resell","products",array("id"=>$ordervalue['product_id']));
 			if($product_info->num_rows > 0){
 				$product_info = $product_info->result_array()[0];
-				$reseller_id  = ($ordervalue['reseller_id'] > 0)?$ordervalue['reseller_id']:0;
+				$reseller_id  = (astpp_gt($ordervalue['reseller_id'], 0))?$ordervalue['reseller_id']:0;
 				$account_data = $this->db_model->getSelect("*","accounts",array("id"=>$ordervalue['accountid'],"reseller_id"=> $reseller_id,"status"=>0,"deleted"=>0));
 
 				if($account_data->num_rows > 0){ 
 					$account_info = $account_data->result_array()[0];
-					$final_array = array_merge($account_info,$product_info);
+					$final_array = astpp_array_merge($account_info,$product_info);
 
 					$final_array['billing_date'] = $final_array['next_billing_date'];
-					$final_array['next_billing_date'] =($product_info['billing_days'] == 0)?gmdate('Y-m-d 23:59:59', strtotime('+10 years')):gmdate("Y-m-d 23:59:59",strtotime("+".($product_info['billing_days']-1)." days"));
+					$final_array['next_billing_date'] =(astpp_eq0($product_info['billing_days']))?astpp_gmdate('Y-m-d 23:59:59', strtotime('+10 years')):astpp_gmdate("Y-m-d 23:59:59",strtotime("+".(astpp_n($product_info['billing_days'])-1)." days"));
 					$final_array['product_name'] = $product_info['name'];
-					if($product_info['status'] == 1 ||   $product_info['billing_type'] == 0 ){ 
+					if($product_info['status'] == 1 ||   astpp_eq0($product_info['billing_type']) ){ 
 						$final_array['next_billing_date'] = $this->CurrentDate;
 						$this->common->mail_to_users ( "product_release", $final_array );
-					}else if(($product_info['can_purchase'] == 1 ||$product_info['can_resell'] == 1) && $product_info['reseller_id'] == $ordervalue['reseller_id'] && $ordervalue['reseller_id'] > 0){  
+					}else if(($product_info['can_purchase'] == 1 ||$product_info['can_resell'] == 1) && $product_info['reseller_id'] == $ordervalue['reseller_id'] && astpp_gt($ordervalue['reseller_id'], 0)){  
 
 					/*	$where_sip_devices  = array('accountid'=>$final_array ['id']);
 						$dialer_device_info = ( array ) $this->db->get_where( "sip_devices", $where_sip_devices )->result_array();

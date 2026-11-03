@@ -9,6 +9,7 @@
  * @version   4.03
  */
 
+#[\AllowDynamicProperties]
 class HTML2PDF_exception extends exception
 {
 	protected $_tag = null;

@@ -11,6 +11,7 @@ if (! defined ( 'BASEPATH' )) {
  */
 
 require_once 'system/libraries/Log.php';
+#[\AllowDynamicProperties]
 class api_log extends CI_Log {
 	
 	// --------------------------------------------------------------------
@@ -34,7 +35,7 @@ class api_log extends CI_Log {
 	 *        	bool whether the error is a native PHP error
 	 * @return bool
 	 */
-	public function write_log($level = 'info', $msg, $php_error = FALSE) {
+	public function write_log($level, $msg, $php_error = FALSE) {
 		$level = strtoupper ( $level );
 		
 		// if ( ! isset($this->_levels[$level]) OR ($this->_levels[$level] > $this->_threshold))

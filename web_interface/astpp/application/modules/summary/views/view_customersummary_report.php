@@ -138,7 +138,7 @@ if (! empty($resellerlist)) {
                                                     <?php
                                             foreach ($value as $sub_key => $sub_value) {
                                                 $selected = null;
-                                                if (isset($session_info['reseller_id']) && $session_info['reseller_id'] > 0 && $sub_key == $session_info['reseller_id']) {
+                                                if (isset($session_info['reseller_id']) && astpp_gt($session_info['reseller_id'], 0) && $sub_key == $session_info['reseller_id']) {
                                                     $selected = "selected";
                                                 }
                                                 ?>
@@ -174,7 +174,7 @@ if (! empty($accountlist)) {
                                                     <?php
                                                 foreach ($value as $sub_key => $sub_value) {
                                                     $selected = null;
-                                                    if (isset($session_info['accountid']) && $session_info['accountid'] > 0 && $sub_key == $session_info['accountid']) {
+                                                    if (isset($session_info['accountid']) && astpp_gt($session_info['accountid'], 0) && $sub_key == $session_info['accountid']) {
                                                         $selected = "selected";
                                                     }
                                                     ?>

@@ -47,7 +47,7 @@
 			</div>
 			<div class="p-4 col-md-12">
 				<div class="col-md-12 p-0">
-   <?php  if((isset($permissioninfo['invoices']['invoice_list']['search'])) && ($permissioninfo['invoices']['invoice_list']['search']==0)  && ($permissioninfo['login_type'] == '2' or $permissioninfo['login_type'] == '-1' or $permissioninfo['login_type'] == '0' or $permissioninfo['login_type'] == '1') or ($permissioninfo['login_type'] == '-1')){ ?>
+   <?php  if((isset($permissioninfo['invoices']['invoice_list']['search'])) && (astpp_eq0($permissioninfo['invoices']['invoice_list']['search']))  && ($permissioninfo['login_type'] == '2' or $permissioninfo['login_type'] == '-1' or $permissioninfo['login_type'] == '0' or $permissioninfo['login_type'] == '1') or ($permissioninfo['login_type'] == '-1')){ ?>
     <div id="show_search" class="float-right col-md-4 p-0">
 						<input type="text" name="left_panel_quick_search"
 							id="left_panel_quick_search"

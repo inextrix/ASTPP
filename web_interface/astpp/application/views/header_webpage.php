@@ -104,7 +104,7 @@
 	  ?>
                 
      <?php
-		  if(common_model::$global_config['system_config']['opensips']== 0 &&  $menu_key !='SIP Devices'){
+		  if(astpp_eq0(common_model::$global_config['system_config']['opensips']) &&  $menu_key !='SIP Devices'){
 			  echo '<li class="nav-item dropdown"><a class="nav-link dropdown-toggle" role="button" href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">'.gettext($menu_key).'<span class="sr-only">(current)</span></a>';
 		  }
 		  if(common_model::$global_config['system_config']['opensips']== 1 &&  $menu_key != 'Opensips'){
@@ -119,14 +119,14 @@
                             <? foreach($sub_menu_values as $sub_key => $sub_menu_lables){
 								$module_url = explode('/',$sub_menu_lables['module_url']);
 								
-								if(isset($permissioninfo[$module_url[0]][$module_url[1]]) || $this->session->userdata('userlevel_logintype') == '-1' || $this->session->userdata('userlevel_logintype') == '0' || $this->session->userdata('userlevel_logintype') == '3' || in_array($module_url[1], $allow_menu_url)){
-				if((common_model::$global_config['system_config']['paypal_status']== 1 && strtolower($sub_menu_lables["menu_label"]) =='recharge')|| (common_model::$global_config['system_config']['enterprise']== 0 &&  $sub_menu_lables["menu_label"] =='Opensips devices')  || (common_model::$global_config['system_config']['enterprise']== 0 &&  $sub_menu_lables["menu_label"] =='Opensips')  || (common_model::$global_config['system_config']['opensips']== 1 &&  $sub_menu_lables["menu_label"] =='Dispatcher list') || (common_model::$global_config['system_config']['opensips']== 1 &&  $sub_menu_lables["menu_label"] =='Opensips devices')  || (common_model::$global_config['system_config']['opensips']== 1 &&  $sub_menu_lables["menu_label"] =='Opensips') || (common_model::$global_config['system_config']['enterprise']== 1 && common_model::$global_config['system_config']['opensips']== 0 &&  $sub_menu_lables["menu_label"] =='SIP Devices') || (($acc_info['type'] == '3' || $acc_info['type'] == '0') && $acc_info['allow_ip_management'] == '1' && strtolower($sub_menu_lables["menu_label"]) == 'ip settings')){
+								if(isset($permissioninfo[$module_url[0]][$module_url[1]]) || $this->session->userdata('userlevel_logintype') == '-1' || $this->session->userdata('userlevel_logintype') == '0' || $this->session->userdata('userlevel_logintype') == '3' || astpp_in_array($module_url[1], $allow_menu_url)){
+				if((common_model::$global_config['system_config']['paypal_status']== 1 && strtolower($sub_menu_lables["menu_label"]) =='recharge')|| (astpp_eq0(common_model::$global_config['system_config']['enterprise']) &&  $sub_menu_lables["menu_label"] =='Opensips devices')  || (astpp_eq0(common_model::$global_config['system_config']['enterprise']) &&  $sub_menu_lables["menu_label"] =='Opensips')  || (common_model::$global_config['system_config']['opensips']== 1 &&  $sub_menu_lables["menu_label"] =='Dispatcher list') || (common_model::$global_config['system_config']['opensips']== 1 &&  $sub_menu_lables["menu_label"] =='Opensips devices')  || (common_model::$global_config['system_config']['opensips']== 1 &&  $sub_menu_lables["menu_label"] =='Opensips') || (common_model::$global_config['system_config']['enterprise']== 1 && astpp_eq0(common_model::$global_config['system_config']['opensips']) &&  $sub_menu_lables["menu_label"] =='SIP Devices') || (($acc_info['type'] == '3' || $acc_info['type'] == '0') && $acc_info['allow_ip_management'] == '1' && strtolower($sub_menu_lables["menu_label"]) == 'ip settings')){
 								}else{?>
                                 <li><a class="dropdown-item" href="<?php echo base_url().$sub_menu_lables["module_url"];?>"><?php echo gettext($sub_menu_lables["menu_label"]);?></a>
 				<?}?>
 				<?}} ?>
                             <?php }else{
-				if(common_model::$global_config['system_config']['opensips']==0 && $menu_key !='System Configuration'){ ?>    
+				if(astpp_eq0(common_model::$global_config['system_config']['opensips']) && $menu_key !='System Configuration'){ ?>    
 				   <li class="dropdown-submenu"><a class="dropdown-item dropdown-toggle" href="#"><span><?=$sub_menu_key;?></span></a>
 				<? } if(common_model::$global_config['system_config']['opensips']==1 && $sub_menu_key!="Customers") {?>
 				    <li class="dropdown-submenu"><a class="dropdown-item dropdown-toggle" href="#"><span><?=$sub_menu_key;?></span></a>
@@ -134,7 +134,7 @@
 				if(common_model::$global_config['system_config']['opensips']==1 && $sub_menu_key=="Customers") {?>
 				    <li class="dropdown-submenu"><a class="dropdown-item dropdown-toggle" href="<?php echo base_url(); ?>accounts/customer_list/"><span><?=$sub_menu_key;?></span></a>
 				<?php }
-				if(($acc_info['type']==3 || $acc_info['type']== 0) && $acc_info['allow_ip_management']== 1 && strtolower($sub_menu_lables["menu_label"]) !='ip settings'){ ?>
+				if(($acc_info['type']==3 || astpp_eq0($acc_info['type'])) && $acc_info['allow_ip_management']== 1 && strtolower($sub_menu_lables["menu_label"]) !='ip settings'){ ?>
 				    <li class="dropdown-submenu"><a class="nav-link dropdown-toggle dropdown-item" href="#"><span><?=$sub_menu_key;?></span></a>
 				<? }
 							?>
@@ -143,9 +143,9 @@
                                 <? foreach($sub_menu_values as $sub_menu_lables){ 
 									$module_url = explode('/',$sub_menu_lables['module_url']);
 
-                                    if(isset($permissioninfo[$module_url[0]][$module_url[1]]) || $this->session->userdata('userlevel_logintype') == '-1' || $this->session->userdata('userlevel_logintype') == '0' || $this->session->userdata('userlevel_logintype') == '3' || in_array($module_url[1], $allow_menu_url)){
+                                    if(isset($permissioninfo[$module_url[0]][$module_url[1]]) || $this->session->userdata('userlevel_logintype') == '-1' || $this->session->userdata('userlevel_logintype') == '0' || $this->session->userdata('userlevel_logintype') == '3' || astpp_in_array($module_url[1], $allow_menu_url)){
 					 if($sub_menu_lables['menu_label'] != 'Configuration'){
-				  if(common_model::$global_config['system_config']['opensips']==0 &&  $sub_menu_lables["menu_label"] !='SIP Devices'){
+				  if(astpp_eq0(common_model::$global_config['system_config']['opensips']) &&  $sub_menu_lables["menu_label"] !='SIP Devices'){
 					  ?>
 				      <li><a class="dropdown-item" href="<?php echo base_url().$sub_menu_lables["module_url"];?>"><?php echo gettext($sub_menu_lables["menu_label"]);?></a></li>
 				  <? }

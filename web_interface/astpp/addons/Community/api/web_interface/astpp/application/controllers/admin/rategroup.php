@@ -3,6 +3,7 @@
 //require APPPATH . '/libraries/API_Controller.php';
 require APPPATH . '/controllers/common/account.php';
 
+#[\AllowDynamicProperties]
 class Rategroup extends Account {
 	
 	protected $postdata = "";
@@ -51,7 +52,7 @@ class Rategroup extends Account {
 		// END
 		if ($function != '') {
 			$function = '_' . $function;
-			if (( int ) method_exists ( $this, $function ) > 0) {
+			if (astpp_gt(( int ) method_exists ( $this, $function ), 0)) {
 				$this->$function ();
 			} else {
 				$this->response ( array (
@@ -76,13 +77,13 @@ class Rategroup extends Account {
 				'error' => $this->lang->line ( 'error_param_missing' )
 			), 400 );
 		}else{
-			if($this->postdata['start_limit'] <= 0 || $this->postdata['end_limit'] <= 0) {
+			if(astpp_le($this->postdata['start_limit'], 0) || astpp_le($this->postdata['end_limit'], 0)) {
 				$this->response ( array (
 					'status' => false,
 					'error' => $this->lang->line('number_greater_zero')
 				), 400 );
 			}
-		$start = $this->postdata['start_limit']-1;
+		$start = astpp_n($this->postdata['start_limit'])-1;
 		$limit = $this->postdata['end_limit'];
 		$object_where_params = $this->postdata['object_where_params'];
 		
@@ -169,7 +170,7 @@ class Rategroup extends Account {
 					$available_rategroup[$key]['reseller_id'] = $this->common->reseller_select_value('first_name,last_name,number,company_name','accounts',$value['reseller_id']);
 				}
 				if ($this->accountinfo['type'] != 1) {
-					if($value['routing_type'] == 0) {
+					if(astpp_eq0($value['routing_type'])) {
 						$available_rategroup[$key]['routing_type'] = "LCR";
 					}
 					elseif ($value['routing_type'] == 1) {
@@ -262,7 +263,7 @@ class Rategroup extends Account {
 					'success' =>  $this->lang->line ('valid_reseller_id')  
 				), 400 );
 			}
-			if ($this->postdata['reseller_id'] == "" || $this->postdata['reseller_id'] == 0) {
+			if ($this->postdata['reseller_id'] == "" || astpp_eq0($this->postdata['reseller_id'])) {
 				$add_array['reseller_id'] = 0 ;
 			}
 			else{
@@ -329,7 +330,7 @@ class Rategroup extends Account {
 		$add_array['status'] = isset($this->postdata['status']) && ($this->postdata['status'] != "") ? $this->postdata['status'] : 0;
 		$routing_type_id = (array)$this->db->get_where('pricelists', array('id' => $this->postdata['rategroup_id']))->first_row();
 		if ($this->accountinfo['type'] == -1 || $this->accountinfo['type'] == 2) {
-			$add_array['routing_type'] = ($routing_type_id['reseller_id'] == 0) ? $this->postdata['routing_type'] : 0;
+			$add_array['routing_type'] = (astpp_eq0($routing_type_id['reseller_id'])) ? $this->postdata['routing_type'] : 0;
 		}else{
 			$add_array['routing_type'] =  0;
 		}
@@ -351,7 +352,7 @@ class Rategroup extends Account {
 		}
 		$this->db->insert("pricelists", $add_array);
 		$last_id = $this->db->insert_id();
-		if ($this->postdata['reseller_id'] == "" || $this->postdata['reseller_id'] == 0) {
+		if ($this->postdata['reseller_id'] == "" || astpp_eq0($this->postdata['reseller_id'])) {
 			if (strpos($this->postdata['trunk_id'], ',') !== false) {
 				$trunk_ids = explode(',',$this->postdata['trunk_id']);
 				foreach ($trunk_ids as $key => $value) {

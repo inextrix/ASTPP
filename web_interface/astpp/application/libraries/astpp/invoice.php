@@ -22,6 +22,7 @@
 // ##############################################################################
 if (! defined ( 'BASEPATH' ))
 	exit ( 'No direct script access allowed' );
+#[\AllowDynamicProperties]
 class invoice {
 	function __construct($library_name = '') {
 		$this->CI = & get_instance ();
@@ -31,12 +32,12 @@ class invoice {
 		$this->CI->load->library ( 'session' );
 	}
 
-	function get_invoice_date($select, $accountid = 0, $reseller_id, $order_by = 'id') {
+	function get_invoice_date($select, $accountid, $reseller_id, $order_by = 'id') {
 
 		$where = array (
 				"reseller_id" => $reseller_id
 		);
-		if ($accountid > 0) {
+		if (astpp_gt($accountid, 0)) {
 			$where ['accountid'] = $accountid;
 		}
 		
@@ -51,7 +52,7 @@ class invoice {
 		return false;
 	}
 	function generate_invoice($accountinfo,$amount,$payment_id) {
-		$parent_id = ($accountinfo ['reseller_id'] == 0) ? 1 : $accountinfo ['reseller_id'];
+		$parent_id = (astpp_eq0($accountinfo ['reseller_id'])) ? 1 : $accountinfo ['reseller_id'];
 		$where = "accountid IN('".$parent_id."','1')";
 		$this->CI->db->select('*');
 		$this->CI->db->where($where);
@@ -62,8 +63,8 @@ class invoice {
 
 		$last_invoiceid = $this->get_invoice_date ( "number", '', $accountinfo["reseller_id"]);
 
-		if ($last_invoiceid && $last_invoiceid > 0) {
-			$last_invoiceid = ($last_invoiceid + 1);
+		if ($last_invoiceid && astpp_gt($last_invoiceid, 0)) {
+			$last_invoiceid = (astpp_n($last_invoiceid) + 1);
 
 			if ($last_invoiceid < $invoice_conf ['invoice_start_from'])
 					$last_invoiceid = $invoice_conf ['invoice_start_from'];	
@@ -73,7 +74,7 @@ class invoice {
 		$last_invoiceid = str_pad ( $last_invoiceid, 0 , '0', STR_PAD_LEFT );
 
 		$invoice_prefix = $invoice_conf ['invoice_prefix'];
-		$due_date = $invoice_conf ['interval']  > 0 ? date ( "Y-m-d H:i:s", strtotime ( gmdate ( "Y-m-d H:i:s" ) . " +" . $invoice_conf ['interval'] . " days" ) ) : gmdate ( "Y-m-d H:i:s" );
+		$due_date = astpp_gt($invoice_conf ['interval'], 0) ? astpp_date ( "Y-m-d H:i:s", strtotime ( gmdate ( "Y-m-d H:i:s" ) . " +" . $invoice_conf ['interval'] . " days" ) ) : gmdate ( "Y-m-d H:i:s" );
 		$invoice_data = array (
 				"accountid" => $accountinfo['id'],
 				"prefix" => $invoice_prefix,
@@ -91,23 +92,23 @@ class invoice {
 		$invoiceid = $this->CI->db->insert_id ();
 		return $invoiceid;
 	}
-	public function receive_payment($product_info,$account_info,$tax_calculation='',$payment_id,$currency_info='',$invoice_id){
+	public function receive_payment($product_info,$account_info,$tax_calculation,$payment_id,$currency_info,$invoice_id){
 		$debit = "0.00";
 		$credit = "0.00";
 		$base_currency = Common_model::$global_config ['system_config'] ['base_currency'];
 		$bal= $this->CI->common->get_field_name("balance","accounts",array("id"=>$account_info['id']));
-		$account_balance = $account_info ['posttoexternal'] == 1 ? ($account_info ['credit_limit'] - $bal) : $bal;
+		$account_balance = $account_info ['posttoexternal'] == 1 ? (astpp_n($account_info ['credit_limit']) - astpp_n($bal)) : $bal;
 		$total_amt=$product_info['price'];
-		$after_balance = $account_balance + $total_amt; 
+		$after_balance = astpp_n($account_balance) + astpp_n($total_amt); 
 
 		if($product_info['invoice_type'] == 'credit'){
 			$debit = "0.00";
 			$credit = isset($tax_calculation['amount_with_tax'])?$tax_calculation['amount_with_tax']:$product_info['price'];
-			$after_balance = $account_balance + $total_amt;
+			$after_balance = astpp_n($account_balance) + astpp_n($total_amt);
 		}else{
 			$debit = isset($tax_calculation['amount_with_tax'])?$tax_calculation['amount_with_tax']:$product_info['price'];
 			$credit = "0.00";
-			$after_balance = $account_balance - $total_amt;
+			$after_balance = astpp_n($account_balance) - astpp_n($total_amt);
 		}
 		$insert_arr = array (
 				"accountid" =>$account_info['id'],
@@ -139,20 +140,20 @@ class invoice {
 		return $invoice_id;
 	}
 
-	public function add_invoice_details($product_info,$account_info,$tax_calculation='',$payment_id,$currency_info=''){
+	public function add_invoice_details($product_info,$account_info,$tax_calculation,$payment_id,$currency_info=''){
 		$is_update_after_balance = "true";
 		$debit = "0.00";
 		$credit = "0.00";
 		$bal= $this->CI->common->get_field_name("balance","accounts",array("id"=>$account_info['id']));
 		$base_currency = Common_model::$global_config ['system_config'] ['base_currency'];
-		$account_balance = $account_info ['posttoexternal'] == 1 ? $account_info ['credit_limit'] - ($bal) : $bal;
+		$account_balance = $account_info ['posttoexternal'] == 1 ? astpp_n($account_info ['credit_limit']) - (astpp_n($bal)) : $bal;
 		$product_info['is_update_balance'] = isset($product_info['is_update_balance']) ? $product_info['is_update_balance']:"true";
 
 	
 		$total_amt=$product_info['price'];
 
 
-		if( $account_info ['posttoexternal'] == 0){
+		if( astpp_eq0($account_info ['posttoexternal'])){
 			$invoice_id = $this->generate_invoice ($account_info,$total_amt,$payment_id);
 
 		}else{
@@ -168,11 +169,11 @@ class invoice {
 			}else{
 				$credit = isset($tax_calculation['amount_without_tax'])?$tax_calculation['amount_without_tax']:$product_info['price'];
 			}
-			$after_balance = $account_balance + $credit;
+			$after_balance = astpp_n($account_balance) + astpp_n($credit);
 		}else{
 			$debit = isset($tax_calculation['amount_without_tax'])?$tax_calculation['amount_without_tax']:$product_info['price'];
 			$credit = "0.00";
-			$after_balance = $account_balance - $debit;
+			$after_balance = astpp_n($account_balance) - astpp_n($debit);
 		}
 		if(isset($product_info['is_update_balance']) && $product_info['is_update_balance'] == "false"){
 			$after_balance = $account_balance;
@@ -205,7 +206,7 @@ class invoice {
 		if(isset($tax_calculation['tax']) && !empty($tax_calculation['tax'])){
 			foreach($tax_calculation['tax'] as $tax_key => $tax){
 				$before_balance = $after_balance;
-				$after_balance = $after_balance - $tax;
+				$after_balance = astpp_n($after_balance) - astpp_n($tax);
 			$tax_insert_arr = array (
 						"accountid" =>$account_info['id'],
 						"description" =>$tax_key,

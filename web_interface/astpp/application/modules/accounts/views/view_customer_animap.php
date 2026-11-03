@@ -103,14 +103,14 @@ label.error {
     ?>	
       <div class="p-4 col-md-12">
 				<div class="col-md-12 p-0">
-         <?php  if((isset($permissioninfo['animap']['animap_detail']['create'])) && ($permissioninfo['animap']['animap_detail']['create']==0)  && ($permissioninfo['login_type'] == '2' or $permissioninfo['login_type'] == '-1' or $permissioninfo['login_type'] == '0' or $permissioninfo['login_type'] == '3' or $permissioninfo['login_type'] == '1') or ($permissioninfo['login_type'] == '-1')){ ?>
+         <?php  if((isset($permissioninfo['animap']['animap_detail']['create'])) && (astpp_eq0($permissioninfo['animap']['animap_detail']['create']))  && ($permissioninfo['login_type'] == '2' or $permissioninfo['login_type'] == '-1' or $permissioninfo['login_type'] == '0' or $permissioninfo['login_type'] == '3' or $permissioninfo['login_type'] == '1') or ($permissioninfo['login_type'] == '-1')){ ?>
           <div class="float-left" id="left_panel_add">
 						<span class="btn btn-line-warning"> <i
 							class="fa fa-plus-circle fa-lg"></i><?php echo gettext('Add');?></span>
 					</div>
           <?php
         }
-        if ((isset($permissioninfo['freeswitch']['fssipdevices']['delete'])) && ($permissioninfo['freeswitch']['fssipdevices']['delete'] == 0) && ($permissioninfo['login_type'] == '-1' or $permissioninfo['login_type'] == '0' or $permissioninfo['login_type'] == '3' or $permissioninfo['login_type'] == '1') or ($permissioninfo['login_type'] == '-1')) {
+        if ((isset($permissioninfo['freeswitch']['fssipdevices']['delete'])) && (astpp_eq0($permissioninfo['freeswitch']['fssipdevices']['delete'])) && ($permissioninfo['login_type'] == '-1' or $permissioninfo['login_type'] == '0' or $permissioninfo['login_type'] == '3' or $permissioninfo['login_type'] == '1') or ($permissioninfo['login_type'] == '-1')) {
             ?>
           <div id="left_panel_delete"
 						class="pull-left margin-t-0 padding-x-4"
@@ -120,7 +120,7 @@ label.error {
               <?php echo gettext('Delete');?>
             </span>
 					</div>
-        <?php  } if((isset($permissioninfo['animap']['animap_detail']['search'])) && ($permissioninfo['animap']['animap_detail']['search']==0)  && ($permissioninfo['login_type'] == '2' or $permissioninfo['login_type'] == '-1' or $permissioninfo['login_type'] == '0' or $permissioninfo['login_type'] == '3' or $permissioninfo['login_type'] == '1') or $permissioninfo['login_type'] == '3'){ ?>
+        <?php  } if((isset($permissioninfo['animap']['animap_detail']['search'])) && (astpp_eq0($permissioninfo['animap']['animap_detail']['search']))  && ($permissioninfo['login_type'] == '2' or $permissioninfo['login_type'] == '-1' or $permissioninfo['login_type'] == '0' or $permissioninfo['login_type'] == '3' or $permissioninfo['login_type'] == '1') or $permissioninfo['login_type'] == '3'){ ?>
           <div id="show_search" class="float-right col-md-4 p-0">
 						<input type="text" name="left_panel_quick_search"
 							id="left_panel_quick_search"

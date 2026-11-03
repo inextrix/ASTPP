@@ -312,7 +312,7 @@ $(document).ready(function() {
                                                 <label class="form-label"><?php echo gettext("Always"); ?></label>
                                                 <div class="text-right">
                                                     <label class="switch">
-                                                        <input type="checkbox" name="call_forwarding_flag" id="call_forwarding_flag_enabled" class="onoffswitch-checkbox" onclick="call_forwarding_enabled_disabled();" value="0" <?php if($edit_array['call_forwarding_flag'] == 0){ echo "checked=checked";}  ?>>
+                                                        <input type="checkbox" name="call_forwarding_flag" id="call_forwarding_flag_enabled" class="onoffswitch-checkbox" onclick="call_forwarding_enabled_disabled();" value="0" <?php if(astpp_eq0($edit_array['call_forwarding_flag'])){ echo "checked=checked";}  ?>>
                                                         <span class="slider round"></span>
                                                     </label>
                                                 </div>
@@ -340,7 +340,7 @@ $(document).ready(function() {
                                                     <label class="form-label"><?php echo gettext("On Busy"); ?></label>
                                                     <div>
                                                         <label class="switch">
-                                                            <input type="checkbox" name="on_busy_flag" class="onoffswitch-checkbox" onclick="on_busy_enabled_disabled()" value="0" <?php if($edit_array['on_busy_flag'] == 0){ echo "checked=checked";}  ?>>
+                                                            <input type="checkbox" name="on_busy_flag" class="onoffswitch-checkbox" onclick="on_busy_enabled_disabled()" value="0" <?php if(astpp_eq0($edit_array['on_busy_flag'])){ echo "checked=checked";}  ?>>
                                                             <span class="slider round"></span>
                                                         </label>
                                                     </div>
@@ -366,7 +366,7 @@ $(document).ready(function() {
                                                         <label class="form-label"><?php echo gettext("No Answer"); ?></label>
                                                         <div>
                                                             <label class="switch">
-                                                                <input type="checkbox" name="no_answer_flag" onclick="no_answer_disabled_enabled()" class="onoffswitch-checkbox" value="0" <?php if($edit_array['no_answer_flag'] == 0){ echo "checked=checked";}  ?>>
+                                                                <input type="checkbox" name="no_answer_flag" onclick="no_answer_disabled_enabled()" class="onoffswitch-checkbox" value="0" <?php if(astpp_eq0($edit_array['no_answer_flag'])){ echo "checked=checked";}  ?>>
                                                                 <span class="slider round"></span>
                                                             </label>
                                                         </div>  
@@ -393,7 +393,7 @@ $(document).ready(function() {
                                                         </label>
                                                         <div>
                                                             <label class="switch">
-                                                                <input type="checkbox" name="not_register_flag" onclick="not_register_disabled_enabled()" class="onoffswitch-checkbox" value="0" <?php if($edit_array['not_register_flag'] == 0){ echo "checked=checked";}  ?>>
+                                                                <input type="checkbox" name="not_register_flag" onclick="not_register_disabled_enabled()" class="onoffswitch-checkbox" value="0" <?php if(astpp_eq0($edit_array['not_register_flag'])){ echo "checked=checked";}  ?>>
                                                                 <span class="slider round"></span>
                                                             </label>
                                                         </div>

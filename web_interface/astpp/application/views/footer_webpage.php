@@ -166,7 +166,7 @@ jQuery(function($) {
 
 	<span class="pull-right pr-4 pl-3"> <?php echo gettext('Version')?>  <?php echo common_model::$global_config['system_config']['version']; ?>  &nbsp; 
 	</span>
-	<?php	} else  if($this->session->userdata['logintype'] ==0 || $this->session->userdata['logintype'] == 1){
+	<?php	} else  if(astpp_eq0($this->session->userdata['logintype']) || $this->session->userdata['logintype'] == 1){
 		
 		$user_footer = $this->session->userdata('user_footer');	
 		if ($user_footer != '') { 

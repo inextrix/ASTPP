@@ -26,6 +26,7 @@
  * @author		ExpressionEngine Dev Team
  * @link		http://codeigniter.com/user_guide/libraries/cart.html
  */
+#[\AllowDynamicProperties]
 class CI_Cart {
 
 	// These are the regular expression rules that we use to validate the product ID and product name
@@ -49,7 +50,7 @@ class CI_Cart {
 
 		// Are any config settings being passed manually?  If so, set them
 		$config = array();
-		if (count($params) > 0)
+		if (astpp_count($params) > 0)
 		{
 			foreach ($params as $key => $val)
 			{
@@ -86,7 +87,7 @@ class CI_Cart {
 	function insert($items = array())
 	{
 		// Was any cart data passed? No? Bah...
-		if ( ! is_array($items) OR count($items) == 0)
+		if ( ! is_array($items) OR astpp_count($items) == 0)
 		{
 			log_message('error', 'The insert method must be passed an array containing data.');
 			return FALSE;
@@ -140,7 +141,7 @@ class CI_Cart {
 	function _insert($items = array())
 	{
 		// Was any cart data passed? No? Bah...
-		if ( ! is_array($items) OR count($items) == 0)
+		if ( ! is_array($items) OR astpp_count($items) == 0)
 		{
 			log_message('error', 'The insert method must be passed an array containing data.');
 			return FALSE;
@@ -163,7 +164,7 @@ class CI_Cart {
 		$items['qty'] = trim(preg_replace('/(^[0]+)/i', '', $items['qty']));
 
 		// If the quantity is zero or blank there's nothing for us to do
-		if ( ! is_numeric($items['qty']) OR $items['qty'] == 0)
+		if ( ! is_numeric($items['qty']) OR astpp_eq0($items['qty']))
 		{
 			return FALSE;
 		}
@@ -215,9 +216,9 @@ class CI_Cart {
 		// Internally, we need to treat identical submissions, but with different options, as a unique product.
 		// Our solution is to convert the options array to a string and MD5 it along with the product ID.
 		// This becomes the unique "row ID"
-		if (isset($items['options']) AND count($items['options']) > 0)
+		if (isset($items['options']) AND astpp_count($items['options']) > 0)
 		{
-			$rowid = md5($items['id'].implode('', $items['options']));
+			$rowid = md5($items['id'].astpp_implode('', $items['options']));
 		} else
 		{
 			// No options were submitted so we simply MD5 the product ID.
@@ -264,7 +265,7 @@ class CI_Cart {
 	function update($items = array())
 	{
 		// Was any cart data passed?
-		if ( ! is_array($items) OR count($items) == 0)
+		if ( ! is_array($items) OR astpp_count($items) == 0)
 		{
 			return FALSE;
 		}
@@ -344,7 +345,7 @@ class CI_Cart {
 
 		// Is the quantity zero?  If so we will remove the item from the cart.
 		// If the quantity is greater than zero we are updating
-		if ($items['qty'] == 0)
+		if (astpp_eq0($items['qty']))
 		{
 			unset($this->_cart_contents[$items['rowid']]);
 		} else
@@ -380,11 +381,11 @@ class CI_Cart {
 				continue;
 			}
 
-			$total += ($val['price'] * $val['qty']);
-			$items += $val['qty'];
+			$total = astpp_n($total) + astpp_n(astpp_n($val['price']) * astpp_n($val['qty']));
+			$items = astpp_n($items) + astpp_n($val['qty']);
 
 			// Set the subtotal
-			$this->_cart_contents[$key]['subtotal'] = ($this->_cart_contents[$key]['price'] * $this->_cart_contents[$key]['qty']);
+			$this->_cart_contents[$key]['subtotal'] = (astpp_n($this->_cart_contents[$key]['price']) * astpp_n($this->_cart_contents[$key]['qty']));
 		}
 
 		// Set the cart total and total items.
@@ -392,7 +393,7 @@ class CI_Cart {
 		$this->_cart_contents['cart_total'] = $total;
 
 		// Is our cart empty?  If so we delete it from the session
-		if (count($this->_cart_contents) <= 2)
+		if (astpp_count($this->_cart_contents) <= 2)
 		{
 			$this->CI->session->unset_userdata('cart_contents');
 
@@ -470,7 +471,7 @@ class CI_Cart {
 	 */
 	function has_options($rowid = '')
 	{
-		if ( ! isset($this->_cart_contents[$rowid]['options']) OR count($this->_cart_contents[$rowid]['options']) === 0)
+		if ( ! isset($this->_cart_contents[$rowid]['options']) OR astpp_count($this->_cart_contents[$rowid]['options']) === 0)
 		{
 			return FALSE;
 		}
@@ -518,7 +519,7 @@ class CI_Cart {
 		// Remove anything that isn't a number or decimal point.
 		$n = trim(preg_replace('/([^0-9\.])/i', '', $n));
 
-		return number_format($n, 2, '.', ',');
+		return astpp_number_format($n, 2, '.', ',');
 	}
 
 	// --------------------------------------------------------------------

@@ -98,7 +98,7 @@
                         if($csv_key <  15){
                           echo "<tr>";
                           foreach($csv_value as $field_name => $field_val){
-                            if($csv_key == 0){
+                            if(astpp_eq0($csv_key)){
                               $cnt++;
                               echo "<th>".ucfirst($field_name)."</th>";
                             }else{

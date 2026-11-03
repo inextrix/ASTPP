@@ -162,8 +162,8 @@ if (isset($csv_tmp_data) && ! empty($csv_tmp_data)) {
         ?>
 									<option value="">Select</option>
 									<?php
-        $keys = array_keys($file_data);
-        for ($i = 0; $i < count($file_data); $i ++) {
+        $keys = astpp_array_keys($file_data);
+        for ($i = 0; $i < astpp_count($file_data); $i ++) {
             ?>
 										<option value="<?php echo $file_data[$i]; ?>"><?php
             echo $file_data[$i];
@@ -202,7 +202,7 @@ if (isset($csv_tmp_data) && ! empty($csv_tmp_data)) {
         if ($csv_key < 15) {
             echo "<tr class='thead-light'>";
             foreach ($csv_value as $field_name => $field_val) {
-                if ($csv_key == 0) {
+                if (astpp_eq0($csv_key)) {
                     echo "<th>" . ucfirst($field_val) . "</th>";
                 } else {
                     echo "<td>" . $field_val . "</td>";

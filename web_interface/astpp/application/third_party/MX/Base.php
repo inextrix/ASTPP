@@ -37,6 +37,7 @@ require_once dirname(__FILE__).'/Config.php';
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  **/
+#[\AllowDynamicProperties]
 class CI extends CI_Controller
 {
 	public static $APP;

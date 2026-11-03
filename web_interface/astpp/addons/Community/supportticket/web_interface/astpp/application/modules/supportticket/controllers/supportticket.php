@@ -20,6 +20,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ############################################################################### 
+#[\AllowDynamicProperties]
 class Supportticket extends CI_Controller {
 
 	function __construct() {
@@ -70,7 +71,7 @@ class Supportticket extends CI_Controller {
 					unset($explode_display_flag[$key]);
 				}
 			}
-			$implode_display_flag = implode(',',$explode_display_flag);
+			$implode_display_flag = astpp_implode(',',$explode_display_flag);
 			$this->db->where('id',$edit_id);
 			$this->db->update("support_ticket", array('close_ticket_display_flag'=>$implode_display_flag));
 		}
@@ -97,7 +98,7 @@ class Supportticket extends CI_Controller {
 			$data['ticket_lable']= "Answer";
 			$data['ticket_type']= "1";
 		}
-		if(count($data['details_arr']) == 1 && $this->session->userdata('logintype') != 0 && $this->session->userdata('logintype') != 1){
+		if(astpp_count($data['details_arr']) == 1 && (!astpp_eq0($this->session->userdata('logintype'))) && $this->session->userdata('logintype') != 1){
 			$data['ticket_lable']= "Answered";
 		}else{
 			$data['ticket_lable']= "Customer-Reply";
@@ -208,10 +209,10 @@ class Supportticket extends CI_Controller {
 	
 	function last_reply_time($date){
 		$seconds = strtotime(gmdate("Y-m-d H:i:s")) - strtotime($date);
-		$days    = floor($seconds / 86400);
-		$hours   = floor(($seconds - ($days * 86400)) / 3600);
-		$minutes = floor(($seconds - ($days * 86400) - ($hours * 3600))/60);
-		$seconds = floor(($seconds - ($days * 86400) - ($hours * 3600) - ($minutes*60)));
+		$days    = astpp_floor(astpp_n($seconds) / 86400);
+		$hours   = astpp_floor((astpp_n($seconds) - (astpp_n($days) * 86400)) / 3600);
+		$minutes = astpp_floor((astpp_n($seconds) - (astpp_n($days) * 86400) - (astpp_n($hours) * 3600))/60);
+		$seconds = astpp_floor((astpp_n($seconds) - (astpp_n($days) * 86400) - (astpp_n($hours) * 3600) - (astpp_n($minutes)*60)));
 		return $days.' Day '.$hours.' Hour '.$minutes .' Min '.$seconds.' Sec' ;
     	}
 	
@@ -245,12 +246,12 @@ class Supportticket extends CI_Controller {
 	       $add_array = $this->input->post();
 	       $add_array['page_title'] = gettext('Support Ticket');
 	       $nooffile= $files['file']['name'];
-	       $count=count($nooffile);
+	       $count=astpp_count($nooffile);
 	       $add_array['attachment']='';
 	       $add_array['file']='';
 	       for($i=0;$i<$count;$i++){
 		       $tmp_name[]= $files['file']['tmp_name'][$i];
-		       if($files['file']['error'][$i]==0){
+		       if(astpp_eq0($files['file']['error'][$i])){
 			       $cur_name = $files['file']['name'][$i];
 			       $parts = explode(".", $cur_name);
 			       $reverse_array = array_reverse($parts);
@@ -403,7 +404,7 @@ class Supportticket extends CI_Controller {
 		readfile(getcwd().'/attachments/'.$file_name);
 	}
 	}
-	function set_support_ticket_id($select = "", $table = "", $support_id){
+	function set_support_ticket_id($select, $table, $support_id){
 	$system_config = common_model::$global_config['system_config'];
 		$support_ticket = $system_config['ticket_digits'];    
 		return sprintf('%0'.$support_ticket.'d', $support_id);

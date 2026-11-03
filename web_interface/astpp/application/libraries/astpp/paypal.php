@@ -222,7 +222,7 @@ class paypal {
 		));
 		$res = curl_exec($c);
 		$code = curl_getinfo($c, CURLINFO_HTTP_CODE);
-		curl_close($c);
+		PHP_VERSION_ID < 80000 && curl_close($c);
 		return $code == 200 && is_string($res) && trim($res) === 'VERIFIED';
 	}
 }

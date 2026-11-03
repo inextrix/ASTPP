@@ -21,6 +21,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 // ##############################################################################
+#[\AllowDynamicProperties]
 class calltype extends MX_Controller
 {
 
@@ -128,7 +129,7 @@ class calltype extends MX_Controller
                 if (isset($add_array['call_type'])) {
                     $query = $this->calltype_model->check_unique_call_type('edit', 'call_type', $add_array['call_type']);
                     $result = $query->result_array();
-                    if (count($result) > 0) {
+                    if (astpp_count($result) > 0) {
                         if ($result[0]['id'] != $add_array['id'] && $result[0]['call_type'] == $add_array['call_type']) {
                             echo json_encode(array(
                                 "call_type_error" => gettext("Calltype already exist in system.")
@@ -154,7 +155,7 @@ class calltype extends MX_Controller
 
                 if (isset($add_array['call_type'])) {
                     $query = $this->calltype_model->check_unique_call_type('add', 'call_type', $add_array['call_type']);
-                    if ($query > 0) {
+                    if (astpp_gt($query, 0)) {
                         echo json_encode(array(
                             "call_type_error" => gettext("Calltype already exist in system.")
                         ));

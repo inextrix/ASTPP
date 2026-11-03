@@ -1,6 +1,7 @@
 <?php
 // require('fpdf.php');
 
+#[\AllowDynamicProperties]
 class PDF extends FPDF {
 
 var $tablewidths;
@@ -39,9 +40,9 @@ function _beginpage($orientation, $size) {
 			$this->w = $size[1];
 			$this->h = $size[0];
 		}
-		$this->wPt = $this->w*$this->k;
-		$this->hPt = $this->h*$this->k;
-		$this->PageBreakTrigger = $this->h-$this->bMargin;
+		$this->wPt = astpp_n($this->w)*astpp_n($this->k);
+		$this->hPt = astpp_n($this->h)*astpp_n($this->k);
+		$this->PageBreakTrigger = astpp_n($this->h)-astpp_n($this->bMargin);
 		$this->CurOrientation = $orientation;
 		$this->CurPageSize = $size;
 	}
@@ -69,7 +70,7 @@ function morepagestable($datas, $lineheight=8) {
 	// calculate the whole width
 	$fullwidth = 0;
 	foreach($this->tablewidths AS $width) {
-		$fullwidth += $width;
+		$fullwidth = astpp_n($fullwidth) + astpp_n($width);
 	}
 
 	// Now let's start to write the table
@@ -86,7 +87,7 @@ function morepagestable($datas, $lineheight=8) {
 		  $this->MultiCell($this->tablewidths[$col],$lineheight,$txt,0,"R");
 			else
 		  $this->MultiCell($this->tablewidths[$col],$lineheight,$txt);
-			$l += $this->tablewidths[$col];
+			$l = astpp_n($l) + astpp_n($this->tablewidths[$col]);
 
 			if(!isset($tmpheight[$row.'-'.$this->page]))
 				$tmpheight[$row.'-'.$this->page] = 0;
@@ -107,16 +108,16 @@ function morepagestable($datas, $lineheight=8) {
 	// draw the borders
 	// we start adding a horizontal line on the last page
 	$this->page = $maxpage;
-	$this->Line($l,$h,$fullwidth+$l,$h);
+	$this->Line($l,$h,astpp_n($fullwidth)+astpp_n($l),$h);
 	// now we start at the top of the document and walk down
 	for($i = $startpage; $i <= $maxpage; $i++) {
 		$this->page = $i;
 		$l = $this->lMargin;
 		$t  = ($i == $startpage) ? $startheight : $this->tMargin;
-		$lh = ($i == $maxpage)   ? $h : $this->h-$this->bMargin;
+		$lh = ($i == $maxpage)   ? $h : astpp_n($this->h)-astpp_n($this->bMargin);
 		$this->Line($l,$t,$l,$lh);
 		foreach($this->tablewidths AS $width) {
-			$l += $width;
+			$l = astpp_n($l) + astpp_n($width);
 			$this->Line($l,$t,$l,$lh);
 		}
 	}
@@ -135,7 +136,7 @@ function table_total($datas, $lineheight=8) {
 	// calculate the whole width
 	$fullwidth = 0;
 	foreach($this->tablewidths AS $width) {
-		$fullwidth += $width;
+		$fullwidth = astpp_n($fullwidth) + astpp_n($width);
 	}
 
 	// Now let's start to write the table
@@ -157,7 +158,7 @@ function table_total($datas, $lineheight=8) {
 		  $this->MultiCell($this->tablewidths[$col],$lineheight,$txt,0,"R");
 			else
 		  $this->MultiCell($this->tablewidths[$col],$lineheight,$txt);
-			$l += $this->tablewidths[$col];
+			$l = astpp_n($l) + astpp_n($this->tablewidths[$col]);
 
 			if(!isset($tmpheight[$row.'-'.$this->page]))
 				$tmpheight[$row.'-'.$this->page] = 0;
@@ -186,10 +187,10 @@ function table_total($datas, $lineheight=8) {
 		$this->page = $i;
 		$l = $this->lMargin;
 		$t  = ($i == $startpage) ? $startheight : $this->tMargin;
-		$lh = ($i == $maxpage)   ? $h : $this->h-$this->bMargin;
+		$lh = ($i == $maxpage)   ? $h : astpp_n($this->h)-astpp_n($this->bMargin);
 
 		foreach($this->tablewidths AS $width) {
-		$l += $width;
+		$l = astpp_n($l) + astpp_n($width);
 		if($width != '30')
 		{
 		  $this->Line(100,$t,100,$lh);
@@ -211,14 +212,14 @@ function export_pdf($datas, $lineheight=8) {
 	// calculate the whole width
 	$fullwidth = 0;
 	foreach($this->tablewidths AS $width) {
-		$fullwidth += $width;
+		$fullwidth = astpp_n($fullwidth) + astpp_n($width);
 	}
 
 	// Now let's start to write the table
 	foreach($datas AS $row => $data) {
 		$this->page = $currpage;
 		// write the horizontal borders
-	 $this->Line($l,$h,$fullwidth+$l,$h); 
+	 $this->Line($l,$h,astpp_n($fullwidth)+astpp_n($l),$h); 
 		// write the content and remember the height of the highest col
 		foreach($data AS $col => $txt) {
 			$this->page = $currpage;
@@ -228,7 +229,7 @@ function export_pdf($datas, $lineheight=8) {
 		  $this->MultiCell($this->tablewidths[$col],$lineheight,$txt,0,"R");
 			else
 		  $this->MultiCell($this->tablewidths[$col],$lineheight,$txt);
-			$l += $this->tablewidths[$col];
+			$l = astpp_n($l) + astpp_n($this->tablewidths[$col]);
 
 			if(!isset($tmpheight[$row.'-'.$this->page]))
 				$tmpheight[$row.'-'.$this->page] = 0;
@@ -249,16 +250,16 @@ function export_pdf($datas, $lineheight=8) {
 	// draw the borders
 	// we start adding a horizontal line on the last page
 	$this->page = $maxpage;
-	$this->Line($l,$h,$fullwidth+$l,$h);
+	$this->Line($l,$h,astpp_n($fullwidth)+astpp_n($l),$h);
 	// now we start at the top of the document and walk down
 	for($i = $startpage; $i <= $maxpage; $i++) {
 		$this->page = $i;
 		$l = $this->lMargin;
 		$t  = ($i == $startpage) ? $startheight : $this->tMargin;
-		$lh = ($i == $maxpage)   ? $h : $this->h-$this->bMargin;
+		$lh = ($i == $maxpage)   ? $h : astpp_n($this->h)-astpp_n($this->bMargin);
 		$this->Line($l,$t,$l,$lh);
 		foreach($this->tablewidths AS $width) {
-			$l += $width;
+			$l = astpp_n($l) + astpp_n($width);
 			$this->Line($l,$t,$l,$lh);
 		}
 	}

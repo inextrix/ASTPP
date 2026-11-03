@@ -1,4 +1,5 @@
 <?php
+#[\AllowDynamicProperties]
 class PHPFatalError{
 	protected $CI;
 	public function setHandler() {
@@ -17,4 +18,3 @@ function exception_handler($exception) {
 	}
 	show_error('An internal error occurred. Please contact the administrator.', 500);
 }
-

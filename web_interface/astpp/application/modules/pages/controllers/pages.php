@@ -21,6 +21,7 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 // ##############################################################################
 
+#[\AllowDynamicProperties]
 class Pages extends MX_Controller {
 	
 	function __construct() {
@@ -44,7 +45,7 @@ function services($category= '') {
 		if($product_category->num_rows > 0){
 			$data['product_category'] = $product_category->result_array();
 			
-			if($accountinfo['reseller_id'] > 0 && $category != 3 ){ 
+			if(astpp_gt($accountinfo['reseller_id'], 0) && $category != 3 ){ 
 				if(empty($post['country_id'])){
 					$temp_where = '(`reseller_products`.`is_optin` = 0 OR `reseller_products`.`is_owner` = 0)';
 				}else{
@@ -68,7 +69,7 @@ function services($category= '') {
 					$data['product_msg']=  gettext("Not Avaialable any Subscription.");
 				}
 			}
-			if(!empty($post['country_id'] != 0)){
+			if(!empty((!astpp_eq0($post['country_id'])))){
 				$data["country_id"] = $post['country_id'];
 			}
 			$data['country'] = $this->db_model->build_dropdown("id,country", "countrycode","","");
@@ -94,7 +95,7 @@ function services($category= '') {
 			$data['productdata'] = $productdata->result_array();
 			foreach ($productdata->result_array() as $key => $value) {
 				$currency = $this->common->get_field_name ( 'currency', 'currency', $accountinfo ["currency_id"] );
-				$data['productdata'][$key]['price']=number_format($this->common_model->calculate_currency ( $value['price'], "", '', false, false ), 4) . ' '.$currency;
+				$data['productdata'][$key]['price']=astpp_number_format($this->common_model->calculate_currency ( $value['price'], "", '', false, false ), 4) . ' '.$currency;
 			}
 			
 		}
@@ -121,7 +122,7 @@ function services($category= '') {
 				$data['product_info'] = $productarr;
 				$data['ewallet_payment'] = common_model::$global_config ['system_config']['ewallet_payment'];
 				$data['account_info'] = $account_info;
-				$data['product_info']['setup_price']=($data['product_info']['price'] + $data['product_info']['setup_fee']);
+				$data['product_info']['setup_price']=(astpp_n($data['product_info']['price']) + astpp_n($data['product_info']['setup_fee']));
 				$this->load->view( 'view_checkout',$data);
 
 			}else{
@@ -161,17 +162,17 @@ function services($category= '') {
 		 $data_header = array();
 		 $k = 0;
 		 $data = explode("\n", $response);
-		 for ($i = 0; $i < count($data) - 2; $i ++) {
+		 for ($i = 0; $i < astpp_count($data) - 2; $i ++) {
 		     if (trim($data[$i]) != '') {
-		         if (count($data_header) == 0 || substr($data[$i], 0, 4) == "uuid") {
+		         if (astpp_count($data_header) == 0 || substr($data[$i], 0, 4) == "uuid") {
 		             $data_header = explode(",", $data[$i]);
 		         } else {
 		             $bridge_str = "";
 		             $string = " " . $data[$i];
 		             $ini = strpos($string, '[');
-		             if ($ini != 0) {
-		                 $ini += strlen('[');
-		                 $len = strpos($string, ']', $ini) - $ini;
+		             if ((!astpp_eq0($ini))) {
+		                 $ini = astpp_n($ini) + strlen('[');
+		                 $len = strpos($string, ']', $ini) - astpp_n($ini);
 		                 $bridge_str = substr($string, $ini, $len);
 		             }
 		             if ($bridge_str != '') {
@@ -180,7 +181,7 @@ function services($category= '') {
 		             }
 		             // HP:END.
 		             $data_call = explode(",", $data[$i]);
-		             for ($j = 0; $j < count($data_call); $j ++) {
+		             for ($j = 0; $j < astpp_count($data_call); $j ++) {
 		                 $calls[$k][@$data_header[$j]] = @$data_call[$j];
 				 $calls_final[@$calls[$k]['uuid']] = @$calls[$k];
 		             }
@@ -207,7 +208,7 @@ function services($category= '') {
                 	     $livecall_data = explode("|||", $calls[$i]['presence_data']);
 		         $account_explode=explode('(',$livecall_data[1]);	
 		         if (isset($value['state']) && ($value['state'] == 'CS_EXCHANGE_MEDIA' || $value['state'] == 'CS_CONSUME_MEDIA') ) {
-				 if($accountinfo['number'] == rtrim($account_explode[1],')') || array_key_exists($value['initial_dest'],$sip_device_final_array)){
+				 if($accountinfo['number'] == rtrim($account_explode[1],')') || astpp_array_key_exists($value['initial_dest'],$sip_device_final_array)){
 		             $response_return=false;
 		 		}
 		         } 
@@ -245,10 +246,10 @@ function services($category= '') {
 				$product_info['product_id'] = $productid;
 				$user_info =$this->db_model->getSelect("posttoexternal,balance,credit_limit","accounts",array("id"=>$account_info["id"])); 
 			 	$user_info = (array)$user_info->first_row();
-				$account_balance = $user_info ['posttoexternal'] == 1 ? $user_info ['credit_limit'] - ($user_info ['balance']) : $user_info ['balance'];
+				$account_balance = $user_info ['posttoexternal'] == 1 ? astpp_n($user_info ['credit_limit']) - (astpp_n($user_info ['balance'])) : $user_info ['balance'];
 
-				$total_amt = (($productinfo['price'] + $productinfo['setup_fee'])*$quantity);
-				if($account_info ['type'] == 0 && (!$this->check_calls_running())){
+				$total_amt = ((astpp_n($productinfo['price']) + astpp_n($productinfo['setup_fee']))*astpp_n($quantity));
+				if(astpp_eq0($account_info ['type']) && (!$this->check_calls_running())){
 					$this->session->set_flashdata('astpp_notification', gettext('You can not purchase any new product when your calls are running!'));
 					redirect ( base_url () . 'pages/services/'.$productinfo['product_category'].'' );
 					exit;
@@ -261,19 +262,19 @@ function services($category= '') {
 					$product_info['category_name'] = $this->common->get_field_name("name","category",array("id"=>$productinfo['product_category']));
 					$product_info['product_name'] = $this->common->get_field_name("name","products",array("id"=>$productinfo['id']));
 
-					$product_info['next_billing_date']=($productinfo['billing_days'] == 0)?gmdate('Y-m-d 23:59:59', strtotime('+10 years')):gmdate("Y-m-d 23:59:59",strtotime("+".$productinfo['billing_days']." days"));
+					$product_info['next_billing_date']=(astpp_eq0($productinfo['billing_days']))?astpp_gmdate('Y-m-d 23:59:59', strtotime('+10 years')):astpp_gmdate("Y-m-d 23:59:59",strtotime("+".$productinfo['billing_days']." days"));
 					$product_info['quantity'] = $quantity;	
 					$order_id = $this->order->confirm_order($product_info,$account_info['id'],$account_info);
 					
 					if($order_id != ""){
 						$product_info['price']=$productinfo['price'];	
-						$final_array = array_merge($account_info,$productinfo);
+						$final_array = astpp_array_merge($account_info,$productinfo);
 						// Kinjal ASTPPENT-1028 Start
 						$final_array['last_id'] = $account_info['id'];
 						// Kinjal ASTPPENT-1028 END
 						$final_array['quantity']=$quantity;
-						$final_array['total_price']=($productinfo['setup_fee']+$productinfo['price'])*($final_array['quantity']);
-						$final_array['price']=($productinfo['setup_fee']+$productinfo['price']);
+						$final_array['total_price']=(astpp_n($productinfo['setup_fee'])+astpp_n($productinfo['price']))*(astpp_n($final_array['quantity']));
+						$final_array['price']=(astpp_n($productinfo['setup_fee'])+astpp_n($productinfo['price']));
 						$final_array['name']=$product_info['product_name'];
 						$final_array['category_name']=$product_info['category_name'];
 						$final_array['next_billing_date']=$product_info['next_billing_date'];
@@ -355,12 +356,12 @@ function services($category= '') {
 		$accountinfo=(array)$this->db->get_where("accounts",array("id"=>$accountid))->first_row();
 		$this->load->library('astpp/paypal');
 		$settings = $this->paypal->for_account($accountinfo);
-		$amt = ($product_info['price'] + $product_info['setup_fee']) * $product_info['quantity'];
+		$amt = (astpp_n($product_info['price']) + astpp_n($product_info['setup_fee'])) * astpp_n($product_info['quantity']);
 		$amount_with_tax = $this->common_model->calculate_taxes($accountinfo,$amt);
 		$total = ($amount_with_tax != '') ? $amount_with_tax['amount_with_tax'] : $amt;
 		$row = null;
 		if ($settings !== null) {
-			$total = $total + ($total * $settings['fee'] / 100);
+			$total = astpp_n($total) + (astpp_n($total) * astpp_n($settings['fee']) / 100);
 			$row = $this->paypal->create($accountinfo, 'order', $oreder_req_result, $total, $amt, $settings);
 		}
 		if ($row === null) {
@@ -394,7 +395,7 @@ function services($category= '') {
 			
 			$currency = $this->common->get_field_name ( 'currency', 'currency', $accountinfo ["currency_id"] );
 			$paypal_fee = $this->common->get_field_name('value','system',array("name" => "paypal_fee"));
-	 		if($paypal_fee == 0){
+	 		if(astpp_eq0($paypal_fee)){
 	 			$paypal_tax = $this->common->get_field_name('value','system',array("name" => "paypal_tax"));
 	 		}else{
 	 			$paypal_tax = '';
@@ -461,7 +462,7 @@ function services($category= '') {
 				"is_apply_tax" => "false",
 				'payment_by' => "Paypal",
 				'price' => $row['credit'],
-				"payment_fee" => $row['amount'] - $row['credit'],
+				"payment_fee" => astpp_n($row['amount']) - astpp_n($row['credit']),
 				"invoiceid" => $row['ref_id'],
 				"order_item_id" => 0,
 				"charge_type" => "INVPAY",
@@ -482,7 +483,7 @@ function services($category= '') {
 			$payment_info = array(
 				"price" => $row['credit'],
 				"payment_by" => "Paypal",
-				"payment_fee" => $row['amount'] - $row['credit'],
+				"payment_fee" => astpp_n($row['amount']) - astpp_n($row['credit']),
 				"invoice_type" => "credit",
 				"product_category" => 3,
 				"description" => ($row['kind'] === 'topup') ? "Refill via PayPal" : "Refill via PayPal (order " . (int) $row['ref_id'] . " was no longer pending)",
@@ -502,11 +503,11 @@ function services($category= '') {
 		$orderarr['payment_by'] = "Paypal";
 		$orderarr['charge_type'] = $this->common->get_field_name("code","category",array("id"=>$orderarr['product_category']));
 		$chain = array((int) $orderarr['id']);
-		for ($p = (int) $orderarr['parent_order_id']; $p > 0 && count($chain) < 20 && ! in_array($p, $chain, true); ) {
+		for ($p = (int) $orderarr['parent_order_id']; astpp_gt($p, 0) && astpp_count($chain) < 20 && ! astpp_in_array($p, $chain, true); ) {
 			$chain[] = $p;
 			$p = (int) $this->common->get_field_name("parent_order_id","orders",array("id"=>$p));
 		}
-		if($orderarr['parent_order_id'] > 0){
+		if(astpp_gt($orderarr['parent_order_id'], 0)){
 			$temp_arr['description'] = "Payment has been received from customer ".$account_info['first_name']." ( ".$account_info['number']." )";
 			$temp_arr['payment_by'] = "Paypal";
 			$temp_arr['transaction_id'] = $txn_id;
@@ -515,14 +516,14 @@ function services($category= '') {
 			$this->order->update_order_status($orderarr,$orderarr['parent_order_id'],$temp_arr,'PAID',$account_info);
 		}
 		$orderarr['invoice_type'] = ($orderarr['product_category'] == 3) ? "credit":"debit";
-		$quantity = ($orderarr['quantity'] > 0) ? $orderarr['quantity'] : 1;
-		$price=$orderarr['price']/$quantity;
-		$setupfee=$orderarr['setup_fee']/$quantity;
-		$orderarr['price']=$orderarr['price']+$orderarr['setup_fee'];
+		$quantity = (astpp_gt($orderarr['quantity'], 0)) ? $orderarr['quantity'] : 1;
+		$price=astpp_div($orderarr['price'], $quantity);
+		$setupfee=astpp_div($orderarr['setup_fee'], $quantity);
+		$orderarr['price']=astpp_n($orderarr['price'])+astpp_n($orderarr['setup_fee']);
 		$orderarr['description'] = ($orderarr['product_category'] == 3) ? "Refill Done success":" (".$orderarr['name'].") has been added.";
 		$invoiceid =$this->payment->add_payments_transcation($orderarr,$account_info,$currency_info);
 		if($invoiceid != ''){
-			if($orderarr['product_category'] != 3 && $account_info['posttoexternal'] == 0){
+			if($orderarr['product_category'] != 3 && astpp_eq0($account_info['posttoexternal'])){
 				$orderarr['INV_DIRECT_PAY'] = "true";
 				$orderarr['invoiceid'] = $invoiceid;
 				$orderarr['is_update_balance'] = "true";
@@ -536,10 +537,10 @@ function services($category= '') {
 		$this->db->update('order_items', array('is_terminated' => 0, 'termination_date' => '0000-00-00 00:00:00', 'termination_note' => ''));
 		$orderarr['category_name']=$this->common->get_field_name("name","category",array("id"=>$orderarr['product_category']));
 		$orderarr['price']=$price;
-		$orderarr['next_billing_date']=($orderarr['billing_days'] == 0)?gmdate('Y-m-d 23:59:59', strtotime('+10 years')):gmdate("Y-m-d 23:59:59",strtotime("+".$orderarr['billing_days']." days"));
-		$final_array = array_merge($account_info,$orderarr);
-		$final_array['total_price']=($price+$setupfee)*($orderarr['quantity']);
-		$final_array['price']=($price+$setupfee);
+		$orderarr['next_billing_date']=(astpp_eq0($orderarr['billing_days']))?astpp_gmdate('Y-m-d 23:59:59', strtotime('+10 years')):astpp_gmdate("Y-m-d 23:59:59",strtotime("+".$orderarr['billing_days']." days"));
+		$final_array = astpp_array_merge($account_info,$orderarr);
+		$final_array['total_price']=(astpp_n($price)+astpp_n($setupfee))*(astpp_n($orderarr['quantity']));
+		$final_array['price']=(astpp_n($price)+astpp_n($setupfee));
 		$this->common->mail_to_users ('product_purchase', $final_array );
 	}
 

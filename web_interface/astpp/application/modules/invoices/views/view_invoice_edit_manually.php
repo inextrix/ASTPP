@@ -113,7 +113,7 @@ table.datatable th {
 											name="taxes_count" value="<?= $taxes_count; ?>"> <input
 											type='hidden' name="count" value="<?= $count; ?>"> <input
 											type="hidden" id="total_tax_input" name="total_tax_input"
-											value="<?= ($totaltaxdis > 0)?$totaltaxdis:''; ?>"> <input
+											value="<?= (astpp_gt($totaltaxdis, 0))?$totaltaxdis:''; ?>"> <input
 											type="hidden" id="total_val_final" name="total_val_final"
 											value="<?= $total_credit_dis; ?>"> <input type="hidden"
 											id="total_val" name="total_val"
@@ -176,13 +176,13 @@ table.datatable th {
 														</tr>
 														<tr>
 															<td><b><?php echo gettext('From Date')?> : </b><span
-																style="color: #a09d9d;"> <?php echo date('Y-m-d', strtotime($from_date)) ; ?></span>
+																style="color: #a09d9d;"> <?php echo astpp_date('Y-m-d', strtotime($from_date)) ; ?></span>
 															</td>
 														</tr>
 														<tr>
 															<td><b><?php echo gettext('Due Date')?> : </b><span
 																style="color: #a09d9d;"><?php
-                echo date('Y-m-d', strtotime($payment_due_date));
+                echo astpp_date('Y-m-d', strtotime($payment_due_date));
                 ?></span></td>
 														</tr>
 													</table>
@@ -228,7 +228,7 @@ table.datatable th {
 
                                 if (isset($get_data) && ! empty($get_data)) {
                                     for ($i = 1; $i <= $row_count; $i ++) {
-                                        if (isset($get_data['invoice_amount_' . $i]) && $get_data['invoice_amount_' . $i] > 0) {
+                                        if (isset($get_data['invoice_amount_' . $i]) && astpp_gt($get_data['invoice_amount_' . $i], 0)) {
                                             $invoice_amt = $this->common->currency_decimal($this->common_model->calculate_currency($get_data['invoice_amount_' . $i]));
                                         } else {
                                             $invoice_amt = '';
@@ -324,7 +324,7 @@ table.datatable th {
                                     </td>
 												<td style="text-align: right;">
 													<div id='amount_val_final' name='amount_val_final'>
-                                          <?= $this->common->currency_decimal($total_credit_dis+$totaltaxdis); ?>
+                                          <?= $this->common->currency_decimal(astpp_n($total_credit_dis)+astpp_n($totaltaxdis)); ?>
                                        </div>
 												</td>
 											</tr>

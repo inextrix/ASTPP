@@ -32,6 +32,7 @@ defined ( 'BASEPATH' ) or exit ( 'No direct script access allowed' );
  */
 
 require APPPATH . '/controllers/common/account.php';
+#[\AllowDynamicProperties]
 class Sip_devices extends Account {
 
 	protected $postdata = "";
@@ -77,7 +78,7 @@ class Sip_devices extends Account {
 		$accountinfo = $this->_authorize_account ( $accountinfo,true,true);
 		if ($function != '') {
 			$function = '_' . $function;
-			if (( int ) method_exists ( $this, $function ) > 0) {
+			if (astpp_gt(( int ) method_exists ( $this, $function ), 0)) {
 				$this->$function ();
 			} else {
 				$this->response ( array (
@@ -129,7 +130,7 @@ function _sip_devices_list(){
 				}
 			}
 		}
-		$start = $this->postdata['start_limit']-1;
+		$start = astpp_n($this->postdata['start_limit'])-1;
 		$limit = $this->postdata['end_limit'];
 		$no_of_records = (int)$limit - (int)$start;
 		if($this->accountinfo['type'] == 1){
@@ -280,7 +281,7 @@ function _sip_devices_list(){
 				$postdata['send_all_message'] = 'true';
 			}
 			$digits = 5;
-        	$random_password = rand(pow(10, $digits - 1), pow(10, $digits) - 1);
+        	$random_password = rand(pow(10, astpp_n($digits) - 1), pow(10, $digits) - 1);
 			$sipdevice_array = array (
 				'username' => $postdata['username'],
 				'sip_profile_id' => $postdata ['sip_profile_id'],

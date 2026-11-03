@@ -27,6 +27,7 @@
 //
 //*######################################################################
 
+#[\AllowDynamicProperties]
 class Mailchimpsync extends CI_Controller {
 
 	public $Error_flag = false;

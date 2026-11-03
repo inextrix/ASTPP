@@ -174,13 +174,13 @@ label.error {
 			</div>
 			<div class="p-4 col-md-12">
 				<div class="col-md-12 p-0">
-           <?php  if((isset($permissioninfo['did']['did_list']['purchase'])) && ($permissioninfo['did']['did_list']['purchase']==0)  || ($permissioninfo['login_type'] == '2' or $permissioninfo['login_type'] == '-1' or $permissioninfo['login_type'] == '0' or $permissioninfo['login_type'] == '3' or $permissioninfo['login_type'] == '1') or ($permissioninfo['login_type'] == '-1')){ ?>   
+           <?php  if((isset($permissioninfo['did']['did_list']['purchase'])) && (astpp_eq0($permissioninfo['did']['did_list']['purchase']))  || ($permissioninfo['login_type'] == '2' or $permissioninfo['login_type'] == '-1' or $permissioninfo['login_type'] == '0' or $permissioninfo['login_type'] == '3' or $permissioninfo['login_type'] == '1') or ($permissioninfo['login_type'] == '-1')){ ?>   
             <div class="float-left" id="left_panel_add">
 						<span class="btn btn-line-warning"> <i
 							class="fa fa-plus-circle fa-lg"></i> <?php echo gettext('Purchase');?></span>
 					</div>
         <?php } ?>
-        <?php  if((isset($permissioninfo['did']['did_list']['delete'])) && ($permissioninfo['did']['did_list']['delete']==0)  || ($permissioninfo['login_type'] == '2' or $permissioninfo['login_type'] == '-1' or $permissioninfo['login_type'] == '0' or $permissioninfo['login_type'] == '3' or $permissioninfo['login_type'] == '1') or ($permissioninfo['login_type'] == '-1')){ ?>   
+        <?php  if((isset($permissioninfo['did']['did_list']['delete'])) && (astpp_eq0($permissioninfo['did']['did_list']['delete']))  || ($permissioninfo['login_type'] == '2' or $permissioninfo['login_type'] == '-1' or $permissioninfo['login_type'] == '0' or $permissioninfo['login_type'] == '3' or $permissioninfo['login_type'] == '1') or ($permissioninfo['login_type'] == '-1')){ ?>   
             <div class="pull-left margin-t-0 padding-x-4"
 						id="left_panel_add"
 						onclick="delete_multiple('/accounts/customer_did_delete/<?php echo $edit_id; ?>')")>
@@ -188,7 +188,7 @@ label.error {
 							class="fa fa-times-circle fa-lg"></i><?php echo gettext('Delete');?></span>
 					</div>
        <?php } ?>
-       <?php  if((isset($permissioninfo['did']['did_list']['search'])) && ($permissioninfo['did']['did_list']['search']==0)  && ($permissioninfo['login_type'] == '2' or $permissioninfo['login_type'] == '-1' or $permissioninfo['login_type'] == '0' or $permissioninfo['login_type'] == '3' or $permissioninfo['login_type'] == '1') or ($permissioninfo['login_type'] == '-1')){ ?>   
+       <?php  if((isset($permissioninfo['did']['did_list']['search'])) && (astpp_eq0($permissioninfo['did']['did_list']['search']))  && ($permissioninfo['login_type'] == '2' or $permissioninfo['login_type'] == '-1' or $permissioninfo['login_type'] == '0' or $permissioninfo['login_type'] == '3' or $permissioninfo['login_type'] == '1') or ($permissioninfo['login_type'] == '-1')){ ?>   
         <div id="show_search" class="float-right col-md-4 p-0">
 						<input type="text" name="left_panel_quick_search"
 							id="left_panel_quick_search"

@@ -32,7 +32,7 @@ function parse_rates_array($xml_rate, $constant_array, $logger) {
 	foreach ( $xml_rate_array as $rate_key => $rate_value ) {
 		$rates_array = explode ( "|", $rate_value );
 		
-		$user_id_param = $rates_array [count ( $rates_array ) - 1];
+		$user_id_param = $rates_array [astpp_count ( $rates_array ) - 1];
 		$user_id = (substr ( $user_id_param, 0, 3 ) == 'UID') ? substr ( $user_id_param, 3 ) : 0;
 		
 		foreach ( $rates_array as $key => $value ) {
@@ -47,14 +47,14 @@ function process_package($xml_cdr, $user_id, $rates_array, $logger, $db) {
 	$duration = $xml_cdr->variables->duration;
 	$xml_cdr->variables->package_id = 0;
 	$flag = false;
-	if ($duration > 0 && $xml_cdr->variables->call_direction == 'outbound') {
+	if (astpp_gt($duration, 0) && $xml_cdr->variables->call_direction == 'outbound') {
 		$destination_number = $xml_cdr->variables->effective_destination_number;
 		
 		$number_len = strlen ( $destination_number );
 		$number_loop_str = '(';
-		while ( $number_len > 0 ) {
+		while ( astpp_gt($number_len, 0) ) {
 			$number_loop_str .= " code='" . substr ( $destination_number, 0, $number_len ) . "' OR ";
-			$number_len -= 1;
+			$number_len = astpp_n($number_len) - 1;
 		}
 		$number_loop_str .= " code='--')";
 		
@@ -73,13 +73,13 @@ function process_package($xml_cdr, $user_id, $rates_array, $logger, $db) {
 				
 				$logger->log ( "Included seconds : " . $package_info ['includedseconds'] . ", Used seconds : " . $used_seconds );
 				if ($package_info ['includedseconds'] > $used_seconds) {
-					$remaining_seconds = $package_info ['includedseconds'] - ($duration + $used_seconds);
-					if ($remaining_seconds > 0) {
+					$remaining_seconds = astpp_n($package_info ['includedseconds']) - (astpp_n($duration) + astpp_n($used_seconds));
+					if (astpp_gt($remaining_seconds, 0)) {
 						$dud_sec = $duration;
 						$duration = 0;
 					} else {
-						$dud_sec = $duration - abs ( $remaining_seconds );
-						$duration = abs ( $remaining_seconds );
+						$dud_sec = astpp_n($duration) - astpp_abs ( $remaining_seconds );
+						$duration = astpp_abs ( $remaining_seconds );
 					}
 					$flag = true;
 					$xml_cdr->variables->package_id = $package_info ['package_id'];
@@ -100,7 +100,7 @@ function process_package($xml_cdr, $user_id, $rates_array, $logger, $db) {
 }
 
 // Process user/vendor cdr
-function do_cdr_process($xml_cdr, $debit, $cost, $vendor_cost, $rates_array, $parent_id = 0, $parent_rates, $carrier_rates_array, $logger, $db) {
+function do_cdr_process($xml_cdr, $debit, $cost, $vendor_cost, $rates_array, $parent_id, $parent_rates, $carrier_rates_array, $logger, $db) {
 	$query_string = "'" . $xml_cdr->variables->uuid . "','" . $xml_cdr->variables->user_id . "','" . $xml_cdr->variables->entity_id . "','" . urldecode ( $xml_cdr->variables->effective_caller_id_name ) . "','" . $xml_cdr->variables->effective_caller_id_number . "','" . $xml_cdr->variables->effective_destination_number . "'," . $xml_cdr->variables->duration . ",'" . $xml_cdr->variables->carrier_id . "','" . $xml_cdr->callflow [0]->caller_profile->originatee->originatee_caller_profile->network_addr . "','" . $xml_cdr->variables->sip_contact_host . "','" . $xml_cdr->variables->hangup_cause . "','" . urldecode ( $xml_cdr->variables->start_stamp ) . "'," . $debit . "," . $cost . ",'" . $xml_cdr->variables->vendor_id . "'," . $vendor_cost . "," . $rates_array ['ratecard_id'] . "," . $xml_cdr->variables->package_id . ",'" . $rates_array ['code'] . "','" . $rates_array ['destination'] . "','" . $rates_array ['cost'] . "','" . $parent_id . "','" . @$parent_rates ['code'] . "','" . @$parent_rates ['destination'] . "','" . @$parent_rates ['cost'] . "','" . @$carrier_rates_array ['code'] . "','" . @$carrier_rates_array ['destination'] . "','" . @$carrier_rates_array ['cost'] . "','" . $xml_cdr->variables->call_direction . "','" . urldecode ( $xml_cdr->variables->profile_start_stamp ) . "','" . urldecode ( $xml_cdr->variables->answer_stamp ) . "','" . urldecode ( $xml_cdr->variables->bridge_stamp ) . "','" . urldecode ( $xml_cdr->variables->progress_stamp ) . "','" . urldecode ( $xml_cdr->variables->progress_media_stamp ) . "','" . urldecode ( $xml_cdr->variables->end_stamp ) . "'," . $xml_cdr->variables->billmsec . "," . $xml_cdr->variables->answermsec . "," . $xml_cdr->variables->waitmsec . "," . $xml_cdr->variables->progress_mediamsec . "," . $xml_cdr->variables->flow_billmsec;
 	
 	$query = "INSERT INTO tbl_cdrs (uniqueid,user_id,entity_id,callerid_name,callerid_number,dstnum,duration,carrier_id,carrierip,callerip,disposition,start_stamp,debit,cost,vendor_id,vendor_cost,ratecard_id,package_id,rate_code,rate_code_destination,rate_cost,parent_id,parent_code,parent_code_destination,parent_cost,carrier_code,carrier_code_destination ,carrier_cost,call_direction,profile_start_stamp,answer_stamp,bridge_stamp,progress_stamp,progress_media_stamp,end_stamp,billmsec,answermsec,waitmsec,progress_mediamsec,flow_billmsec) values ($query_string)";
@@ -110,7 +110,7 @@ function do_cdr_process($xml_cdr, $debit, $cost, $vendor_cost, $rates_array, $pa
 }
 
 // Process reseller cdr
-function do_reseller_cdr_process($xml_cdr, $debit, $cost, $rates_array, $parent_id = 0, $parent_rates, $logger, $db) {
+function do_reseller_cdr_process($xml_cdr, $debit, $cost, $rates_array, $parent_id, $parent_rates, $logger, $db) {
 	$query_string = "'" . $xml_cdr->variables->uuid . "','" . $xml_cdr->variables->user_id . "','" . urldecode ( $xml_cdr->variables->effective_caller_id_name ) . "','" . $xml_cdr->variables->effective_caller_id_number . "','" . $xml_cdr->variables->effective_destination_number . "'," . $xml_cdr->variables->duration . ",'" . $xml_cdr->variables->hangup_cause . "','" . urldecode ( $xml_cdr->variables->start_stamp ) . "'," . $debit . "," . $cost . "," . $rates_array ['ratecard_id'] . "," . $xml_cdr->variables->package_id . ",'" . $rates_array ['code'] . "','" . $rates_array ['destination'] . "','" . $rates_array ['cost'] . "','" . $parent_id . "','" . @$parent_rates ['code'] . "','" . @$parent_rates ['destination'] . "','" . @$parent_rates ['cost'] . "','" . $xml_cdr->variables->call_direction . "'";
 	
 	$query = "INSERT INTO tbl_cdrs_reseller (uniqueid,reseller_id,callerid_name,callerid_number,dstnum,duration,disposition,start_stamp,debit,cost,ratecard_id,package_id,rate_code,rate_code_destination,rate_cost,parent_id,parent_code,parent_code_destination,parent_cost,call_direction) values ($query_string)";
@@ -125,8 +125,8 @@ function do_reseller_cdr_process($xml_cdr, $debit, $cost, $rates_array, $parent_
  * @param integer $entity_id        	
  */
 function update_balance($user_id, $amount, $entity_id, $logger, $db) {
-	if ($amount > 0) {
-		$math_sign = ($entity_id == 0 || $entity_id == 1) ? '-' : '+';
+	if (astpp_gt($amount, 0)) {
+		$math_sign = (astpp_eq0($entity_id) || $entity_id == 1) ? '-' : '+';
 		$query = "UPDATE tbl_users SET credit=credit$math_sign" . $amount . " WHERE id=" . $user_id;
 		$logger->log ( "Balance update : " . $query );
 		$db->run ( $query );

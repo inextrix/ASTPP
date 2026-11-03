@@ -172,7 +172,7 @@
 
                 <div class="col-md-12">
                   <div class="row">
-                   <?php if($accountinfo['type'] == 0 || $accountinfo['type'] == 1){ ?>
+                   <?php if(astpp_eq0($accountinfo['type']) || $accountinfo['type'] == 1){ ?>
                     <div class="col-md-6 form-group">
                       <label class="p-0 control-label"><?php echo gettext("Name"); ?><span style="color:black;">*</span></label>
                       <input type="text" id="name" maxlength="20" name="name" class="col-md-12 form-control form-control-lg" value="<?php echo isset($edit_array['name'])?$edit_array['name']:''; ?>">  

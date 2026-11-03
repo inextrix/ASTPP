@@ -20,6 +20,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 // ##############################################################################
+#[\AllowDynamicProperties]
 class custom_rates extends MX_Controller {
 	function __construct() {
 		parent::__construct ();
@@ -74,7 +75,7 @@ class custom_rates extends MX_Controller {
 		{
 			$selected = array($selected);
 		}
-		if (count($selected) === 0)
+		if (astpp_count($selected) === 0)
 		{
 			if (isset($_POST[$name]))
 			{
@@ -103,14 +104,14 @@ class custom_rates extends MX_Controller {
 				$form .= '<optgroup label="'.$key.'">'."\n";
 				foreach ($val as $optgroup_key => $optgroup_val)
 				{
-					$sel = (in_array($optgroup_key, $selected)) ? ' selected="selected"' : '';
+					$sel = (astpp_in_array($optgroup_key, $selected)) ? ' selected="selected"' : '';
 					$form .= '<option value="'.$optgroup_key.'"'.$sel.'>'.(string) $optgroup_val."</option>\n";
 				}
 				$form .= '</optgroup>'."\n";
 			}
 			else
 			{
-				$sel = (in_array($key, $selected)) ? ' selected="selected"' : '';
+				$sel = (astpp_in_array($key, $selected)) ? ' selected="selected"' : '';
 				$form .= '<option value="'.$key.'"'.$sel.'>'.(string) $val."</option>\n";
 			}
 		}
@@ -245,7 +246,7 @@ class custom_rates extends MX_Controller {
 				
 				if(!empty($add_array['trunk_id_new'])){
 					foreach($add_array['trunk_id_new'] as $key=>$value){
-						if($value != "" && $value !=0){
+						if($value != "" && (!astpp_eq0($value))){
 							$implode_str.=$value.",";
 						}
 					}
@@ -269,9 +270,9 @@ class custom_rates extends MX_Controller {
 				$trunk_array = array();
 				if(isset($add_array['trunk_id']) && $add_array['trunk_id'] != ""){
 					$add_array['trunk_id'] = explode(",",$add_array['trunk_id']);
-					$trunk_array = array_values($add_array['trunk_id']);
+					$trunk_array = astpp_array_values($add_array['trunk_id']);
 				}
-				$add_array['trunk_id'] = implode(",",$trunk_array);
+				$add_array['trunk_id'] = astpp_implode(",",$trunk_array);
 				
 				$this->db->where('routes_id',$add_array['id']);
 				$this->db->delete('routing');	
@@ -297,7 +298,7 @@ class custom_rates extends MX_Controller {
 				$implode_str=null;
 				if(!empty($add_array['trunk_id_new'])){
 					foreach($add_array['trunk_id_new'] as $key=>$value){
-						if($value != "" && $value !=0){
+						if($value != "" && (!astpp_eq0($value))){
 							$implode_str.=$value.",";
 						}
 					}
@@ -316,7 +317,7 @@ class custom_rates extends MX_Controller {
 				$add_array['percentage']=$implode_str_per;
 				unset($add_array['trunk_id_new']);
 				$last_id = $this->custom_rates_model->add_custom_rate($add_array);
-				if($last_id > 0){
+				if(astpp_gt($last_id, 0)){
 					if(isset($add_array['routing_type']) && $add_array['routing_type'] == 1){
 						$this->origination_set_force_routing($add_array,$last_id);
 					}
@@ -332,9 +333,9 @@ class custom_rates extends MX_Controller {
 	function origination_set_force_routing($add_array,$routes_id){
 		$trunk_id= explode(",",$add_array['trunk_id']);
 		$percentage= explode(",",$add_array['percentage']);
-		$trunk_count =count($trunk_id);
+		$trunk_count =astpp_count($trunk_id);
 		foreach($trunk_id as $key=>$value){
-			if($value != 0){
+			if((!astpp_eq0($value))){
 				$insert_array =array(
 					"routes_id"=>$routes_id,
 					"pricelist_id"=>0,
@@ -395,7 +396,7 @@ class custom_rates extends MX_Controller {
 		$personalized_rates_decode = json_decode($personalized_rates, true);
 		$personalized_edit = $personalized_rates_decode['personalized_rates']['personalized_rates_list'];
 		if($accountinfo['type'] == 1){
-			if(isset($personalized_edit['edit']) && $personalized_edit['edit'] == 0){
+			if(isset($personalized_edit['edit']) && astpp_eq0($personalized_edit['edit'])){
 				$data ['permission'] = '1';		
 			} else{
 				$data ['permission'] = '0';
@@ -422,7 +423,7 @@ class custom_rates extends MX_Controller {
 			$k=6;
 			while($k >= 1){
 				$wherestr.= " OR pattern = '".substr($val ['pattern'], 0, $k)."'";
-				$k = $k-1;
+				$k = astpp_n($k)-1;
 			}
 			$qr = "select destination from 	ratedeck where (".$wherestr.") order by LENGTH (pattern) DESC";
 			$destination = $this->db->query($qr);
@@ -477,7 +478,7 @@ class custom_rates extends MX_Controller {
 		$markup = $this->common->get_field_name ( 'markup', 'pricelists', array (
 			'id' => $account_data ["pricelist_id"] 
 		) );
-		$markup = ($markup > 0) ? $markup : 1;
+		$markup = (astpp_gt($markup, 0)) ? $markup : 1;
 		
 		$count_all = $this->custom_rates_model->get_custom_rate_list_for_user ( false );
 		$paging_data = $this->form->load_grid_config ( $count_all, $_GET ['rp'], $_GET ['page'] );
@@ -491,7 +492,7 @@ class custom_rates extends MX_Controller {
 					$this->common->get_only_numeric_val ( "", "", $value ["pattern"] ),
 					$value ['comment'],
 					$value ['inc'],
-					$this->common_model->calculate_currency ( ($value ['cost'] + ($value ['cost'] * $markup) / 100), '', '', '', true ),
+					$this->common_model->calculate_currency ( (astpp_n($value ['cost']) + (astpp_n($value ['cost']) * astpp_n($markup)) / 100), '', '', '', true ),
 					$this->common_model->calculate_currency ( $value ['connectcost'], '', '', '', true ),
 					$value ['includedseconds'] 
 				) 
@@ -545,7 +546,7 @@ class custom_rates extends MX_Controller {
 	function custom_rate_export_cdr_xls() {
 		$account_info = $accountinfo = $this->session->userdata ( 'accountinfo' );
 		$currency_id = $account_info ['currency_id'];
-		$reseller_id = $accountinfo ['reseller_id'] > 0 ? $accountinfo ['reseller_id'] : 0;
+		$reseller_id = astpp_gt($accountinfo ['reseller_id'], 0) ? $accountinfo ['reseller_id'] : 0;
 		$currency = $this->common->get_field_name ( 'currency', 'currency', $currency_id );
 		$query = $this->custom_rates_model->get_custom_rate ( true, '', '', false );
 		
@@ -607,7 +608,7 @@ class custom_rates extends MX_Controller {
 							$row ['inc'],
 							// $row['precedence'],
 							$this->common->get_field_name ( "number", "accounts", $row ['accountid'] ),
-							$row ['reseller_id']==0 ? 'Admin':$this->common->build_concat_string ( "first_name,last_name,number,company_name", "accounts", $row ['reseller_id']),
+							astpp_eq0($row ['reseller_id']) ? 'Admin':$this->common->build_concat_string ( "first_name,last_name,number,company_name", "accounts", $row ['reseller_id']),
 							$this->common->convert_GMT_to ( '', '', $row ['creation_date'] ),
 							$this->common->convert_GMT_to ( '', '', $row ['last_modified_date'] ),
 							$this->common->get_status ( 'export', '', $row ['status'] )
@@ -780,9 +781,9 @@ class custom_rates extends MX_Controller {
 		$grid_fields = json_decode ( $this->custom_rates_form->build_rates_list_for_reseller () );
 		foreach ( $query->result_array () as $key => $value ) {
 			$cost=0;
-			if(isset($value ['cost']) && $value['cost'] > 0)
+			if(isset($value ['cost']) && astpp_gt($value['cost'], 0))
 			{
-				$cost=$this->common_model->calculate_currency ( ($value ['cost'] + ($value ['cost'] * $markup) / 100), '', '', 'true', true );
+				$cost=$this->common_model->calculate_currency ( (astpp_n($value ['cost']) + (astpp_n($value ['cost']) * astpp_n($markup)) / 100), '', '', 'true', true );
 			}
 			$json_data ['rows'] [] = array (
 				'cell' => array (
@@ -888,7 +889,7 @@ class custom_rates extends MX_Controller {
 				if (! $header)
 					$header = $row;
 				else
-					$data [] = array_combine ( $header, $row );
+					$data [] = astpp_array_combine ( $header, $row );
 			}
 			
 			fclose ( $handle );
@@ -899,7 +900,7 @@ class custom_rates extends MX_Controller {
 	function utf8_converter($array) {
 		array_walk_recursive ( $array, function (&$item, $key) {
 			if (! mb_detect_encoding ( $item, 'utf-8', true )) {
-				$item = utf8_encode ( $item );
+				$item = mb_convert_encoding($item, 'UTF-8', 'ISO-8859-1') /* PHP8: utf8_encode() is deprecated */;
 			}
 		} );
 		return $array;

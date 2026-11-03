@@ -42,7 +42,7 @@ function &DB($params = '', $active_record_override = NULL)
 
 		include($file_path);
 
-		if ( ! isset($db) OR count($db) == 0)
+		if ( ! isset($db) OR astpp_count($db) == 0)
 		{
 			show_error('No database connection settings were found in the database config file.');
 		}

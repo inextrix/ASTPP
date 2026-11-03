@@ -24,6 +24,7 @@
 if (! defined('BASEPATH'))
     exit('No direct script access allowed');
 
+#[\AllowDynamicProperties]
 class Animap_form extends common
 {
 
@@ -44,8 +45,8 @@ class Animap_form extends common
             )
         );
         $logintype = $this->CI->session->userdata('logintype');
-        $val = $id > 0 ? 'ani_map.number.' . $id : 'ani_map.number';
-        if ($id > 0) {
+        $val = astpp_gt($id, 0) ? 'ani_map.number.' . $id : 'ani_map.number';
+        if (astpp_gt($id, 0)) {
             $reseller_drp = array(
                 gettext('Reseller'),
                 'INPUT',

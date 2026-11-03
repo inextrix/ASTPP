@@ -9,7 +9,7 @@
    </section>
    <section class="slice color-three pb-4">
       <div id="floating-label" class="w-section inverse p-4">
-         <?php if(isset($logtype) && ($logtype == 0 || $logtype == 3 )){ ?>
+         <?php if(isset($logtype) && (astpp_eq0($logtype) || $logtype == 3 )){ ?>
             <form method="POST"
             action="<?= base_url() ?>user/user_did_forward_save/"
             enctype="multipart/form-data" id="did_forward" name="did_forward">    
@@ -45,7 +45,7 @@
 
               <div class="col-md-1 pr-0">
                <input type='checkbox' name="call_type_vm_flag"
-               <?php if($call_type_vm_flag == 0){ ?> checked <?php } ?>>
+               <?php if(astpp_eq0($call_type_vm_flag)){ ?> checked <?php } ?>>
             </div>
          </div>
          <div class="col-12 my-4">
@@ -66,7 +66,7 @@
 </section>
 <?php
 // customers/providers cannot use the did module; they load the list from the portal
-$local_change_url = ($this->session->userdata('logintype') == 0 || $this->session->userdata('logintype') == 3) ? 'user/user_did_local_change/' : 'did/did_local_change/';
+$local_change_url = (astpp_eq0($this->session->userdata('logintype')) || $this->session->userdata('logintype') == 3) ? 'user/user_did_local_change/' : 'did/did_local_change/';
 ?>
 <script type="text/javascript">
 

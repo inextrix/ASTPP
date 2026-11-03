@@ -264,7 +264,7 @@ $(function() {
 				    $permissioninfo = $this->session->userdata('permissioninfo');
 				    $currnet_url=current_url();
 
-          	if((isset($permissioninfo['supportticket']['supportticket_list']['close'])) && ($permissioninfo['supportticket']['supportticket_list']['close'] == 0) && ($permissioninfo['login_type'] == '2' or $permissioninfo['login_type'] == '1') or $permissioninfo['login_type'] == '-1'){?>
+          	if((isset($permissioninfo['supportticket']['supportticket_list']['close'])) && (astpp_eq0($permissioninfo['supportticket']['supportticket_list']['close'])) && ($permissioninfo['login_type'] == '2' or $permissioninfo['login_type'] == '1') or $permissioninfo['login_type'] == '-1'){?>
             	<span class="btn btn-info">
 								<i class="fa fa-times-circle fa-lg"></i> <?php echo gettext("Close Support Ticket"); ?>
 							</span>

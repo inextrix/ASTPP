@@ -136,7 +136,7 @@
                         <?php $product_rategrp =explode(',',$product_info['apply_on_rategroups']);
 				foreach($product_rate_group as $key => $rate_group) { 
 					$selected ='';		
-				if ( in_array($key, $product_rategrp)) {
+				if ( astpp_in_array($key, $product_rategrp)) {
 					$selected = 'selected = selected';
 				}
 

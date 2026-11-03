@@ -33,11 +33,12 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  **/
+#[\AllowDynamicProperties]
 class MX_Config extends CI_Config 
 {	
 	public function load($file = 'config', $use_sections = FALSE, $fail_gracefully = FALSE, $_module = '') {
 		
-		if (in_array($file, $this->is_loaded, TRUE)) {
+		if (astpp_in_array($file, $this->is_loaded, TRUE)) {
 			return $this->item($file);
 		}
 
@@ -57,13 +58,13 @@ class MX_Config extends CI_Config
 			if ($use_sections === TRUE) {
 				
 				if (isset($current_config[$file])) {
-					$current_config[$file] = array_merge($current_config[$file], $config);
+					$current_config[$file] = astpp_array_merge($current_config[$file], $config);
 				} else {
 					$current_config[$file] = $config;
 				}
 				
 			} else {
-				$current_config = array_merge($current_config, $config);
+				$current_config = astpp_array_merge($current_config, $config);
 			}
 			$this->is_loaded[] = $file;
 			unset($config);

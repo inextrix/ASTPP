@@ -23,6 +23,7 @@
 if (! defined ( 'BASEPATH' )) {
 	exit ( 'No direct script access allowed' );
 }
+#[\AllowDynamicProperties]
 class freeswitch_lib {
 	function event_socket_create($host = '127.0.0.1', $port = '8021', $password = 'ClueCon') {
 		$fp = @fsockopen ( $host, $port, $errno, $errdesc );
@@ -51,11 +52,11 @@ class freeswitch_lib {
 			$contentlength = 0;
 			while ( ! feof ( $fp ) ) {
 				$buffer = fgets ( $fp, 4096 );
-				if ($contentlength > 0) {
+				if (astpp_gt($contentlength, 0)) {
 					$response .= $buffer;
 				}
 				
-				if ($contentlength == 0) { 
+				if (astpp_eq0($contentlength)) { 
 					if (strlen ( trim ( $buffer ) ) > 0) { 
 						$temparray = explode ( ":", trim ( $buffer ) );
 						if ($temparray [0] == "Content-Length") {
@@ -70,7 +71,7 @@ class freeswitch_lib {
 					break;
 				}
 				
-				if ($contentlength > 0) { 
+				if (astpp_gt($contentlength, 0)) { 
 				                          
 					if (strlen ( $response ) >= $contentlength) {
 						break;

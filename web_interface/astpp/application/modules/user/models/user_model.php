@@ -21,13 +21,14 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 // ##############################################################################
+#[\AllowDynamicProperties]
 class user_model extends CI_Model
 {
 
     function __construct()
     {
         parent::__construct();
-        if (Common_model::$global_config['system_config']['opensips'] == 0) {
+        if (astpp_eq0(Common_model::$global_config['system_config']['opensips'])) {
             $db_config = Common_model::$global_config['system_config'];
             $opensipdsn = "mysqli://" . $db_config['opensips_dbuser'] . ":" . $db_config['opensips_dbpass'] . "@" . $db_config['opensips_dbhost'] . "/" . $db_config['opensips_dbname'] . "?char_set=utf8&dbcollat=utf8_general_ci&cache_on=true&cachedir=";
             $this->opensips_db = $this->load->database($opensipdsn, true);
@@ -344,7 +345,7 @@ class user_model extends CI_Model
             'effective_caller_id_number' => $add_array['effective_caller_id_number']
         );
         $log_type = $this->session->userdata("logintype");
-        if ($log_type == 0 || $log_type == 3 || $log_type == 1) {
+        if (astpp_eq0($log_type) || $log_type == 3 || $log_type == 1) {
             $add_array['sip_profile_id'] = $this->common->get_field_name('id', 'sip_profiles', array(
                 'name' => 'default'
             ));
@@ -371,7 +372,7 @@ class user_model extends CI_Model
         $account_data = $this->session->userdata("accountinfo");
         $field_name = 'debit';
         $cdrs_table = 'cdrs';
-        if ($account_data['type'] == 0 || $account_data['type'] == 1) {
+        if (astpp_eq0($account_data['type']) || $account_data['type'] == 1) {
             $where['accountid'] = $account_data['id'];
         }
         if ($account_data['type'] == 3) {
@@ -403,7 +404,7 @@ class user_model extends CI_Model
 
     function user_fund_transfer($data, $accountinfo)
     {
-        $data["payment_by"] = $accountinfo['reseller_id'] > 0 ? $accountinfo['reseller_id'] : - 1;
+        $data["payment_by"] = astpp_gt($accountinfo['reseller_id'], 0) ? $accountinfo['reseller_id'] : - 1;
         $data['accountid'] = $data['id'];
         $data['payment_mode'] = $data['payment_type'];
         unset($data['action'], $data['id'], $data['account_currency'], $data['payment_type']);
@@ -411,12 +412,12 @@ class user_model extends CI_Model
             $data['credit'] = $data['credit'] == '' ? 0 : $data['credit'];
             $date = gmdate('Y-m-d H:i:s');
             $accountid = $data['accountid'];
-            while ($accountid > 0) {
+            while (astpp_gt($accountid, 0)) {
                 $customer_id = $accountid;
                 $accountid = $this->common_model->get_parent_info($accountid);
-                $parent_id = $accountid > 0 ? $accountid : - 1;
+                $parent_id = astpp_gt($accountid, 0) ? $accountid : - 1;
 
-                if ($data['payment_mode'] == 0) {
+                if (astpp_eq0($data['payment_mode'])) {
                     $insert_arr = array(
                         "accountid" => $customer_id,
                         "credit" => $data['credit'],
@@ -445,7 +446,7 @@ class user_model extends CI_Model
                 'payment_by' => $accountinfo['id']
             );
         }
-        if ($userlevel_logintype == 0 || $userlevel_logintype == 3) {
+        if (astpp_eq0($userlevel_logintype) || $userlevel_logintype == 3) {
             $where_arr = array(
                 'accountid' => $accountinfo['id']
             );
@@ -624,7 +625,7 @@ class user_model extends CI_Model
     {
         $this->db_model->build_search('user_did_search');
         $account_data = $this->session->userdata("accountinfo");
-        if ($account_data['reseller_id'] > 0) {
+        if (astpp_gt($account_data['reseller_id'], 0)) {
             $where_arr = array(
                 "buyer_accountid" => $account_data['id']
             );

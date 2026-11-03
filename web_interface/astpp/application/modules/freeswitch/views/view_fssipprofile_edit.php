@@ -160,7 +160,7 @@ function reload_port(h){
 						<select name="sipstatus"
 							class="col-md-12 form-control form-control-lg selectpicker"
 							data-live-search='true'>
-							<option value="0" <?if ($status == 0)echo 'selected=selected;'?>><?php echo gettext("Active"); ?></option>
+							<option value="0" <?if (astpp_eq0($status))echo 'selected=selected;'?>><?php echo gettext("Active"); ?></option>
 							<option value="1" <?if ($status == 1)echo 'selected=selected;'?>><?php echo gettext("Inactive"); ?></option>
 						</select>
 					</div>

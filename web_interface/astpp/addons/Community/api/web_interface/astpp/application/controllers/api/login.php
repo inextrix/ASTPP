@@ -54,7 +54,7 @@ require APPPATH . '/controllers/common/account.php';
 				$function = (isset($this->postdata['object']))?$this->postdata['object']:'';
 				$function = (($function != '') ? "_".$function : "_".$this->account_reseller);
 			}
-			if (( int ) method_exists ( $this, $function ) > 0)
+			if (astpp_gt(( int ) method_exists ( $this, $function ), 0))
 				$this->$function ();
 			else {
 				$this->api_log->write_log ('ERROR',"Unknown Method.");
@@ -121,7 +121,7 @@ require APPPATH . '/controllers/common/account.php';
 			}
 			$accountinfo ['id'] = $this->postdata['id'];
 			$deleted_rows = $this->_device_info ( $accountinfo, 'DELETE' );
-			if($deleted_rows > 0){
+			if(astpp_gt($deleted_rows, 0)){
 				$this->api_log->write_log ('ERROR',"You Logout from account.");
 				$this->response ( array (
 					'status' => true,

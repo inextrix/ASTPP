@@ -116,7 +116,7 @@ $("#subsmit").click(function (e) {
             <div class="col-12">
             <ul class="p-0">
             
-               <?php if($login_type != 0 && $login_type != 3){ ?>
+               <?php if((!astpp_eq0($login_type)) && $login_type != 3){ ?>
                 <div class="pb-4" id="floating-label">
                     <div class="col-md-12 form-group">
                         <label class="p-0 control-label"><?php echo gettext("Account"); ?></label>

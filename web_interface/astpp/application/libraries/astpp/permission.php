@@ -22,6 +22,7 @@
 // ##############################################################################
 if (! defined ( 'BASEPATH' ))
 	exit ( 'No direct script access allowed' );
+#[\AllowDynamicProperties]
 class Permission {
 	function __construct($library_name = '') {
 		$this->CI = & get_instance ();
@@ -72,7 +73,7 @@ class Permission {
                         $sub_main_module=$module_url_explode[1];
 			$sub_url_explode=explode('_',$sub_main_module);
                         $logintype = $this->CI->session->userdata('logintype');
-                        if((isset($permissioninfo[$main_module][$sub_main_module]['list']) && $permissioninfo[$main_module][$sub_main_module]['list'] == 0 or $permissioninfo['login_type'] == '-1' or $permissioninfo['login_type'] == '0' or $permissioninfo['login_type'] == '3') or ($permissioninfo['login_type'] == '1' and $sub_main_module='resellersrates_list') or (isset($permissioninfo[$main_module][$sub_main_module]['list']) && $permissioninfo[$main_module][$sub_main_module]['list'] == 0 and $permissioninfo['login_type'] == '2')){
+                        if((isset($permissioninfo[$main_module][$sub_main_module]['list']) && astpp_eq0($permissioninfo[$main_module][$sub_main_module]['list']) or $permissioninfo['login_type'] == '-1' or $permissioninfo['login_type'] == '0' or $permissioninfo['login_type'] == '3') or ($permissioninfo['login_type'] == '1' and $sub_main_module='resellersrates_list') or (isset($permissioninfo[$main_module][$sub_main_module]['list']) && astpp_eq0($permissioninfo[$main_module][$sub_main_module]['list']) and $permissioninfo['login_type'] == '2')){
                                 $permited_modules[] = trim($sub_url_explode[0]);
                         }
                 	}
@@ -102,7 +103,7 @@ class Permission {
 		else if(!$check_function_access){
 			$permission_result  = $this->_check_record_permission($table_name,array('id'=>$id,'reseller_id'=>$reseller_id));
 		}
-		if( $reseller_id > 0 && ((empty($permission_result) || $check_function_access) )){
+		if( astpp_gt($reseller_id, 0) && ((empty($permission_result) || $check_function_access) )){
 				$this->permission_redirect_url($redirect_url);
 		}	
 	}

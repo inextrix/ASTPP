@@ -24,6 +24,7 @@
  * @author		  Casey McLaughlin
  * @link		    http://caseyamcl.com/resources/userTrackingForCI#license
  */
+#[\AllowDynamicProperties]
 class Usertracking
 {
   private $CI;
@@ -224,7 +225,7 @@ class Usertracking
     $tracking_filters = $this->configuration['tracking_filter'];
 
     //If there are filters, process them
-    if (is_array($tracking_filters) && count($tracking_filters) > 0 && $tracking_filters[0] !== null)
+    if (is_array($tracking_filters) && astpp_count($tracking_filters) > 0 && $tracking_filters[0] !== null)
     {
       $filter_results = array();
 
@@ -232,18 +233,18 @@ class Usertracking
       foreach($tracking_filters as $curr_filter)
       {
         //Check the filter for the right type
-        if ( ! is_array($curr_filter) OR (count($curr_filter) != 4 && count($curr_filter) != 5))
+        if ( ! is_array($curr_filter) OR (astpp_count($curr_filter) != 4 && astpp_count($curr_filter) != 5))
         {
           show_error("The userTracking filter is malformed.  Check the userTracking configuration.  Filter: $curr_filter");
           continue;
         }
 
-        if (count($curr_filter) == 4)
+        if (astpp_count($curr_filter) == 4)
         {
           list($class_type, $class_name, $function_name, $expected_result) = $curr_filter;
           $the_args = array();  //This is empty
         }
-        elseif (count($curr_filter) == 5)
+        elseif (astpp_count($curr_filter) == 5)
           list($class_type, $class_name, $function_name, $expected_result, $the_args) = $curr_filter;
         else
         {
@@ -296,14 +297,14 @@ class Usertracking
       //check the results
       if (strtoupper($this->configuration['tracking_filter_logic']) == "AND") //AND Logic
       {
-        if ( ! in_array("fail", $filter_results))
+        if ( ! astpp_in_array("fail", $filter_results))
           return TRUE;
         else
           return FALSE;
       }
       else //OR Logic
       {
-        if (in_array("pass", $filter_results))
+        if (astpp_in_array("pass", $filter_results))
           return TRUE;
         else
           return FALSE;
@@ -357,7 +358,7 @@ class Usertracking
         }
       }
 
-      if ($num_matched < count($this->needed_fields) && $this->configuration['auto_fix_db'] === TRUE)
+      if ($num_matched < astpp_count($this->needed_fields) && $this->configuration['auto_fix_db'] === TRUE)
       {
         //if the columns are setup incorrectly and autofix_db is on, fix the db and return TRUE
 
@@ -373,7 +374,7 @@ class Usertracking
         //return TRUE
         return $result;
       }
-      elseif ($num_matched < count($this->needed_fields) && $this->configuration['auto_fix_db'] !== TRUE)
+      elseif ($num_matched < astpp_count($this->needed_fields) && $this->configuration['auto_fix_db'] !== TRUE)
       {
         //if the columns are setup incorrectly and autofix_db is off, show error return FALSE
         show_error('The database table exists, but is malformed and not setup correctly.');

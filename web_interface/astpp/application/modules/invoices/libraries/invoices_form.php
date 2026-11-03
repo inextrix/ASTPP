@@ -24,6 +24,7 @@ if (! defined('BASEPATH')) {
     exit('No direct script access allowed');
 }
 
+#[\AllowDynamicProperties]
 class invoices_form extends common
 {
 
@@ -39,7 +40,7 @@ class invoices_form extends common
         $currency = $this->CI->common->get_field_name('currency', 'currency', $currency_id);
 
         $logintype = $this->CI->session->userdata('logintype');
-        $url = ($logintype == 0 || $logintype == 3) ? "/user/user_invoice_download/" : '/invoices/invoice_main_download/';
+        $url = (astpp_eq0($logintype) || $logintype == 3) ? "/user/user_invoice_download/" : '/invoices/invoice_main_download/';
         $grid_field_arr = json_encode(array(
             array(
                 gettext("Number"),
@@ -165,7 +166,7 @@ class invoices_form extends common
         $currency = $this->CI->common->get_field_name('currency', 'currency', $currency_id);
 
         $logintype = $this->CI->session->userdata('logintype');
-        $url = ($logintype == 0 || $logintype == 3) ? "/user/user_invoice_download/" : '/invoices/invoice_main_download/';
+        $url = (astpp_eq0($logintype) || $logintype == 3) ? "/user/user_invoice_download/" : '/invoices/invoice_main_download/';
         $grid_field_arr = json_encode(array(
             array(
                 gettext("Number"),
@@ -275,7 +276,7 @@ class invoices_form extends common
 
     function build_invoices_list_for_customer()
     {
-        $url = ($this->CI->session->userdata('logintype') == 0) ? "/user/user_invoice_download/" : '/invoices/invoice_main_download/';
+        $url = (astpp_eq0($this->CI->session->userdata('logintype'))) ? "/user/user_invoice_download/" : '/invoices/invoice_main_download/';
         $grid_field_arr = json_encode(array(
             array(
                 gettext("Number"),

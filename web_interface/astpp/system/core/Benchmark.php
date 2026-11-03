@@ -29,6 +29,7 @@
  * @author		ExpressionEngine Dev Team
  * @link		http://codeigniter.com/user_guide/libraries/benchmark.html
  */
+#[\AllowDynamicProperties]
 class CI_Benchmark {
 
 	/**
@@ -91,7 +92,7 @@ class CI_Benchmark {
 		list($sm, $ss) = explode(' ', $this->marker[$point1]);
 		list($em, $es) = explode(' ', $this->marker[$point2]);
 
-		return number_format(($em + $es) - ($sm + $ss), $decimals);
+		return astpp_number_format((astpp_n($em) + astpp_n($es)) - (astpp_n($sm) + astpp_n($ss)), $decimals);
 	}
 
 	// --------------------------------------------------------------------

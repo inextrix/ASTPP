@@ -21,6 +21,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 // ##############################################################################
+#[\AllowDynamicProperties]
 class Reports extends MX_Controller
 {
 
@@ -96,7 +97,7 @@ class Reports extends MX_Controller
             }
             $currency_info = $this->common->get_currency_info();
             foreach ($query as $value) {
-                $duration = ($show_seconds == 'minutes') ? ($value['billseconds'] > 0) ? sprintf('%02d', $value['billseconds'] / 60) . ":" . sprintf('%02d', $value['billseconds'] % 60) : "00:00" : $value['billseconds'];
+                $duration = ($show_seconds == 'minutes') ? (astpp_gt($value['billseconds'], 0)) ? sprintf('%02d', astpp_n($value['billseconds']) / 60) . ":" . sprintf('%02d', astpp_n($value['billseconds']) % 60) : "00:00" : $value['billseconds'];
                 $account = isset($account_arr[$value['accountid']]) ? $account_arr[$value['accountid']] : 'Anonymous';
                 $is_recording = isset($account_is_recording[$value['accountid']]) ? $account_is_recording[$value['accountid']] : '1';
                 $uid = $value['uniqueid'];
@@ -116,7 +117,7 @@ class Reports extends MX_Controller
                     $action .= "<button onclick='playAudio(\"$uid\",\"$billseconds\")' type='button' class='btnplay'  id='play_" . $uid . "'  style='display:block;margin:0px 0 0 25px;border:0px !important; float:left; padding:0px'><img src=" . $play_img_url . " height='25px' width='25px' style='cursor: pointer;'/></button>";
 
                     $action .= "<button onclick='pauseAudio(\"$uid\")' type='button'  class='btnplay' id='pause_" . $uid . "' style='display: none;margin:0px 0 0 25px;border:0px !important; float:left;padding:0px'><img src=" . $pause_img_url . " height='25px' width='25px' style='cursor: pointer;'/></button>";
-                    $recording = ($is_recording == 0) ? '<a title="Recording file" href="' . $url . '"><img src="' . base_url() . 'assets/images/download.png" height="20px" width="20px"/></a>' : '<img src="' . base_url() . 'assets/images/false.png" height="20px" alt="file not found" width="20px"/>';
+                    $recording = (astpp_eq0($is_recording)) ? '<a title="Recording file" href="' . $url . '"><img src="' . base_url() . 'assets/images/download.png" height="20px" width="20px"/></a>' : '<img src="' . base_url() . 'assets/images/false.png" height="20px" alt="file not found" width="20px"/>';
                 } else {
                     $recording = '<img src="' . base_url() . 'assets/images/false.png" height="20px" title="Record file is not available" width="20px"/>';
                     $action = '<img src="' . base_url() . 'assets/images/false.png" height="20px" title="Play file is not available" width="20px"/>';
@@ -163,7 +164,7 @@ class Reports extends MX_Controller
                     );
                 }
             }
-            $duration = ($show_seconds == 'minutes') ? ($count_all['billseconds'] > 0) ? floor($count_all['billseconds'] / 60) . ":" . sprintf('%02d', $count_all['billseconds'] % 60) : "00:00" : $count_all['billseconds'];
+            $duration = ($show_seconds == 'minutes') ? (astpp_gt($count_all['billseconds'], 0)) ? astpp_floor(astpp_n($count_all['billseconds']) / 60) . ":" . sprintf('%02d', astpp_n($count_all['billseconds']) % 60) : "00:00" : $count_all['billseconds'];
             $json_data['rows'][] = array(
                 "cell" => array(
                     "<b>".gettext("Grand Total")."</b>",
@@ -173,7 +174,7 @@ class Reports extends MX_Controller
                     "",
                     "",
                     "<b>$duration</b>",
-                    "<b>" . $this->common->calculate_currency_manually($currency_info, $count_all['total_debit'] - $count_all['free_debit'], false) . "</b>",
+                    "<b>" . $this->common->calculate_currency_manually($currency_info, astpp_n($count_all['total_debit']) - astpp_n($count_all['free_debit']), false) . "</b>",
                     "<b>" . $this->common->calculate_currency_manually($currency_info, $count_all['total_cost'], false) . "</b>",
                     "",
                     "",
@@ -221,7 +222,7 @@ class Reports extends MX_Controller
                     if (isset($duration[0]) && isset($duration[1])) {
 
                         if (is_numeric($duration[0]) && is_numeric($duration[1])) {
-                            $action['billseconds']['billseconds'] = (60 * $duration[0]) + $duration[1];
+                            $action['billseconds']['billseconds'] = (60 * astpp_n($duration[0])) + astpp_n($duration[1]);
                         }
                     }
                 }
@@ -259,7 +260,7 @@ class Reports extends MX_Controller
         $count_res = $this->reports_model->getcustomer_cdrs(false, "", "");
         $count_all = (array) $count_res->first_row();
         ob_clean();
-        if ($count_all['count'] > 0) {
+        if (astpp_gt($count_all['count'], 0)) {
             $pricelist_arr = array();
             $trunk_arr = array();
             $account_arr = array();
@@ -310,7 +311,7 @@ class Reports extends MX_Controller
                     $trunk_arr[$value['id']] = $value['name'];
                 }
                 foreach ($query->result_array() as $value) {
-                    $duration = ($show_seconds == 'minutes') ? ($value['billseconds'] > 0) ? floor($value['billseconds'] / 60) . ":" . sprintf('%02d', $value['billseconds'] % 60) : "00:00" : $value['billseconds'];
+                    $duration = ($show_seconds == 'minutes') ? (astpp_gt($value['billseconds'], 0)) ? astpp_floor(astpp_n($value['billseconds']) / 60) . ":" . sprintf('%02d', astpp_n($value['billseconds']) % 60) : "00:00" : $value['billseconds'];
                     $account = isset($account_arr[$value['accountid']]) ? $account_arr[$value['accountid']] : 'Anonymous';
                     $customer_array[] = array(
                         $this->common->convert_GMT_to('', '', $value['callstart']),
@@ -330,7 +331,7 @@ class Reports extends MX_Controller
                         $value['sip_user']
                     );
                 }
-                $duration = ($show_seconds == 'minutes') ? ($count_all['billseconds'] > 0) ? floor($count_all['billseconds'] / 60) . ":" . sprintf('%02d', $count_all['billseconds'] % 60) : "00:00" : $count_all['billseconds'];
+                $duration = ($show_seconds == 'minutes') ? (astpp_gt($count_all['billseconds'], 0)) ? astpp_floor(astpp_n($count_all['billseconds']) / 60) . ":" . sprintf('%02d', astpp_n($count_all['billseconds']) % 60) : "00:00" : $count_all['billseconds'];
                 $customer_array[] = array(
                     "Grand Total",
                     "",
@@ -366,7 +367,7 @@ class Reports extends MX_Controller
                     gettext("SIP User")
                 );
                 foreach ($query->result_array() as $value) {
-                    $duration = ($show_seconds == 'minutes') ? ($value['billseconds'] > 0) ? floor($value['billseconds'] / 60) . ":" . sprintf('%02d', $value['billseconds'] % 60) : "00:00" : $value['billseconds'];
+                    $duration = ($show_seconds == 'minutes') ? (astpp_gt($value['billseconds'], 0)) ? astpp_floor(astpp_n($value['billseconds']) / 60) . ":" . sprintf('%02d', astpp_n($value['billseconds']) % 60) : "00:00" : $value['billseconds'];
                     $account = isset($account_arr[$value['accountid']]) ? $account_arr[$value['accountid']] : 'Anonymous';
                     $customer_array[] = array(
                         $this->common->convert_GMT_to('', '', $value['callstart']),
@@ -384,7 +385,7 @@ class Reports extends MX_Controller
                         $value['sip_user']
                     );
                 }
-                $duration = ($show_seconds == 'minutes') ? ($count_all['billseconds'] > 0) ? floor($count_all['billseconds'] / 60) . ":" . sprintf('%02d', $count_all['billseconds'] % 60) : "00:00" : $count_all['billseconds'];
+                $duration = ($show_seconds == 'minutes') ? (astpp_gt($count_all['billseconds'], 0)) ? astpp_floor(astpp_n($count_all['billseconds']) / 60) . ":" . sprintf('%02d', astpp_n($count_all['billseconds']) % 60) : "00:00" : $count_all['billseconds'];
                 $customer_array[] = array(
                     "Grand Total",
                     "",
@@ -452,10 +453,10 @@ class Reports extends MX_Controller
         $query = $this->reports_model->getreseller_cdrs(true, $paging_data["paging"]["start"], $paging_data["paging"]["page_no"]);
         $grid_fields = json_decode($this->reports_form->build_report_list_for_reseller());
         $json_data['rows'] = $this->form->build_grid($query, $grid_fields);
-        if ($count_all['count'] > 0) {
+        if (astpp_gt($count_all['count'], 0)) {
             $search_arr = $this->session->userdata('reseller_cdr_list_search');
             $show_seconds = (! empty($search_arr['search_in'])) ? $search_arr['search_in'] : 'minutes';
-            $duration = ($show_seconds == 'minutes') ? ($count_all['billseconds'] > 0) ? sprintf('%02d', $count_all['billseconds'] / 60) . ":" . sprintf('%02d', $count_all['billseconds'] % 60) : "00:00" : sprintf('%02d', $count_all['billseconds']);
+            $duration = ($show_seconds == 'minutes') ? (astpp_gt($count_all['billseconds'], 0)) ? sprintf('%02d', astpp_n($count_all['billseconds']) / 60) . ":" . sprintf('%02d', astpp_n($count_all['billseconds']) % 60) : "00:00" : sprintf('%02d', $count_all['billseconds']);
             $json_data['rows'][] = array(
                 "cell" => array(
                     "<b>".gettext("Grand Total")."</b>",
@@ -464,7 +465,7 @@ class Reports extends MX_Controller
                     "",
                     "",
                     "<b>$duration</b>",
-                    "<b>" . $this->common_model->calculate_currency($count_all['total_debit'] - $count_all['free_debit'], '', '', true, false) . "</b>",
+                    "<b>" . $this->common_model->calculate_currency(astpp_n($count_all['total_debit']) - astpp_n($count_all['free_debit']), '', '', true, false) . "</b>",
                     "<b>" . $this->common_model->calculate_currency($count_all['total_cost'], '', '', true, false) . "</b>",
                     "",
                     "",
@@ -493,7 +494,7 @@ class Reports extends MX_Controller
                     if (isset($duration[0]) && isset($duration[1])) {
 
                         if (is_numeric($duration[0]) && is_numeric($duration[1])) {
-                            $action['billseconds']['billseconds'] = (60 * $duration[0]) + $duration[1];
+                            $action['billseconds']['billseconds'] = (60 * astpp_n($duration[0])) + astpp_n($duration[1]);
                         }
                     }
                 }
@@ -541,7 +542,7 @@ class Reports extends MX_Controller
             gettext("Call Type"),
             gettext("Direction")
         );
-        if ($count_all['count'] > 0) {
+        if (astpp_gt($count_all['count'], 0)) {
             $pricelist_arr = array();
             $query = $this->reports_model->getreseller_cdrs(true, '', '', true);
             $currency_info = $this->common->get_currency_info();
@@ -564,7 +565,7 @@ class Reports extends MX_Controller
                 $trunk_arr[$value['id']] = $value['name'];
             }
             foreach ($query->result_array() as $value) {
-                $duration = ($show_seconds == 'minutes') ? ($value['billseconds'] > 0) ? sprintf('%02d', $value['billseconds'] / 60) . ":" . sprintf('%02d', $value['billseconds'] % 60) : "00:00" : $value['billseconds'];
+                $duration = ($show_seconds == 'minutes') ? (astpp_gt($value['billseconds'], 0)) ? sprintf('%02d', astpp_n($value['billseconds']) / 60) . ":" . sprintf('%02d', astpp_n($value['billseconds']) % 60) : "00:00" : $value['billseconds'];
                 $reseller_array[] = array(
                     $this->common->convert_GMT_to('', '', $value['callstart']),
                     $value['callerid'],
@@ -582,7 +583,7 @@ class Reports extends MX_Controller
                     $value['call_direction']
                 );
             }
-            $duration = ($show_seconds == 'minutes') ? ($count_all['billseconds'] > 0) ? floor($count_all['billseconds'] / 60) . ":" . sprintf('%02d', $count_all['billseconds'] % 60) : "00:00" : $count_all['billseconds'];
+            $duration = ($show_seconds == 'minutes') ? (astpp_gt($count_all['billseconds'], 0)) ? astpp_floor(astpp_n($count_all['billseconds']) / 60) . ":" . sprintf('%02d', astpp_n($count_all['billseconds']) % 60) : "00:00" : $count_all['billseconds'];
             $reseller_array[] = array(
                 gettext("Grand Total"),
                 "",
@@ -629,10 +630,10 @@ class Reports extends MX_Controller
         $query = $this->reports_model->getprovider_cdrs(true, $paging_data["paging"]["start"], $paging_data["paging"]["page_no"]);
         $grid_fields = json_decode($this->reports_form->build_report_list_for_provider());
         $json_data['rows'] = $this->form->build_grid($query, $grid_fields);
-        if ($count_all['count'] > 0) {
+        if (astpp_gt($count_all['count'], 0)) {
             $search_arr = $this->session->userdata('provider_cdr_list_search');
             $show_seconds = (! empty($search_arr['search_in'])) ? $search_arr['search_in'] : 'minutes';
-            $duration = ($show_seconds == 'minutes') ? ($count_all['billseconds'] > 0) ? floor($count_all['billseconds'] / 60) . ":" . sprintf("%02d", $count_all['billseconds'] % 60) : "00:00" : $count_all['billseconds'];
+            $duration = ($show_seconds == 'minutes') ? (astpp_gt($count_all['billseconds'], 0)) ? astpp_floor(astpp_n($count_all['billseconds']) / 60) . ":" . sprintf("%02d", astpp_n($count_all['billseconds']) % 60) : "00:00" : $count_all['billseconds'];
             $json_data['rows'][] = array(
                 "cell" => array(
                     "<b>".gettext("Grand Total")."</b>",
@@ -665,7 +666,7 @@ class Reports extends MX_Controller
                     $duration = explode(':', $action['billseconds']['billseconds']);
                     if (isset($duration[0]) && isset($duration[1])) {
                         if (is_numeric($duration[0]) && is_numeric($duration[1])) {
-                            $action['billseconds']['billseconds'] = (60 * $duration[0]) + $duration[1];
+                            $action['billseconds']['billseconds'] = (60 * astpp_n($duration[0])) + astpp_n($duration[1]);
                         }
                     }
                 }
@@ -716,13 +717,13 @@ class Reports extends MX_Controller
             gettext("Account"),
             gettext("Direction")
         );
-        if ($count_all['count'] > 0) {
+        if (astpp_gt($count_all['count'], 0)) {
             $query = $this->reports_model->getprovider_cdrs(true, '', '', true);
             $currency_info = $this->common->get_currency_info();
             $search_arr = $this->session->userdata('provider_cdr_list_search');
             $show_seconds = (! empty($search_arr['search_in'])) ? $search_arr['search_in'] : 'minutes';
             foreach ($query->result_array() as $value) {
-                $duration = ($show_seconds == 'minutes') ? ($value['billseconds'] > 0) ? floor($value['billseconds'] / 60) . ":" . sprintf("%02d", $value['billseconds'] % 60) : "00:00" : $value['billseconds'];
+                $duration = ($show_seconds == 'minutes') ? (astpp_gt($value['billseconds'], 0)) ? astpp_floor(astpp_n($value['billseconds']) / 60) . ":" . sprintf("%02d", astpp_n($value['billseconds']) % 60) : "00:00" : $value['billseconds'];
                 $account_arr = $this->db_model->getSelect('*', 'accounts', array(
                     'id' => $value['provider_id']
                 ));
@@ -746,7 +747,7 @@ class Reports extends MX_Controller
                     $value['call_direction']
                 );
             }
-            $duration = ($show_seconds == 'minutes') ? ($count_all['billseconds'] > 0) ? floor($count_all['billseconds'] / 60) . ":" . sprintf("%02d", $count_all['billseconds'] % 60) : "00:00" : $count_all['billseconds'];
+            $duration = ($show_seconds == 'minutes') ? (astpp_gt($count_all['billseconds'], 0)) ? astpp_floor(astpp_n($count_all['billseconds']) / 60) . ":" . sprintf("%02d", astpp_n($count_all['billseconds']) % 60) : "00:00" : $count_all['billseconds'];
             $provider_array[] = array(
                 gettext("Grand Total"),
                 "",
@@ -919,7 +920,7 @@ class Reports extends MX_Controller
         if($account_info['type'] == 1){
             $reseller_id = $account_info['id'];
         }else{
-            $reseller_id = $account_info['reseller_id'] > 0 ? $account_info['reseller_id'] : 0;
+            $reseller_id = astpp_gt($account_info['reseller_id'], 0) ? $account_info['reseller_id'] : 0;
         }
         $account_arr = array();
         $transaction_details = array();

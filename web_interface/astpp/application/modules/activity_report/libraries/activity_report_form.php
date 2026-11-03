@@ -23,6 +23,7 @@
 if (! defined('BASEPATH'))
     exit('No direct script access allowed');
 
+#[\AllowDynamicProperties]
 class Activity_report_form extends common
 {
 

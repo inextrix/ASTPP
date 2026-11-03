@@ -50,7 +50,7 @@ if ( ! function_exists('is_php'))
 
 		if ( ! isset($_is_php[$version]))
 		{
-			$_is_php[$version] = (version_compare(PHP_VERSION, $version) < 0) ? FALSE : TRUE;
+			$_is_php[$version] = (astpp_lt(version_compare(PHP_VERSION, $version), 0)) ? FALSE : TRUE;
 		}
 
 		return $_is_php[$version];
@@ -244,7 +244,7 @@ if ( ! function_exists('get_config'))
 		}
 
 		// Are any values being dynamically replaced?
-		if (count($replace) > 0)
+		if (astpp_count($replace) > 0)
 		{
 			foreach ($replace as $key => $val)
 			{
@@ -348,11 +348,11 @@ if ( ! function_exists('show_404'))
 */
 if ( ! function_exists('log_message'))
 {
-	function log_message($level = 'error', $message, $php_error = FALSE)
+	function log_message($level, $message, $php_error = FALSE)
 	{
 		static $_log;
 
-		if (config_item('log_threshold') == 0)
+		if (astpp_eq0(config_item('log_threshold')))
 		{
 			return;
 		}
@@ -476,22 +476,38 @@ if ( ! function_exists('_exception_handler'))
 		 // For example, if you are running PHP 5 and you use version 4 style
 		 // class functions (without prefixes like "public", "private", etc.)
 		 // you'll get notices telling you that these have been deprecated.
-		if ($severity == E_STRICT)
+		// PHP8: E_STRICT (2048) no longer exists as a level, the constant is deprecated
+		if ($severity == 2048)
 		{
 			return;
 		}
 
+		// Respect the @ operator (PHP 8 no longer sets error_reporting() to 0 for it)
+		if (($severity & error_reporting()) != $severity)
+		{
+			return TRUE;
+		}
+
 		$_error = & load_class('Exceptions', 'core');
 
-		// Should we display the error? We'll get the current error_reporting
-		// level and add its bits with the severity bits to find out.
-		if (($severity & error_reporting()) == $severity)
+		// PHP8: only print errors into the page in development - otherwise log them
+		// (upstream printed them into the HTML and therefore ran with error_reporting(0)).
+		if (defined('ENVIRONMENT') && ENVIRONMENT == 'development')
 		{
 			$_error->show_php_error($severity, $message, $filepath, $line);
 		}
+		else
+		{
+			$levels = array(E_WARNING => 'Warning', E_NOTICE => 'Notice', E_DEPRECATED => 'Deprecated',
+				E_USER_ERROR => 'User Error', E_USER_WARNING => 'User Warning', E_USER_NOTICE => 'User Notice',
+				E_USER_DEPRECATED => 'User Deprecated', E_RECOVERABLE_ERROR => 'Recoverable Error');
+			$level = isset($levels[$severity]) ? $levels[$severity] : 'Error ' . $severity;
+			error_log('PHP ' . $level . ': ' . $message . ' in ' . $filepath . ' on line ' . $line
+				. (isset($_SERVER['REQUEST_URI']) ? ' [' . $_SERVER['REQUEST_URI'] . ']' : ''));
+		}
 
 		// Should we log the error?  No?  We're done...
-		if (config_item('log_threshold') == 0)
+		if (astpp_eq0(config_item('log_threshold')))
 		{
 			return;
 		}
@@ -554,7 +570,7 @@ if ( ! function_exists('html_escape'))
 	{
 		if (is_array($var))
 		{
-			return array_map('html_escape', $var);
+			return astpp_array_map('html_escape', $var);
 		} else
 		{
 			return htmlspecialchars($var, ENT_QUOTES, config_item('charset'));

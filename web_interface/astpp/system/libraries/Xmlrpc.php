@@ -32,6 +32,7 @@ if ( ! function_exists('xml_parser_create'))
  * @author		ExpressionEngine Dev Team
  * @link		http://codeigniter.com/user_guide/libraries/xmlrpc.html
  */
+#[\AllowDynamicProperties]
 class CI_Xmlrpc {
 
 	var $debug = FALSE; // Debugging on or off
@@ -74,7 +75,7 @@ class CI_Xmlrpc {
 	public function __construct($config = array())
 	{
 		$this->xmlrpcName = $this->xmlrpcName;
-		$this->xmlrpc_backslash = chr(92).chr(92);
+		$this->xmlrpc_backslash = astpp_chr(92).astpp_chr(92);
 
 		// Types for info sent back and forth
 		$this->xmlrpcTypes = array(
@@ -136,7 +137,7 @@ class CI_Xmlrpc {
 
 	function initialize($config = array())
 	{
-		if (count($config) > 0)
+		if (astpp_count($config) > 0)
 		{
 			foreach ($config as $key => $val)
 			{
@@ -232,7 +233,7 @@ class CI_Xmlrpc {
 
 	function values_parsing($value, $return = FALSE)
 	{
-		if (is_array($value) && array_key_exists(0, $value))
+		if (is_array($value) && astpp_array_key_exists(0, $value))
 		{
 			if ( ! isset($value['1']) OR ( ! isset($this->xmlrpcTypes[$value['1']])))
 			{
@@ -245,7 +246,7 @@ class CI_Xmlrpc {
 				}
 			} elseif (is_array($value['0']) && ($value['1'] == 'struct' OR $value['1'] == 'array'))
 			{
-				while (list($k) = each($value['0']))
+				foreach (astpp_array_keys($value['0']) as $k)
 				{
 					$value['0'][$k] = $this->values_parsing($value['0'][$k], TRUE);
 				}
@@ -347,6 +348,7 @@ class CI_Xmlrpc {
  * @author		ExpressionEngine Dev Team
  * @link		http://codeigniter.com/user_guide/libraries/xmlrpc.html
  */
+#[\AllowDynamicProperties]
 class XML_RPC_Client extends CI_Xmlrpc
 {
 	var $path			= '';
@@ -428,6 +430,7 @@ class XML_RPC_Client extends CI_Xmlrpc
  * @author		ExpressionEngine Dev Team
  * @link		http://codeigniter.com/user_guide/libraries/xmlrpc.html
  */
+#[\AllowDynamicProperties]
 class XML_RPC_Response
 {
 	var $val = 0;
@@ -438,7 +441,7 @@ class XML_RPC_Response
 
 	public function __construct($val, $code = 0, $fstr = '')
 	{
-		if ($code != 0)
+		if ((!astpp_eq0($code)))
 		{
 			// error
 			$this->errno = $code;
@@ -506,7 +509,7 @@ class XML_RPC_Response
 		
 		if ($array !== FALSE && is_array($array))
 		{
-			while (list($key) = each($array))
+			foreach (astpp_array_keys($array) as $key)
 			{
 				if (is_array($array[$key]))
 				{
@@ -552,9 +555,9 @@ class XML_RPC_Response
 			return $xmlrpc_val->scalarval();
 		} elseif ($kind == 'array')
 		{
-			reset($xmlrpc_val->me);
-			list($a, $b) = each($xmlrpc_val->me);
-			$size = count($b);
+			astpp_reset($xmlrpc_val->me);
+			$a = astpp_key($xmlrpc_val->me); $b = astpp_current($xmlrpc_val->me); // PHP8: was each()
+			$size = astpp_count($b);
 
 			$arr = array();
 
@@ -565,10 +568,10 @@ class XML_RPC_Response
 			return $arr;
 		} elseif ($kind == 'struct')
 		{
-			reset($xmlrpc_val->me['struct']);
+			astpp_reset($xmlrpc_val->me['struct']);
 			$arr = array();
 
-			while (list($key, $value) = each($xmlrpc_val->me['struct']))
+			foreach ($xmlrpc_val->me['struct'] as $key => $value)
 			{
 				$arr[$key] = $this->xmlrpc_decoder($value);
 			}
@@ -604,6 +607,7 @@ class XML_RPC_Response
  * @author		ExpressionEngine Dev Team
  * @link		http://codeigniter.com/user_guide/libraries/xmlrpc.html
  */
+#[\AllowDynamicProperties]
 class XML_RPC_Message extends CI_Xmlrpc
 {
 	var $payload;
@@ -616,9 +620,9 @@ class XML_RPC_Message extends CI_Xmlrpc
 		parent::__construct();
 
 		$this->method_name = $method;
-		if (is_array($pars) && count($pars) > 0)
+		if (is_array($pars) && astpp_count($pars) > 0)
 		{
-			for ($i = 0; $i < count($pars); $i++)
+			for ($i = 0; $i < astpp_count($pars); $i++)
 			{
 				// $pars[$i] = XML_RPC_Values
 				$this->params[] = $pars[$i];
@@ -636,7 +640,7 @@ class XML_RPC_Message extends CI_Xmlrpc
 		$this->payload .= '<methodName>'.$this->method_name."</methodName>\r\n";
 		$this->payload .= "<params>\r\n";
 
-		for ($i = 0; $i < count($this->params); $i++)
+		for ($i = 0; $i < astpp_count($this->params); $i++)
 		{
 			// $p = XML_RPC_Values
 			$p = $this->params[$i];
@@ -727,24 +731,24 @@ class XML_RPC_Message extends CI_Xmlrpc
 			}
 			$this->xh[$parser]['headers'][] = $line;
 		}
-		$data = implode("\r\n", $lines);
+		$data = astpp_implode("\r\n", $lines);
 
 
 		//-------------------------------------
 		//  PARSE XML DATA
 		//-------------------------------------
 
-		if ( ! xml_parse($parser, $data, count($data)))
+		if ( ! xml_parse($parser, $data, astpp_count($data)))
 		{
 			$errstr = sprintf('XML error: %s at line %d',
 					xml_error_string(xml_get_error_code($parser)),
 					xml_get_current_line_number($parser));
 			//error_log($errstr);
 			$r = new XML_RPC_Response(0, $this->xmlrpcerr['invalid_return'], $this->xmlrpcstr['invalid_return']);
-			xml_parser_free($parser);
+			PHP_VERSION_ID < 80000 && xml_parser_free($parser);
 			return $r;
 		}
-		xml_parser_free($parser);
+		PHP_VERSION_ID < 80000 && xml_parser_free($parser);
 
 		// ---------------------------------------
 		//  Got Ourselves Some Badness, It Seems
@@ -775,7 +779,7 @@ class XML_RPC_Message extends CI_Xmlrpc
 		{
 			echo "<pre>";
 
-			if (count($this->xh[$parser]['headers'] > 0))
+			if (astpp_count(astpp_gt($this->xh[$parser]['headers'], 0)))
 			{
 				echo "---HEADERS---\n";
 				foreach ($this->xh[$parser]['headers'] as $header)
@@ -804,7 +808,7 @@ class XML_RPC_Message extends CI_Xmlrpc
 			$errstr_v = $v->me['struct']['faultString'];
 			$errno = $errno_v->scalarval();
 
-			if ($errno == 0)
+			if (astpp_eq0($errno))
 			{
 				// FAULT returned, errno needs to reflect that
 				$errno = -1;
@@ -847,7 +851,7 @@ class XML_RPC_Message extends CI_Xmlrpc
 
 		// Evaluate and check for correct nesting of XML elements
 
-		if (count($this->xh[$the_parser]['stack']) == 0)
+		if (astpp_count($this->xh[$the_parser]['stack']) == 0)
 		{
 			if ($name != 'METHODRESPONSE' && $name != 'METHODCALL')
 			{
@@ -858,7 +862,7 @@ class XML_RPC_Message extends CI_Xmlrpc
 		} else
 		{
 			// not top level element: see if parent is OK
-			if ( ! in_array($this->xh[$the_parser]['stack'][0], $this->valid_parents[$name], TRUE))
+			if ( ! astpp_in_array($this->xh[$the_parser]['stack'][0], $this->valid_parents[$name], TRUE))
 			{
 				$this->xh[$the_parser]['isf'] = 2;
 				$this->xh[$the_parser]['isf_reason'] = "XML-RPC element $name cannot be child of ".$this->xh[$the_parser]['stack'][0];
@@ -1011,7 +1015,7 @@ class XML_RPC_Message extends CI_Xmlrpc
 					}
 					else
 					{
-						$this->xh[$the_parser]['value'] = (double)$this->xh[$the_parser]['ac'];
+						$this->xh[$the_parser]['value'] = (float)$this->xh[$the_parser]['ac'];
 					}
 				}
 				else
@@ -1041,7 +1045,7 @@ class XML_RPC_Message extends CI_Xmlrpc
 				// build the XML-RPC value out of the data received, and substitute it
 				$temp = new XML_RPC_Values($this->xh[$the_parser]['value'], $this->xh[$the_parser]['vt']);
 
-				if (count($this->xh[$the_parser]['valuestack']) && $this->xh[$the_parser]['valuestack'][0]['type'] == 'ARRAY')
+				if (astpp_count($this->xh[$the_parser]['valuestack']) && $this->xh[$the_parser]['valuestack'][0]['type'] == 'ARRAY')
 				{
 					// Array
 					$this->xh[$the_parser]['valuestack'][0]['values'][] = $temp;
@@ -1121,7 +1125,7 @@ class XML_RPC_Message extends CI_Xmlrpc
 		
 		if ($array !== FALSE && is_array($array))
 		{
-			while (list($key) = each($array))
+			foreach (astpp_array_keys($array) as $key)
 			{
 				if (is_array($array[$key]))
 				{
@@ -1139,7 +1143,7 @@ class XML_RPC_Message extends CI_Xmlrpc
 		{
 			$parameters = array();
 
-			for ($i = 0; $i < count($this->params); $i++)
+			for ($i = 0; $i < astpp_count($this->params); $i++)
 			{
 				$a_param = $this->decode_message($this->params[$i]);
 
@@ -1166,12 +1170,12 @@ class XML_RPC_Message extends CI_Xmlrpc
 			return $param->scalarval();
 		} elseif ($kind == 'array')
 		{
-			reset($param->me);
-			list($a, $b) = each($param->me);
+			astpp_reset($param->me);
+			$a = astpp_key($param->me); $b = astpp_current($param->me); // PHP8: was each()
 
 			$arr = array();
 
-			for ($i = 0; $i < count($b); $i++)
+			for ($i = 0; $i < astpp_count($b); $i++)
 			{
 				$arr[] = $this->decode_message($param->me['array'][$i]);
 			}
@@ -1179,11 +1183,11 @@ class XML_RPC_Message extends CI_Xmlrpc
 			return $arr;
 		} elseif ($kind == 'struct')
 		{
-			reset($param->me['struct']);
+			astpp_reset($param->me['struct']);
 
 			$arr = array();
 
-			while (list($key, $value) = each($param->me['struct']))
+			foreach ($param->me['struct'] as $key => $value)
 			{
 				$arr[$key] = $this->decode_message($value);
 			}
@@ -1203,6 +1207,7 @@ class XML_RPC_Message extends CI_Xmlrpc
  * @author		ExpressionEngine Dev Team
  * @link		http://codeigniter.com/user_guide/libraries/xmlrpc.html
  */
+#[\AllowDynamicProperties]
 class XML_RPC_Values extends CI_Xmlrpc
 {
 	var $me = array();
@@ -1278,7 +1283,7 @@ class XML_RPC_Values extends CI_Xmlrpc
 
 	function addArray($vals)
 	{
-		if ($this->mytype != 0)
+		if ((!astpp_eq0($this->mytype)))
 		{
 			echo '<strong>XML_RPC_Values</strong>: already initialized as a ['.$this->kindOf().']<br />';
 			return 0;
@@ -1294,7 +1299,7 @@ class XML_RPC_Values extends CI_Xmlrpc
 	 */
 	function addStruct($vals)
 	{
-		if ($this->mytype != 0)
+		if ((!astpp_eq0($this->mytype)))
 		{
 			echo '<strong>XML_RPC_Values</strong>: already initialized as a ['.$this->kindOf().']<br />';
 			return 0;
@@ -1331,8 +1336,8 @@ class XML_RPC_Values extends CI_Xmlrpc
 			case 3:
 				// struct
 				$rs .= "<struct>\n";
-				reset($val);
-				while (list($key2, $val2) = each($val))
+				astpp_reset($val);
+				foreach ($val as $key2 => $val2)
 				{
 					$rs .= "<member>\n<name>{$key2}</name>\n";
 					$rs .= $this->serializeval($val2);
@@ -1343,7 +1348,7 @@ class XML_RPC_Values extends CI_Xmlrpc
 			case 2:
 				// array
 				$rs .= "<array>\n<data>\n";
-				for ($i = 0; $i < count($val); $i++)
+				for ($i = 0; $i < astpp_count($val); $i++)
 				{
 					$rs .= $this->serializeval($val[$i]);
 				}
@@ -1380,17 +1385,17 @@ class XML_RPC_Values extends CI_Xmlrpc
 	function serializeval($o)
 	{
 		$ar = $o->me;
-		reset($ar);
+		astpp_reset($ar);
 
-		list($typ, $val) = each($ar);
+		$typ = astpp_key($ar); $val = astpp_current($ar); // PHP8: was each()
 		$rs = "<value>\n".$this->serializedata($typ, $val)."</value>\n";
 		return $rs;
 	}
 
 	function scalarval()
 	{
-		reset($this->me);
-		list($a, $b) = each($this->me);
+		astpp_reset($this->me);
+		$a = astpp_key($this->me); $b = astpp_current($this->me); // PHP8: was each()
 		return $b;
 	}
 
@@ -1411,7 +1416,7 @@ class XML_RPC_Values extends CI_Xmlrpc
 			if (function_exists('gmstrftime')) {
 							$t = gmstrftime("%Y%m%dT%H:%i:%s", $time);
 			} else {
-							$t = strftime("%Y%m%dT%H:%i:%s", $time - date('Z'));
+							$t = strftime("%Y%m%dT%H:%i:%s", astpp_n($time) - astpp_n(date('Z')));
 			}
 		}
 		return $t;

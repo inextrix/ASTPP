@@ -151,7 +151,7 @@ function validateForm(){
 												class="col-md-12 form-control selectpicker form-control-lg"
 												data-live-search='true'>
 												<option value="0"
-													<?php if(isset($details['sipstatus']) && $details['sipstatus'] == 0){?>
+													<?php if(isset($details['sipstatus']) && astpp_eq0($details['sipstatus'])){?>
 													selected="select" <?php } ?>><?php echo gettext("Active"); ?></option>
 												<option value="1"
 													<?php if(isset($details['sipstatus']) && $details['sipstatus'] == 1){?>

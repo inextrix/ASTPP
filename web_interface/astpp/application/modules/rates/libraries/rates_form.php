@@ -23,6 +23,7 @@
 if (! defined('BASEPATH'))
     exit('No direct script access allowed');
 
+#[\AllowDynamicProperties]
 class rates_form extends common
 {
 
@@ -237,7 +238,7 @@ class rates_form extends common
         $reseller_id = ($accountinfo['type'] == 1 || $accountinfo['type'] == 5) ? $accountinfo['id'] : 0;
         $currency_id = $account_info['currency_id'];
         $currency = $this->CI->common->get_field_name('currency', 'currency', $currency_id);
-        if ($id > 0) {
+        if (astpp_gt($id, 0)) {
             if ($this->CI->session->userdata("logintype") == '1') {
                 $reseller_drp = null;
             } else {

@@ -23,6 +23,7 @@
 if (! defined('BASEPATH'))
     exit('No direct script access allowed');
 
+#[\AllowDynamicProperties]
 class accessnumber_form
 {
 
@@ -83,7 +84,7 @@ class accessnumber_form
                 ''
             );
         }
-        $val = $id > 0 ? 'accessnumber.access_number.' . $id : 'accessnumber.access_number';
+        $val = astpp_gt($id, 0) ? 'accessnumber.access_number.' . $id : 'accessnumber.access_number';
         $form['forms'] = array(
             base_url() . 'accessnumber/accessnumber_save/',
             array(

@@ -26,6 +26,7 @@
  * @author		ExpressionEngine Dev Team
  * @link		http://codeigniter.com/user_guide/general/errors.html
  */
+#[\AllowDynamicProperties]
 class CI_Log {
 
 	protected $_log_path;
@@ -71,7 +72,7 @@ class CI_Log {
 	 * @param	bool	whether the error is a native PHP error
 	 * @return	bool
 	 */
-	public function write_log($level = 'error', $msg, $php_error = FALSE)
+	public function write_log($level, $msg, $php_error = FALSE)
 	{
 		if ($this->_enabled === FALSE)
 		{

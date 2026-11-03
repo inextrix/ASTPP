@@ -102,7 +102,7 @@
 			 }
              
 			 $accountinfo=$this->session->userdata('accountinfo');
-			 if($accountinfo['type'] != 0  && $accountinfo['type'] !=3){
+			 if((!astpp_eq0($accountinfo['type']))  && $accountinfo['type'] !=3){
 			  $menu_info_temp= ($uri_arr[0]=="user"
 							? unserialize(RESELLERPROFILE_ARRAY):($uri_arr[0]=="accounts"&& $entity_name =='customer'
 							? unserialize(CUSTOMEREDIT_ARRAY)   :($uri_arr[0]=="accounts"&& $entity_name =='provider'
@@ -121,7 +121,7 @@
 							$permission_check_array = explode('/',$permission_edit_array[$menu_key]);
 							if(isset($permissioninfo[$permission_check_array[0]][$permission_check_array[1]][$permission_check_array[2]])){
 							$check_permission_flag = $permissioninfo[$permission_check_array[0]][$permission_check_array[1]][$permission_check_array[2]];
-							if(isset($check_permission_flag) && $check_permission_flag == 0){
+							if(isset($check_permission_flag) && astpp_eq0($check_permission_flag)){
 								$menu_info[$menu_key] = $menu_value;
 							}
 						}else{
@@ -153,7 +153,7 @@
 					}
 				}
 			 }
-			 if($accountinfo['type']==0 || $accountinfo['type']==3 || $accountinfo['type']==4){
+			 if(astpp_eq0($accountinfo['type']) || $accountinfo['type']==3 || $accountinfo['type']==4){
 					$menu_info=unserialize(CUSTOMERPROFILE_ARRAY);
 				
 			 }
@@ -170,7 +170,7 @@
 		if($acc_info['type'] == '3' || $acc_info['type'] == '0'){
 		  if($value == "user/user_ipmap/" && $acc_info['allow_ip_management'] == '1'){
 			$value_flag=false;
-		  }elseif(in_array('user/user_sipdevices/',$menu_info) && $value == "user/user_sipdevices/" && common_model::$global_config['system_config']['opensips']== 0){
+		  }elseif(astpp_in_array('user/user_sipdevices/',$menu_info) && $value == "user/user_sipdevices/" && astpp_eq0(common_model::$global_config['system_config']['opensips'])){
 			$value_flag=true;
 		  }else{
 			$value_flag=true;
@@ -183,18 +183,18 @@
 			$value_flag=false;
 			  }
 		  }
-		  if(common_model::$global_config['system_config']['opensips']== 0 ){
+		  if(astpp_eq0(common_model::$global_config['system_config']['opensips']) ){
 			  if($value != "accounts/".$entity_name."_sipdevices/"){
 			  $value_flag=true;
 			  }else{
 			$value_flag=false;
 			  }
 		  }
-		  if(common_model::$global_config['system_config']['enterprise'] == 0 ){
-			  if(common_model::$global_config['system_config']['opensips']== 0 && $value == "accounts/".$entity_name."_sipdevices/"){
+		  if(astpp_eq0(common_model::$global_config['system_config']['enterprise']) ){
+			  if(astpp_eq0(common_model::$global_config['system_config']['opensips']) && $value == "accounts/".$entity_name."_sipdevices/"){
 						  $value_flag=true;	
 			  }
-			  if(common_model::$global_config['system_config']['opensips']== 0 && $value == "accounts/".$entity_name."_opensips/"){
+			  if(astpp_eq0(common_model::$global_config['system_config']['opensips']) && $value == "accounts/".$entity_name."_opensips/"){
 						  $value_flag=false;	
 			  }
 		  }
@@ -215,7 +215,7 @@
 						}else{
 							$key_permission='reseller_edit';
 						}
-					if($this->session->userdata('logintype') ==0 || $this->session->userdata('logintype')==3){
+					if(astpp_eq0($this->session->userdata('logintype')) || $this->session->userdata('logintype')==3){
 						echo "<li class='$class'><a href ='$url'>".gettext($key)."</a></li>";
 					}else{
 							echo "<li class='$class'><a href ='$url'>".gettext($key)."</a></li>";
@@ -233,11 +233,11 @@
 function endsWith($haystack, $needle)
 {
     $length = strlen($needle);
-    if ($length == 0) {
+    if (astpp_eq0($length)) {
         return true;
     }
 
-    return (substr($haystack, -$length) === $needle);
+    return (substr($haystack, -astpp_n($length)) === $needle);
 }
 ?>	
 <? start_block_marker('content') ?><? end_block_marker() ?>	

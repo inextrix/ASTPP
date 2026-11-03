@@ -43,9 +43,9 @@
             <div class="card">
                <div class="col-12">
                   <div class="card-body table-responsive">
-                     <?php $account_balance = $accountdata ['posttoexternal'] == 1 ? $accountdata ['credit_limit'] - ($accountdata ['balance']) : $accountdata ['balance'];  ?>
+                     <?php $account_balance = $accountdata ['posttoexternal'] == 1 ? astpp_n($accountdata ['credit_limit']) - (astpp_n($accountdata ['balance'])) : $accountdata ['balance'];  ?>
                      <div class="card-body">
-                        <?php  if ($logintype == 0 || $logintype == 3 ) { ?>  
+                        <?php  if (astpp_eq0($logintype) || $logintype == 3 ) { ?>  
                         <form name="admin_form" id="admin_form"
                            action="<?php echo base_url()?>/user/user_invoice_unpaid_pay/"
                            method="POST">
@@ -116,12 +116,12 @@
                                  </tr>
                                  <tr>
                                     <td><?php echo gettext('From Date')?> :</td>
-                                    <td><span class="float-right" style="color: #a09d9d;"><?php echo date('Y-m-d', strtotime($invoice_info['from_date'])) ; ?> </span>
+                                    <td><span class="float-right" style="color: #a09d9d;"><?php echo astpp_date('Y-m-d', strtotime($invoice_info['from_date'])) ; ?> </span>
                                     </td>
                                  </tr>
                                  <tr>
                                     <td><?php echo gettext('Due Date')?> :</td>
-                                    <td><span class="float-right" style="color: #a09d9d;"><?php echo date('Y-m-d', strtotime($invoice_info['due_date'])) ; ?></span>
+                                    <td><span class="float-right" style="color: #a09d9d;"><?php echo astpp_date('Y-m-d', strtotime($invoice_info['due_date'])) ; ?></span>
                                     </td>
                                  </tr>
                                  <tr>
@@ -167,10 +167,10 @@
                                                if ($value['charge_type'] != 'INVPAY' && $value['charge_type'] != 'REFILL' || $value['charge_type'] != 'REFILL' && $value['charge_type'] != 'COMMISSION') {
                                                    $debit = $value['debit'];
                                                    $credit = $value['credit'];
-                                                   $paypal += $credit;
+                                                   $paypal = astpp_n($paypal) + astpp_n($credit);
                                                    $created_date = $value['created_date'];
                                                    $paypalid = $value['order_item_id'];
-                                                   $outstanding = $amount - $paypal;
+                                                   $outstanding = astpp_n($amount) - astpp_n($paypal);
                                                    $amount_visible = '0000';
                                                    ?>	
                                     <tr style="height: 20px;">
@@ -208,14 +208,14 @@
                                                if ($value['charge_type'] == 'INVPAY' || $value['charge_type'] == 'REFILL' || $value['charge_type'] == 'REFILL' || $value['charge_type'] == 'COMMISSION') {
                                                    $debit = $value['debit'];
                                                    $credit = $value['credit'];
-                                                   $paypal += $credit;
+                                                   $paypal = astpp_n($paypal) + astpp_n($credit);
                                                    $created_date = $value['created_date'];
                                                    $paypalid = $value['order_item_id'];
-                                                   $outstanding = $amount - $paypal;
+                                                   $outstanding = astpp_n($amount) - astpp_n($paypal);
                                                    $amount_visible = '0000';
                                                    ?>	
                                     <tr>
-                                       <td> <?php echo date('Y-m-d', strtotime($created_date)) ?></td>
+                                       <td> <?php echo astpp_date('Y-m-d', strtotime($created_date)) ?></td>
                                        <td><?php echo $value['description']; ?>  <?php echo $paypalid; ?></td>
                                        <td>
                                           <div class="pull-right"><?php echo $this->common->currency_decimal($this->common_model->calculate_currency($credit)); ?> <?php  echo $to_currency; ?></div>
@@ -242,7 +242,7 @@
                                     class="invoice_table4 mb-0">
                                     <tr style="">
                                        <td><b><?php echo gettext('Outstanding Amount')?> :</b></td>
-                                       <td><span class="pull-right" style="color: #3278b6"><b><?php if (($invoice_info['debit'] - $invoice_info['credit']) >  0) { echo  $this->common->currency_decimal($this->common_model->calculate_currency(($invoice_info['debit'] - $invoice_info['credit']))); ?> <?php  echo $to_currency; } else {  echo "0.0000"; ?> <?php  echo $to_currency; } ?></b>
+                                       <td><span class="pull-right" style="color: #3278b6"><b><?php if (astpp_gt((astpp_n($invoice_info['debit']) - astpp_n($invoice_info['credit'])), 0)) { echo  $this->common->currency_decimal($this->common_model->calculate_currency((astpp_n($invoice_info['debit']) - astpp_n($invoice_info['credit'])))); ?> <?php  echo $to_currency; } else {  echo "0.0000"; ?> <?php  echo $to_currency; } ?></b>
                                           </span>
                                        </td>
                                        <input type="hidden" name="total_amount" id="total_amount"
@@ -257,7 +257,7 @@
                                     <tr class="form_invoice_head">
                                        <td width="100%" valign="top">
                                           <div class="table-responsive">
-                                             <?php  if ($logintype == 0 || $logintype == 3) { ?>
+                                             <?php  if (astpp_eq0($logintype) || $logintype == 3) { ?>
                                              <table class="col-md-12">
                                                 <tr>
                                                    <td class="border-0">
@@ -333,7 +333,7 @@
                                                       <div class="col-md-12 form-group p-0">
                                                          <label class="control-label"><?php echo gettext('Please Insert Amount')?> : </label>
                                                          <input type="text" name="amount"
-                                                            value="<?php echo $this->common->currency_decimal($this->common_model->calculate_currency(($invoice_info['debit'] - $invoice_info['credit']))); ?>"
+                                                            value="<?php echo $this->common->currency_decimal($this->common_model->calculate_currency((astpp_n($invoice_info['debit']) - astpp_n($invoice_info['credit'])))); ?>"
                                                             id="amount"
                                                             class="col-md-12 form-control form-control-lg" />
                                                       </div>
@@ -361,9 +361,9 @@
                            </div>
                      </div>
                      <div class="col-md-12 py-4 text-center">
-                     <?php  if ($logintype == 0 || $logintype == 3 ) { ?>
+                     <?php  if (astpp_eq0($logintype) || $logintype == 3 ) { ?>
                      <?php
-                        if (($logintype == 0 || $logintype == 3) && $accountdata['paypal_permission'] == 0) {
+                        if ((astpp_eq0($logintype) || $logintype == 3) && astpp_eq0($accountdata['paypal_permission'])) {
                             ?>
                      <input class="btn btn-success search_generate_bar" name="Paynow"
                         id="Paynow" value="Pay With Paypal" type="button"
@@ -443,7 +443,7 @@
      var description =document.getElementById('description').value;
      var new_amount=parseFloat(document.getElementById('new_amount').value);
         var total_amount =parseFloat(document.getElementById('amount').value);
-	var panding_amount = "<?php echo $invoice_info['debit'] - $invoice_info['credit'] ?>";
+	var panding_amount = "<?php echo astpp_n($invoice_info['debit']) - astpp_n($invoice_info['credit']) ?>";
      if(text == '' || text <= '0'){
     	 document.getElementById('une').innerHTML = "Please enter amount greater than 0";
     	 payment_form.amount.focus();

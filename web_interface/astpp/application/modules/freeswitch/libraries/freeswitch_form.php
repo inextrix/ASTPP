@@ -24,6 +24,7 @@
 if (! defined('BASEPATH'))
     exit('No direct script access allowed');
 
+#[\AllowDynamicProperties]
 class Freeswitch_form extends common
 {
 
@@ -35,7 +36,7 @@ class Freeswitch_form extends common
     function get_freeswith_form_fields($id = false, $reseller_id = '')
     {
         $log_type = $this->CI->session->userdata("logintype");
-        if ($log_type == 0 || $log_type == 3 || $log_type == 1) {
+        if (astpp_eq0($log_type) || $log_type == 3 || $log_type == 1) {
             $sip_pro = null;
             $account_type = null;
             $account_Arr = null;
@@ -57,7 +58,7 @@ class Freeswitch_form extends common
                     "status" => "0"
                 )
             );
-            if ($id > 0) {
+            if (astpp_gt($id, 0)) {
                 $account_type = array(
                     gettext('Reseller'),
                     'INPUT',
@@ -117,12 +118,12 @@ class Freeswitch_form extends common
                 )
             );
         }
-        $val = $id > 0 ? 'sip_devices.username.' . $id : 'sip_devices.username';
+        $val = astpp_gt($id, 0) ? 'sip_devices.username.' . $id : 'sip_devices.username';
         $uname_user = $this->CI->common->find_uniq_rendno('10', '', '');
         $digits = 5;
-        $random_password = random_int((int) pow(10, $digits - 1), (int) pow(10, $digits) - 1);
+        $random_password = random_int((int) pow(10, astpp_n($digits) - 1), (int) pow(10, $digits) - 1);
         $password = $this->CI->common->generate_password();
-        if ($id > 0) {
+        if (astpp_gt($id, 0)) {
             $password_field = array(
                 gettext('Password'),
                 'INPUT',
@@ -2707,12 +2708,12 @@ class Freeswitch_form extends common
 
     function fsdevice_form_fields_for_customer($accountid, $id = false)
     {
-        $val = $id > 0 ? 'sip_devices.username.' . $id : 'sip_devices.username';
+        $val = astpp_gt($id, 0) ? 'sip_devices.username.' . $id : 'sip_devices.username';
         $uname_user = $this->CI->common->find_uniq_rendno('10', '', '');
         $digits = 5;
-        $random_password = random_int((int) pow(10, $digits - 1), (int) pow(10, $digits) - 1);
+        $random_password = random_int((int) pow(10, astpp_n($digits) - 1), (int) pow(10, $digits) - 1);
         $password = $this->CI->common->generate_password();
-        if ($id > 0) {
+        if (astpp_gt($id, 0)) {
             $password_field = array(
                 gettext('Password'),
                 'INPUT',

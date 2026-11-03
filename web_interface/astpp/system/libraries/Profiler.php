@@ -32,6 +32,7 @@
  * @author		ExpressionEngine Dev Team
  * @link		http://codeigniter.com/user_guide/general/profiling.html
  */
+#[\AllowDynamicProperties]
 class CI_Profiler {
 
 	protected $_available_sections = array(
@@ -69,7 +70,7 @@ class CI_Profiler {
 		{
 			if ( ! isset($config[$section]))
 			{
-				$this->_compile_{$section} = TRUE;
+				$this->{'_compile_' . $section} = TRUE; // PHP8: was PHP 5 syntax
 			}
 		}
 
@@ -90,9 +91,9 @@ class CI_Profiler {
 	{
 		foreach ($config as $method => $enable)
 		{
-			if (in_array($method, $this->_available_sections))
+			if (astpp_in_array($method, $this->_available_sections))
 			{
-				$this->_compile_{$method} = ($enable !== FALSE) ? TRUE : FALSE;
+				$this->{'_compile_' . $method} = ($enable !== FALSE) ? TRUE : FALSE;
 			}
 		}
 	}
@@ -168,7 +169,7 @@ class CI_Profiler {
 			}
 		}
 
-		if (count($dbs) == 0)
+		if (astpp_count($dbs) == 0)
 		{
 			$output  = "\n\n";
 			$output .= '<fieldset id="ci_profiler_queries" style="border:1px solid #0000FF;padding:6px 10px 10px 10px;margin:20px 0 20px 0;background-color:#eee">';
@@ -197,7 +198,7 @@ class CI_Profiler {
 		{
 			$count++;
 
-			$hide_queries = (count($db->queries) > $this->_query_toggle_count) ? ' display:none' : '';
+			$hide_queries = (astpp_count($db->queries) > $this->_query_toggle_count) ? ' display:none' : '';
 
 			$show_hide_js = '(<span style="cursor: pointer;" onclick="var s=document.getElementById(\'ci_profiler_queries_db_'.$count.'\').style;s.display=s.display==\'none\'?\'\':\'none\';this.innerHTML=this.innerHTML==\''.$this->CI->lang->line('profiler_section_hide').'\'?\''.$this->CI->lang->line('profiler_section_show').'\':\''.$this->CI->lang->line('profiler_section_hide').'\';">'.$this->CI->lang->line('profiler_section_hide').'</span>)';
 
@@ -208,18 +209,18 @@ class CI_Profiler {
 
 			$output .= '<fieldset style="border:1px solid #0000FF;padding:6px 10px 10px 10px;margin:20px 0 20px 0;background-color:#eee">';
 			$output .= "\n";
-			$output .= '<legend style="color:#0000FF;">&nbsp;&nbsp;'.$this->CI->lang->line('profiler_database').':&nbsp; '.$db->database.'&nbsp;&nbsp;&nbsp;'.$this->CI->lang->line('profiler_queries').': '.count($db->queries).'&nbsp;&nbsp;'.$show_hide_js.'</legend>';
+			$output .= '<legend style="color:#0000FF;">&nbsp;&nbsp;'.$this->CI->lang->line('profiler_database').':&nbsp; '.$db->database.'&nbsp;&nbsp;&nbsp;'.$this->CI->lang->line('profiler_queries').': '.astpp_count($db->queries).'&nbsp;&nbsp;'.$show_hide_js.'</legend>';
 			$output .= "\n";
 			$output .= "\n\n<table style='width:100%;{$hide_queries}' id='ci_profiler_queries_db_{$count}'>\n";
 
-			if (count($db->queries) == 0)
+			if (astpp_count($db->queries) == 0)
 			{
 				$output .= "<tr><td style='width:100%;color:#0000FF;font-weight:normal;background-color:#eee;padding:5px;'>".$this->CI->lang->line('profiler_no_queries')."</td></tr>\n";
 			} else
 			{
 				foreach ($db->queries as $key => $val)
 				{
-					$time = number_format($db->query_times[$key], 4);
+					$time = astpp_number_format($db->query_times[$key], 4);
 
 					$val = highlight_code($val, ENT_QUOTES);
 
@@ -256,7 +257,7 @@ class CI_Profiler {
 		$output .= '<legend style="color:#cd6e00;">&nbsp;&nbsp;'.$this->CI->lang->line('profiler_get_data').'&nbsp;&nbsp;</legend>';
 		$output .= "\n";
 
-		if (count($_GET) == 0)
+		if (astpp_count($_GET) == 0)
 		{
 			$output .= "<div style='color:#cd6e00;font-weight:normal;padding:4px 0 4px 0'>".$this->CI->lang->line('profiler_no_get')."</div>";
 		} else
@@ -304,7 +305,7 @@ class CI_Profiler {
 		$output .= '<legend style="color:#009900;">&nbsp;&nbsp;'.$this->CI->lang->line('profiler_post_data').'&nbsp;&nbsp;</legend>';
 		$output .= "\n";
 
-		if (count($_POST) == 0)
+		if (astpp_count($_POST) == 0)
 		{
 			$output .= "<div style='color:#009900;font-weight:normal;padding:4px 0 4px 0'>".$this->CI->lang->line('profiler_no_post')."</div>";
 		} else
@@ -406,7 +407,7 @@ class CI_Profiler {
 
 		if (function_exists('memory_get_usage') && ($usage = memory_get_usage()) != '')
 		{
-			$output .= "<div style='color:#5a0099;font-weight:normal;padding:4px 0 4px 0'>".number_format($usage).' bytes</div>';
+			$output .= "<div style='color:#5a0099;font-weight:normal;padding:4px 0 4px 0'>".astpp_number_format($usage).' bytes</div>';
 		} else
 		{
 			$output .= "<div style='color:#5a0099;font-weight:normal;padding:4px 0 4px 0'>".$this->CI->lang->line('profiler_no_memory')."</div>";
@@ -530,7 +531,7 @@ class CI_Profiler {
 
 		foreach ($this->_available_sections as $section)
 		{
-			if ($this->_compile_{$section} !== FALSE)
+			if ($this->{'_compile_' . $section} !== FALSE)
 			{
 				$func = "_compile_{$section}";
 				$output .= $this->{$func}();
@@ -538,7 +539,7 @@ class CI_Profiler {
 			}
 		}
 
-		if ($fields_displayed == 0)
+		if (astpp_eq0($fields_displayed))
 		{
 			$output .= '<p style="border:1px solid #5a0099;padding:10px;margin:20px 0;background-color:#eee">'.$this->CI->lang->line('profiler_no_profiles').'</p>';
 		}

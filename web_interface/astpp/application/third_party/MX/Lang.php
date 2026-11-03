@@ -33,6 +33,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  **/
+#[\AllowDynamicProperties]
 class MX_Lang extends CI_Lang
 {
 	public function load($langfile = '', $lang = '', $return = FALSE, $add_suffix = TRUE, $alt_path = '', $_module = '') {
@@ -45,7 +46,7 @@ class MX_Lang extends CI_Lang
 		$deft_lang = CI::$APP->config->item('language');
 		$idiom = ($lang == '') ? $deft_lang : $lang;
 
-		if (in_array($langfile.'_lang'.EXT, $this->is_loaded, TRUE))
+		if (astpp_in_array($langfile.'_lang'.EXT, $this->is_loaded, TRUE))
 			return $this->language;
 
 		$_module OR $_module = CI::$APP->router->fetch_module();
@@ -59,7 +60,7 @@ class MX_Lang extends CI_Lang
 
 			if ($lang = Modules::load_file($_langfile, $path, 'lang')) {
 				if ($return) return $lang;
-				$this->language = array_merge($this->language, $lang);
+				$this->language = astpp_array_merge($this->language, $lang);
 				$this->is_loaded[] = $langfile.'_lang'.EXT;
 				unset($lang);
 			}

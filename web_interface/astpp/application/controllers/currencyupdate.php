@@ -20,13 +20,14 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 // ##############################################################################
+#[\AllowDynamicProperties]
 class Currencyupdate extends CI_Controller {
 	function __construct() {
 		parent::__construct ();
 		// Only internal (cron) calls or a logged-in administrator
 		if (! astpp_internal_request ()) {
 			$this->load->library ( 'session' );
-			if ($this->session->userdata ( 'user_login' ) != TRUE || ! in_array ( ( string ) $this->session->userdata ( 'logintype' ), array ( '2', '4' ), true )) {
+			if ($this->session->userdata ( 'user_login' ) != TRUE || ! astpp_in_array ( ( string ) $this->session->userdata ( 'logintype' ), array ( '2', '4' ), true )) {
 				show_404 ();
 			}
 		}
@@ -42,10 +43,10 @@ class Currencyupdate extends CI_Controller {
 			redirect ( base_url () . "systems/currency_list/" );
 		}
 		$base_currency = $currencyData->base;
-		$last_updated = date("Y-m-d H:i:s",$currencyData->timestamp);
+		$last_updated = astpp_date("Y-m-d H:i:s",$currencyData->timestamp);
 		$currency_rates = (array)$currencyData->rates;	
 		foreach ($currency_rates as $key => $value) {
-			$value = number_format((float)$value, 3, '.', '');
+			$value = astpp_number_format((float)$value, 3, '.', '');
 			$sql = "UPDATE currency SET currencyrate = '".$value."',last_updated = '".$last_updated."' WHERE currency = '" . $key . "'\n";
 			$this->db->query ( $sql );
 		}
@@ -62,7 +63,7 @@ class Currencyupdate extends CI_Controller {
 		curl_setopt ( $ch, CURLOPT_ENCODING, "" );
 		curl_setopt ( $ch, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows; U; Windows NT 6.0; en-US; rv:1.9.2) Gecko/20100115 Firefox/3.6 (.NET CLR 3.5.30729)" );
 		$data = curl_exec ( $ch );
-		curl_close ( $ch );
+		PHP_VERSION_ID < 80000 && curl_close ( $ch );
 		return $data;
 	}
 }

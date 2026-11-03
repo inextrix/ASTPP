@@ -26,6 +26,7 @@
  * @author		ExpressionEngine Dev Team
  * @link		http://codeigniter.com/user_guide/libraries/image_lib.html
  */
+#[\AllowDynamicProperties]
 class CI_Image_lib {
 
 	var $image_library = 'gd2'; // Can be:  imagemagick, netpbm, gd, gd2
@@ -86,7 +87,7 @@ class CI_Image_lib {
 	 */
 	public function __construct($props = array())
 	{
-		if (count($props) > 0)
+		if (astpp_count($props) > 0)
 		{
 			$this->initialize($props);
 		}
@@ -131,7 +132,7 @@ class CI_Image_lib {
 		/*
 		 * Convert array elements into class variables
 		 */
-		if (count($props) > 0)
+		if (astpp_count($props) > 0)
 		{
 			foreach ($props as $key => $val)
 			{
@@ -184,7 +185,7 @@ class CI_Image_lib {
 		}
 
 		$x = explode('/', $full_source_path);
-		$this->source_image = end($x);
+		$this->source_image = astpp_end($x);
 		$this->source_folder = str_replace($this->source_image, '', $full_source_path);
 
 		// Set the Image Properties
@@ -230,7 +231,7 @@ class CI_Image_lib {
 				} else
 				{
 					$x = explode('/', $full_dest_path);
-					$this->dest_image = end($x);
+					$this->dest_image = astpp_end($x);
 					$this->dest_folder = str_replace($this->dest_image, '', $full_dest_path);
 				}
 			}
@@ -291,7 +292,7 @@ class CI_Image_lib {
 		// Set the quality
 		$this->quality = trim(str_replace("%", "", $this->quality));
 
-		if ($this->quality == '' OR $this->quality == 0 OR ! is_numeric($this->quality)) {
+		if ($this->quality == '' OR astpp_eq0($this->quality) OR ! is_numeric($this->quality)) {
 					$this->quality = 90;
 		}
 
@@ -396,7 +397,7 @@ class CI_Image_lib {
 		// Allowed rotation values
 		$degs = array(90, 180, 270, 'vrt', 'hor');
 
-		if ($this->rotation_angle == '' OR ! in_array($this->rotation_angle, $degs))
+		if ($this->rotation_angle == '' OR ! astpp_in_array($this->rotation_angle, $degs))
 		{
 			$this->set_error('imglib_rotation_angle_required');
 			return FALSE;
@@ -535,8 +536,8 @@ class CI_Image_lib {
 		}
 
 		//  Kill the file handles
-		imagedestroy($dst_img);
-		imagedestroy($src_img);
+		PHP_VERSION_ID < 80000 && imagedestroy($dst_img);
+		PHP_VERSION_ID < 80000 && imagedestroy($src_img);
 
 		// Set the file to 777
 		@chmod($this->full_dst_path, FILE_WRITE_MODE);
@@ -600,7 +601,7 @@ class CI_Image_lib {
 		@exec($cmd, $output, $retval);
 
 		//	Did it work?
-		if ($retval > 0)
+		if (astpp_gt($retval, 0))
 		{
 			$this->set_error('imglib_image_process_failed');
 			return FALSE;
@@ -680,7 +681,7 @@ class CI_Image_lib {
 		@exec($cmd, $output, $retval);
 
 		//  Did it work?
-		if ($retval > 0)
+		if (astpp_gt($retval, 0))
 		{
 			$this->set_error('imglib_image_process_failed');
 			return FALSE;
@@ -736,8 +737,8 @@ class CI_Image_lib {
 		}
 
 		//  Kill the file handles
-		imagedestroy($dst_img);
-		imagedestroy($src_img);
+		PHP_VERSION_ID < 80000 && imagedestroy($dst_img);
+		PHP_VERSION_ID < 80000 && imagedestroy($src_img);
 
 		// Set the file to 777
 
@@ -771,7 +772,7 @@ class CI_Image_lib {
 			for ($i = 0; $i < $height; $i++)
 			{
 				$left  = 0;
-				$right = $width - 1;
+				$right = astpp_n($width) - 1;
 
 				while ($left < $right)
 				{
@@ -790,7 +791,7 @@ class CI_Image_lib {
 			for ($i = 0; $i < $width; $i++)
 			{
 				$top = 0;
-				$bot = $height - 1;
+				$bot = astpp_n($height) - 1;
 
 				while ($top < $bot)
 				{
@@ -820,7 +821,7 @@ class CI_Image_lib {
 		}
 
 		//  Kill the file handles
-		imagedestroy($src_img);
+		PHP_VERSION_ID < 80000 && imagedestroy($src_img);
 
 		// Set the file to 777
 		@chmod($this->full_dst_path, FILE_WRITE_MODE);
@@ -891,25 +892,25 @@ class CI_Image_lib {
 		$this->wm_hor_alignment = strtoupper(substr($this->wm_hor_alignment, 0, 1));
 
 		if ($this->wm_vrt_alignment == 'B') {
-					$this->wm_vrt_offset = $this->wm_vrt_offset * -1;
+					$this->wm_vrt_offset = astpp_n($this->wm_vrt_offset) * -1;
 		}
 
 		if ($this->wm_hor_alignment == 'R') {
-					$this->wm_hor_offset = $this->wm_hor_offset * -1;
+					$this->wm_hor_offset = astpp_n($this->wm_hor_offset) * -1;
 		}
 
 		//  Set the base x and y axis values
-		$x_axis = $this->wm_hor_offset + $this->wm_padding;
-		$y_axis = $this->wm_vrt_offset + $this->wm_padding;
+		$x_axis = astpp_n($this->wm_hor_offset) + astpp_n($this->wm_padding);
+		$y_axis = astpp_n($this->wm_vrt_offset) + astpp_n($this->wm_padding);
 
 		//  Set the vertical position
 		switch ($this->wm_vrt_alignment)
 		{
 			case 'T':
 				break;
-			case 'M':	$y_axis += ($this->orig_height / 2) - ($wm_height / 2);
+			case 'M':	$y_axis = astpp_n($y_axis) + astpp_n((astpp_n($this->orig_height) / 2) - (astpp_n($wm_height) / 2));
 				break;
-			case 'B':	$y_axis += $this->orig_height - $wm_height;
+			case 'B':	$y_axis = astpp_n($y_axis) + astpp_n(astpp_n($this->orig_height) - astpp_n($wm_height));
 				break;
 		}
 
@@ -918,9 +919,9 @@ class CI_Image_lib {
 		{
 			case 'L':
 				break;
-			case 'C':	$x_axis += ($this->orig_width / 2) - ($wm_width / 2);
+			case 'C':	$x_axis = astpp_n($x_axis) + astpp_n((astpp_n($this->orig_width) / 2) - (astpp_n($wm_width) / 2));
 				break;
-			case 'R':	$x_axis += $this->orig_width - $wm_width;
+			case 'R':	$x_axis = astpp_n($x_axis) + astpp_n(astpp_n($this->orig_width) - astpp_n($wm_width));
 				break;
 		}
 
@@ -935,7 +936,7 @@ class CI_Image_lib {
 		$alpha = ($rgba & 0x7F000000) >> 24;
 
 		// make a best guess as to whether we're dealing with an image with alpha transparency or no/binary transparency
-		if ($alpha > 0)
+		if (astpp_gt($alpha, 0))
 		{
 			// copy the image directly, the image's alpha transparency being the sole determinant of blending
 			imagecopy($src_img, $wm_img, $x_axis, $y_axis, 0, 0, $wm_width, $wm_height);
@@ -958,8 +959,8 @@ class CI_Image_lib {
 			}
 		}
 
-		imagedestroy($src_img);
-		imagedestroy($wm_img);
+		PHP_VERSION_ID < 80000 && imagedestroy($src_img);
+		PHP_VERSION_ID < 80000 && imagedestroy($wm_img);
 
 		return TRUE;
 	}
@@ -1011,10 +1012,10 @@ class CI_Image_lib {
 		// offset flips itself automatically
 
 		if ($this->wm_vrt_alignment == 'B')
-			$this->wm_vrt_offset = $this->wm_vrt_offset * -1;
+			$this->wm_vrt_offset = astpp_n($this->wm_vrt_offset) * -1;
 
 		if ($this->wm_hor_alignment == 'R')
-			$this->wm_hor_offset = $this->wm_hor_offset * -1;
+			$this->wm_hor_offset = astpp_n($this->wm_hor_offset) * -1;
 
 		// Set font width and height
 		// These are calculated differently depending on
@@ -1024,9 +1025,9 @@ class CI_Image_lib {
 			if ($this->wm_font_size == '')
 				$this->wm_font_size = '17';
 
-			$fontwidth  = $this->wm_font_size - ($this->wm_font_size / 4);
+			$fontwidth  = astpp_n($this->wm_font_size) - (astpp_n($this->wm_font_size) / 4);
 			$fontheight = $this->wm_font_size;
-			$this->wm_vrt_offset += $this->wm_font_size;
+			$this->wm_vrt_offset = astpp_n($this->wm_vrt_offset) + astpp_n($this->wm_font_size);
 		}
 		else
 		{
@@ -1035,8 +1036,8 @@ class CI_Image_lib {
 		}
 
 		// Set base X and Y axis values
-		$x_axis = $this->wm_hor_offset + $this->wm_padding;
-		$y_axis = $this->wm_vrt_offset + $this->wm_padding;
+		$x_axis = astpp_n($this->wm_hor_offset) + astpp_n($this->wm_padding);
+		$y_axis = astpp_n($this->wm_vrt_offset) + astpp_n($this->wm_padding);
 
 		// Set verticle alignment
 		if ($this->wm_use_drop_shadow == FALSE) {
@@ -1050,14 +1051,14 @@ class CI_Image_lib {
 		{
 			case	 "T" :
 				break;
-			case "M":	$y_axis += ($this->orig_height / 2) + ($fontheight / 2);
+			case "M":	$y_axis = astpp_n($y_axis) + astpp_n((astpp_n($this->orig_height) / 2) + (astpp_n($fontheight) / 2));
 				break;
-			case "B":	$y_axis += ($this->orig_height - $fontheight - $this->wm_shadow_distance - ($fontheight / 2));
+			case "B":	$y_axis = astpp_n($y_axis) + astpp_n(astpp_n($this->orig_height) - astpp_n($fontheight) - astpp_n($this->wm_shadow_distance) - (astpp_n($fontheight) / 2));
 				break;
 		}
 
-		$x_shad = $x_axis + $this->wm_shadow_distance;
-		$y_shad = $y_axis + $this->wm_shadow_distance;
+		$x_shad = astpp_n($x_axis) + astpp_n($this->wm_shadow_distance);
+		$y_shad = astpp_n($y_axis) + astpp_n($this->wm_shadow_distance);
 
 		// Set horizontal alignment
 		switch ($this->wm_hor_alignment)
@@ -1066,13 +1067,13 @@ class CI_Image_lib {
 				break;
 			case "R":
 						if ($this->wm_use_drop_shadow)
-							$x_shad += ($this->orig_width - $fontwidth * strlen($this->wm_text));
-							$x_axis += ($this->orig_width - $fontwidth * strlen($this->wm_text));
+							$x_shad = astpp_n($x_shad) + astpp_n(astpp_n($this->orig_width) - astpp_n($fontwidth) * strlen($this->wm_text));
+							$x_axis = astpp_n($x_axis) + astpp_n(astpp_n($this->orig_width) - astpp_n($fontwidth) * strlen($this->wm_text));
 				break;
 			case "C":
 						if ($this->wm_use_drop_shadow)
-							$x_shad += floor(($this->orig_width - $fontwidth * strlen($this->wm_text)) / 2);
-							$x_axis += floor(($this->orig_width - $fontwidth * strlen($this->wm_text)) / 2);
+							$x_shad = astpp_n($x_shad) + astpp_floor((astpp_n($this->orig_width) - astpp_n($fontwidth) * strlen($this->wm_text)) / 2);
+							$x_axis = astpp_n($x_axis) + astpp_floor((astpp_n($this->orig_width) - astpp_n($fontwidth) * strlen($this->wm_text)) / 2);
 				break;
 		}
 
@@ -1100,7 +1101,7 @@ class CI_Image_lib {
 			$this->image_save_gd($src_img);
 		}
 
-		imagedestroy($src_img);
+		PHP_VERSION_ID < 80000 && imagedestroy($src_img);
 
 		return TRUE;
 	}
@@ -1242,7 +1243,7 @@ class CI_Image_lib {
 		header("Content-Disposition: filename={$this->source_image};");
 		header("Content-Type: {$this->mime_type}");
 		header('Content-Transfer-Encoding: binary');
-		header('Last-Modified: '.gmdate('D, d M Y H:i:s', time()).' GMT');
+		header('Last-Modified: '.astpp_gmdate('D, d M Y H:i:s', time()).' GMT');
 
 		switch ($this->image_type)
 		{
@@ -1274,22 +1275,22 @@ class CI_Image_lib {
 	 */
 	function image_reproportion()
 	{
-		if ( ! is_numeric($this->width) OR ! is_numeric($this->height) OR $this->width == 0 OR $this->height == 0) {
+		if ( ! is_numeric($this->width) OR ! is_numeric($this->height) OR astpp_eq0($this->width) OR astpp_eq0($this->height)) {
 					return;
 		}
 
-		if ( ! is_numeric($this->orig_width) OR ! is_numeric($this->orig_height) OR $this->orig_width == 0 OR $this->orig_height == 0) {
+		if ( ! is_numeric($this->orig_width) OR ! is_numeric($this->orig_height) OR astpp_eq0($this->orig_width) OR astpp_eq0($this->orig_height)) {
 					return;
 		}
 
-		$new_width = ceil($this->orig_width * $this->height / $this->orig_height);
-		$new_height = ceil($this->width * $this->orig_height / $this->orig_width);
+		$new_width = astpp_ceil(astpp_div(astpp_n($this->orig_width) * astpp_n($this->height), $this->orig_height));
+		$new_height = astpp_ceil(astpp_div(astpp_n($this->width) * astpp_n($this->orig_height), $this->orig_width));
 
-		$ratio = (($this->orig_height / $this->orig_width) - ($this->height / $this->width));
+		$ratio = ((astpp_div($this->orig_height, $this->orig_width)) - (astpp_div($this->height, $this->width)));
 
 		if ($this->master_dim != 'width' AND $this->master_dim != 'height')
 		{
-			$this->master_dim = ($ratio < 0) ? 'width' : 'height';
+			$this->master_dim = (astpp_lt($ratio, 0)) ? 'width' : 'height';
 		}
 
 		if (($this->width != $new_width) AND ($this->height != $new_height))
@@ -1392,18 +1393,18 @@ class CI_Image_lib {
 			}
 		}
 
-		if ($vals['width'] == 0 OR $vals['height'] == 0)
+		if (astpp_eq0($vals['width']) OR astpp_eq0($vals['height']))
 		{
 			return $vals;
 		}
 
-		if ($vals['new_width'] == 0)
+		if (astpp_eq0($vals['new_width']))
 		{
-			$vals['new_width'] = ceil($vals['width'] * $vals['new_height'] / $vals['height']);
+			$vals['new_width'] = astpp_ceil(astpp_div(astpp_n($vals['width']) * astpp_n($vals['new_height']), $vals['height']));
 		}
-		elseif ($vals['new_height'] == 0)
+		elseif (astpp_eq0($vals['new_height']))
 		{
-			$vals['new_height'] = ceil($vals['new_width'] * $vals['height'] / $vals['width']);
+			$vals['new_height'] = astpp_ceil(astpp_div(astpp_n($vals['new_width']) * astpp_n($vals['height']), $vals['width']));
 		}
 
 		return $vals;

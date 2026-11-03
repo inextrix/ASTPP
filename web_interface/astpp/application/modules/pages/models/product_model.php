@@ -20,6 +20,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 // ##############################################################################
+#[\AllowDynamicProperties]
 class Product_model extends CI_Model {
 	function Plans_model() {
 		parent::__construct ();
@@ -60,10 +61,10 @@ class Product_model extends CI_Model {
 				"billing_type"=>isset($add_array['billing_type'])?$add_array['billing_type']:"",
 				"billing_days"=>isset($add_array['duration'])?$add_array['duration']:"",
 				"free_minutes"=>isset($add_array['free_minutes'])?$add_array['free_minutes']:"",
-				"apply_on_rategroups"=>isset($add_array['product_rate_group'])?implode(",",$add_array['product_rate_group']):"",
-				"destination_rategroups"=>isset($patternSearchArr['destination_rategroups'])?implode(",",$patternSearchArr['destination_rategroups']):"",
-				"destination_countries"=>isset($patternSearchArr['destination_countries'])?implode(",",$patternSearchArr['destination_countries']):"",
-				"destination_calltypes"=>isset($patternSearchArr['destination_calltypes'])?implode(",",$patternSearchArr['destination_calltypes']):"",
+				"apply_on_rategroups"=>isset($add_array['product_rate_group'])?astpp_implode(",",$add_array['product_rate_group']):"",
+				"destination_rategroups"=>isset($patternSearchArr['destination_rategroups'])?astpp_implode(",",$patternSearchArr['destination_rategroups']):"",
+				"destination_countries"=>isset($patternSearchArr['destination_countries'])?astpp_implode(",",$patternSearchArr['destination_countries']):"",
+				"destination_calltypes"=>isset($patternSearchArr['destination_calltypes'])?astpp_implode(",",$patternSearchArr['destination_calltypes']):"",
 				"apply_on_existing_account"=>isset($add_array['apply_on_existing_account'])?$add_array['apply_on_existing_account']:0	,
 				"release_no_balance"=>isset($add_array['release_no_balance'])?$add_array['release_no_balance']:"0",
 				"created_by"=>$add_array['accountid'],
@@ -92,7 +93,7 @@ class Product_model extends CI_Model {
 //ALTER TABLE `package_patterns` ADD UNIQUE( `product_id`, `patterns`);
 		$update_fields [] = "patterns=VALUES(patterns),destination=VALUES(destination)";
 		$insert_string = "INSERT INTO package_patterns (product_id,patterns,destination) VALUES ";
-		$update_string = " ON DUPLICATE KEY UPDATE " . implode ( ', ', $update_fields );
+		$update_string = " ON DUPLICATE KEY UPDATE " . astpp_implode ( ', ', $update_fields );
 
 		$pattern_str = "";
 		if($pattern_array->num_rows > 0){
@@ -102,7 +103,7 @@ class Product_model extends CI_Model {
 			$package_pattern_update = array();
 			$package_pattern_update = array($product_last_id,$package_pattern['pattern'],$package_pattern['comment']);
 
-				$pattern_str.= "('" . implode ( "','", $package_pattern_update) . "'),";
+				$pattern_str.= "('" . astpp_implode ( "','", $package_pattern_update) . "'),";
 
 			}
 			$pattern_str= rtrim ( $pattern_str, "," );
@@ -125,10 +126,10 @@ class Product_model extends CI_Model {
 				"billing_type"=>isset($add_array['billing_type'])?$add_array['billing_type']:"",
 				"billing_days"=>isset($add_array['duration'])?$add_array['duration']:"",
 				"free_minutes"=>isset($add_array['free_minutes'])?$add_array['free_minutes']:"",
-				"apply_on_rategroups"=>isset($add_array['product_rate_group'])?implode(",",$add_array['product_rate_group']):"",
-				"destination_rategroups"=>isset($SearchArr['destination_rategroups'])?implode(",",$SearchArr['destination_rategroups']):"",
-				"destination_countries"=>isset($SearchArr['destination_countries'])?implode(",",$SearchArr['destination_countries']):"",
-				"destination_calltypes"=>isset($SearchArr['destination_calltypes'])?implode(",",$SearchArr['destination_calltypes']):"",
+				"apply_on_rategroups"=>isset($add_array['product_rate_group'])?astpp_implode(",",$add_array['product_rate_group']):"",
+				"destination_rategroups"=>isset($SearchArr['destination_rategroups'])?astpp_implode(",",$SearchArr['destination_rategroups']):"",
+				"destination_countries"=>isset($SearchArr['destination_countries'])?astpp_implode(",",$SearchArr['destination_countries']):"",
+				"destination_calltypes"=>isset($SearchArr['destination_calltypes'])?astpp_implode(",",$SearchArr['destination_calltypes']):"",
 				"apply_on_existing_account"=>isset($add_array['apply_on_existing_account'])?$add_array['apply_on_existing_account']:0	,
 				"release_no_balance"=>isset($add_array['release_no_balance'])?$add_array['release_no_balance']:"0",
 				"created_by"=>$add_array['accountid'],

@@ -24,6 +24,7 @@ if (! defined('BASEPATH')) {
     exit('No direct script access allowed');
 }
 
+#[\AllowDynamicProperties]
 class User_form extends common
 {
 
@@ -313,7 +314,7 @@ class User_form extends common
 
     function get_userprofile_form_fields($dataArr = false)
     {
-        if ($dataArr['id'] > 0) {
+        if (astpp_gt($dataArr['id'], 0)) {
             $val = 'accounts.email.' . $dataArr['id'];
         } else {
             $val = 'accounts.email';
@@ -691,7 +692,7 @@ class User_form extends common
         $account_info = $accountinfo = $this->CI->session->userdata('accountinfo');
         $currency_id = $account_info['currency_id'];
         $currency = $this->CI->common->get_field_name('currency', 'currency', $currency_id);
-        $url = ($this->CI->session->userdata('logintype') == 0) ? "/user/user_invoice_download/" : '/invoices/invoice_main_download/';
+        $url = (astpp_eq0($this->CI->session->userdata('logintype'))) ? "/user/user_invoice_download/" : '/invoices/invoice_main_download/';
         $grid_field_arr = json_encode(array(
             array(
                 gettext("Number"),
@@ -1046,7 +1047,7 @@ class User_form extends common
         $account_info = $accountinfo = $this->CI->session->userdata('accountinfo');
         $currency_id = $account_info['currency_id'];
         $currency = $this->CI->common->get_field_name('currency', 'currency', $currency_id);
-        if ($account_info['reseller_id'] > 0) {
+        if (astpp_gt($account_info['reseller_id'], 0)) {
             $billing_days = array(
                 gettext("Billing Days"),
                 "80",
@@ -1824,12 +1825,12 @@ class User_form extends common
 
     function build_user_sipdevices_form($id = '')
     {
-        $val = $id > 0 ? 'sip_devices.username.' . $id : 'sip_devices.username';
+        $val = astpp_gt($id, 0) ? 'sip_devices.username.' . $id : 'sip_devices.username';
         $uname_user = $this->CI->common->find_uniq_rendno('10', '', '');
 	$digits = 5;
-	$random_password = random_int((int) pow(10, $digits - 1), (int) pow(10, $digits) - 1);
+	$random_password = random_int((int) pow(10, astpp_n($digits) - 1), (int) pow(10, $digits) - 1);
         $password = $this->CI->common->generate_password();
-        if ($id > 0) {
+        if (astpp_gt($id, 0)) {
             $password_field = array(
                 gettext('Password'),
                 'INPUT',
@@ -2416,7 +2417,7 @@ class User_form extends common
 
     function user_alert_threshold($id = false)
     {
-        if ($id > 0) {
+        if (astpp_gt($id, 0)) {
             $email_address = 'accounts.notify_email.' . $id;
         } else {
             $email_address = 'accounts.notify_email';
@@ -3269,7 +3270,7 @@ class User_form extends common
 
     function build_user_opensips_form($id = false)
     {
-        $val = $id > 0 ? 'subscriber.username.' . $id : 'subscriber.username';
+        $val = astpp_gt($id, 0) ? 'subscriber.username.' . $id : 'subscriber.username';
         $uname_user = $this->CI->common->find_uniq_rendno('10', '', '');
         $password = $this->CI->common->generate_password();
         $accountinfo = $this->CI->session->userdata('accountinfo');
@@ -3872,7 +3873,7 @@ class User_form extends common
         $currency_id = $account_info['currency_id'];
         $currency = $this->CI->common->get_field_name('currency', 'currency', $currency_id);
 
-        if (($account_info['type'] == 3) || ($account_info['type'] == 0)) {
+        if (($account_info['type'] == 3) || (astpp_eq0($account_info['type']))) {
             $action_array = array(
                 gettext("Action"),
                 "120",

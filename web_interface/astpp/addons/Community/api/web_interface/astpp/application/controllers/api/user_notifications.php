@@ -1,6 +1,7 @@
 <?php
 defined('BASEPATH') or exit('No direct script access allowed');
 require APPPATH . '/controllers/common/account.php';
+#[\AllowDynamicProperties]
 class User_notifications extends Account
 {
 	protected $postdata = "";
@@ -43,7 +44,7 @@ class User_notifications extends Account
 		if ($function != '') {
 			$function = '_' . $function;
 		
-			if (( int ) method_exists ( $this, $function ) > 0) {
+			if (astpp_gt(( int ) method_exists ( $this, $function ), 0)) {
 				$this->$function ();
 			} else {
 				$this->response ( array (
@@ -80,7 +81,7 @@ class User_notifications extends Account
 					'error' => $this->lang->line('valid_start_limit')
 			), 400 );
 		}
-		$start = $this->postdata['start_limit']-1;
+		$start = astpp_n($this->postdata['start_limit'])-1;
 		$limit = $this->postdata['end_limit'];
 		$no_of_records = (int)$limit - (int)$start;
 
@@ -110,7 +111,7 @@ class User_notifications extends Account
 		}
 		$where = array('accountid' => $this->postdata['id'] );
 		$this->db->where($where);
-		$this->db->order_by('id',DESC);
+		$this->db->order_by('id', 'DESC');
 		$query =$this->db->limit($no_of_records, $start)
 			->select('*')
 			->get ('mail_details');
@@ -161,7 +162,7 @@ class User_notifications extends Account
         $this->db->where($where);
         $result = $this->db->update('speed_dial', $updateinfo);
         $last_edit_id = $this->db->affected_rows();
-		if($last_edit_id > 0){
+		if(astpp_gt($last_edit_id, 0)){
 			$this->response ( array (
 				'status' => true,
 				'success' => $this->lang->line( "remove_speed_dial" )
@@ -207,7 +208,7 @@ class User_notifications extends Account
         $this->db->select('count(id) as count');
         $this->db->where($where);
         $speed_dial_result = (array) $this->db->get('speed_dial')->first_row();
-	    if ($speed_dial_result['count'] == 0) {
+	    if (astpp_eq0($speed_dial_result['count'])) {
 	        for ($i = 0; $i <= 9; $i ++) {
 	            $dest_number = $postdata['speed_dial_id'] == $i ? $postdata['number'] : '';
 	            $data[$i] = array(
@@ -218,7 +219,7 @@ class User_notifications extends Account
 	        }
 	        $this->db->insert_batch('speed_dial', $data);
 	        $id = $this->db->affected_rows();
-	        if($id > 0){
+	        if(astpp_gt($id, 0)){
 	        	$this->response ( array (
 				'status' => true,
 				'success' => $this->lang->line( "insert_speed_dial" )

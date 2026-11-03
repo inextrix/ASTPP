@@ -7,7 +7,7 @@ function create_csv_string($data) {
 		return FALSE;
 	}
 	foreach ($data as $line) {
-		fputcsv($fp, $line);
+		fputcsv($fp, $line, ',', '"', '\\');
 	}
 	rewind($fp);
 	return stream_get_contents($fp);
@@ -40,7 +40,7 @@ function send_csv_mail ($csvData, $body, $to, $subject,$file_name) {
 	. "\r\n"
 	. "$attachment\r\n"
 	. "--$multipartSep--";
-	mail($to, $subject, $body, implode("\r\n", $headers));
+	mail($to, $subject, $body, astpp_implode("\r\n", $headers));
 }
 
 ?>

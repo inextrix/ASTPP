@@ -103,7 +103,7 @@
  *  Set a liberal script execution time limit
  * ------------------------------------------------------
  */
-	if (function_exists("set_time_limit") == TRUE AND @ini_get("safe_mode") == 0)
+	if (function_exists("set_time_limit") == TRUE AND @astpp_eq0(ini_get("safe_mode")))
 	{
 		@set_time_limit(300);
 	}
@@ -267,7 +267,7 @@
 
 	if ( ! class_exists($class)
 		OR strncmp($method, '_', 1) == 0
-		OR in_array(strtolower($method), array_map('strtolower', get_class_methods('CI_Controller')))
+		OR astpp_in_array(strtolower($method), astpp_array_map('strtolower', get_class_methods('CI_Controller')))
 		)
 	{
 		if ( ! empty($RTR->routes['404_override']))
@@ -322,12 +322,12 @@
 	// Is there a "remap" function? If so, we call it instead
 	if (method_exists($CI, '_remap'))
 	{
-		$CI->_remap($method, array_slice($URI->rsegments, 2));
+		$CI->_remap($method, astpp_array_slice($URI->rsegments, 2));
 	} else
 	{
 		// is_callable() returns TRUE on some versions of PHP 5 for private and protected
 		// methods, so we'll use this workaround for consistent behavior
-		if ( ! in_array(strtolower($method), array_map('strtolower', get_class_methods($CI))))
+		if ( ! astpp_in_array(strtolower($method), astpp_array_map('strtolower', get_class_methods($CI))))
 		{
 			// Check and see if we are using a 404 override and use it.
 			if ( ! empty($RTR->routes['404_override']))
@@ -354,7 +354,7 @@
 
 		// Call the requested method.
 		// Any URI segments present (besides the class/function) will be passed to the method for convenience
-		call_user_func_array(array(&$CI, $method), array_slice($URI->rsegments, 2));
+		call_user_func_array(array(&$CI, $method), astpp_array_slice($URI->rsegments, 2));
 	}
 
 

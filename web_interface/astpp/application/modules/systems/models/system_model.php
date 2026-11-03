@@ -21,6 +21,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 // ##############################################################################
+#[\AllowDynamicProperties]
 class System_model extends CI_Model
 {
 
@@ -42,7 +43,7 @@ class System_model extends CI_Model
         return $query;
     }
 
-    function gettemplate_list($flag = "", $start, $limit = "")
+    function gettemplate_list($flag, $start, $limit = "")
     {
         if ($this->session->userdata('logintype') == 1 || $this->session->userdata('logintype') == 5) {
             $account_data = $this->session->userdata("accountinfo");
@@ -107,7 +108,7 @@ class System_model extends CI_Model
         // Only for the system-wide setting: the currency table is global, and resellers reach this
         // method too (systems/configuration) although they have no base_currency row of their own;
         // otherwise a reseller could set the rate of any currency to 1 for the whole system.
-        if ($name == 'base_currency' && $reseller_id == 0 && isset($add_array['value']) && ! is_array($add_array['value'])) {
+        if ($name == 'base_currency' && astpp_eq0($reseller_id) && isset($add_array['value']) && ! is_array($add_array['value'])) {
 
             astpp_cron_background('CurrencyUpdate');
             // the new base currency has the rate 1 (this always set INR)
@@ -308,12 +309,12 @@ class System_model extends CI_Model
     {
         $ordered = array();
         foreach ($orderArray as $key) {
-            if (array_key_exists($key, $array)) {
+            if (astpp_array_key_exists($key, $array)) {
                 $ordered[$key] = $array[$key];
                 unset($array[$key]);
             }
         }
-        return $ordered + $array;
+        return astpp_n($ordered) + astpp_n($array);
     }
 
     function get_subcategory_menu($group_title)

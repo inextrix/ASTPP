@@ -23,6 +23,7 @@
 if (! defined('BASEPATH'))
     exit('No direct script access allowed');
 
+#[\AllowDynamicProperties]
 class Login_activity_form extends common
 {
 

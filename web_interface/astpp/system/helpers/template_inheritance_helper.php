@@ -309,7 +309,7 @@ That's it for now. If you have questions, ideas or problems, please write me at 
 		// get block content
 		$thisBlocksContent = ob_get_clean();
 		// check if we got data for this block from child templates
-		if (array_key_exists($GLOBALS['TI_CURRENT_BLOCKNAME'], $GLOBALS['TI_EXTENDED_BASE_TEMPLATE_DATA'])) {
+		if (astpp_array_key_exists($GLOBALS['TI_CURRENT_BLOCKNAME'], $GLOBALS['TI_EXTENDED_BASE_TEMPLATE_DATA'])) {
 			// if yes, use that data instead of what's in this block
 			// - except we got a marker that the child wants us to include this blocks content
 			// in some places. If so, place our data into those spots.
@@ -343,7 +343,7 @@ That's it for now. If you have questions, ideas or problems, please write me at 
 		// get block content
 		$thisBlocksContent = ob_get_clean();
 		// check if we got data for this block from child templates
-		if (array_key_exists($GLOBALS['TI_CURRENT_BLOCKNAME'], $GLOBALS['TI_EXTENDED_BASE_TEMPLATE_DATA'])) {
+		if (astpp_array_key_exists($GLOBALS['TI_CURRENT_BLOCKNAME'], $GLOBALS['TI_EXTENDED_BASE_TEMPLATE_DATA'])) {
 			// check if we got a marker that the child wants us to include this blocks content
 			// in some places. If so, place our data into those spots.
 			$thisBlocksContent = str_replace(
@@ -371,7 +371,7 @@ That's it for now. If you have questions, ideas or problems, please write me at 
 	 */
 	function block_rendering_neccessary() {
 		// check if no child did override this block
-		if (!array_key_exists($GLOBALS['TI_CURRENT_BLOCKNAME'], $GLOBALS['TI_EXTENDED_BASE_TEMPLATE_DATA'] )) {
+		if (!astpp_array_key_exists($GLOBALS['TI_CURRENT_BLOCKNAME'], $GLOBALS['TI_EXTENDED_BASE_TEMPLATE_DATA'] )) {
 			return true;
 		}
 		// check if there is an extension marker in the child blocks data. If so, the

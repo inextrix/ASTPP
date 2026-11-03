@@ -21,6 +21,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 // ##############################################################################
+#[\AllowDynamicProperties]
 class Account_import extends MX_Controller
 {
 
@@ -75,13 +76,13 @@ class Account_import extends MX_Controller
             if (isset($_FILES['customer_import_mapper']['name']) && $_FILES['customer_import_mapper']['name'] != "") {
                 $segments = explode(".", $_FILES['customer_import_mapper']['name']);
                 $txt = $ext = '';
-                if (count($segments) !== 2) {
+                if (astpp_count($segments) !== 2) {
                     $invalid_flag = true;
                     $error = gettext("File Uploading Fail Please Try Again");
                 } else {
                     list ($txt, $ext) = $segments;
                 }
-                if ($ext == "csv" && $_FILES['customer_import_mapper']['size'] > 0) {
+                if ($ext == "csv" && astpp_gt($_FILES['customer_import_mapper']['size'], 0)) {
                     $error = $_FILES['customer_import_mapper']['error'];
                     $finfo = finfo_open(FILEINFO_MIME_TYPE);
                     $mime_type = finfo_file($finfo, $_FILES["customer_import_mapper"]["tmp_name"]);
@@ -94,13 +95,13 @@ class Account_import extends MX_Controller
                         'text/tab-separated-values',
                         'text/plain'
                     );
-                    if (! in_array($mime_type, $acceptable_mime_types)) {
+                    if (! astpp_in_array($mime_type, $acceptable_mime_types)) {
                         $data['error'] = gettext("Invalid file format : Only CSV file allows to import records(Can't import empty file)");
                     } else {
-                        if ($error == 0) {
+                        if (astpp_eq0($error)) {
                             $uploadedFile = $_FILES["customer_import_mapper"]["tmp_name"];
                             $file_data = $this->common->csv_to_array($uploadedFile);
-                            $field_select = array_combine(array_keys($file_data[0]), array_keys($file_data[0]));
+                            $field_select = astpp_array_combine(astpp_array_keys($file_data[0]), astpp_array_keys($file_data[0]));
                             $data['file_data'] = $field_select;
                             if (! empty($file_data)) {
                                 $sipdevice_flag = $this->input->post('sipdevice_flag', TRUE);
@@ -159,7 +160,7 @@ class Account_import extends MX_Controller
         $default_fields = unserialize($add_array['post_array'], array('allowed_classes' => false));
         $current_date = gmdate("Y-m-d H:i:s");
         $config_array = $this->config->item('Customers-mapper-fields');
-        $custom_config_array = array_merge($config_array['general_info'], $config_array['settings']);
+        $custom_config_array = astpp_array_merge($config_array['general_info'], $config_array['settings']);
         $accountinfo = $this->session->userdata("accountinfo");
         $reseller_id = $accountinfo['type'] == 1 ? $accountinfo['id'] : 0;
         $full_path = $this->config->item('rates-file-path');
@@ -190,7 +191,7 @@ class Account_import extends MX_Controller
                 $sweep_id_array[$value['sweep']] = $value['id'];
             }
         }
-        $count_data = count($csv_tmp_data);
+        $count_data = astpp_count($csv_tmp_data);
         $numberlength = common_model::$global_config['system_config']['pinlength'];
         $numberlength = ($numberlength < 6) ? 6 : common_model::$global_config['system_config']['pinlength'];
         $pin_array = $this->common->find_uniq_rendno_accno($numberlength, 'pin', 'accounts', '', $count_data);
@@ -299,14 +300,14 @@ class Account_import extends MX_Controller
 
                     $new_array['cps'] = ! empty($add_array["cps-select"]) && ! empty($csv_data[$add_array["cps-select"]]) ? $csv_data[$add_array["cps-select"]] : $add_array['cps'];
 
-                    $balance_prepaid = $default_fields['posttoexternal'] == 0 && ! empty($add_array["balance-select"]) && ! empty($csv_data[$add_array["balance-select"]]) > 0 ? $this->common_model->add_calculate_currency($csv_data[$add_array["balance-select"]], '', '', false, false) : ($default_fields['posttoexternal'] == 0 && $add_array['balance'] > 0 ? $this->common_model->add_calculate_currency($add_array['balance'], '', '', false, false) : 0);
+                    $balance_prepaid = astpp_eq0($default_fields['posttoexternal']) && ! empty($add_array["balance-select"]) && astpp_gt(! empty($csv_data[$add_array["balance-select"]]), 0) ? $this->common_model->add_calculate_currency($csv_data[$add_array["balance-select"]], '', '', false, false) : (astpp_eq0($default_fields['posttoexternal']) && astpp_gt($add_array['balance'], 0) ? $this->common_model->add_calculate_currency($add_array['balance'], '', '', false, false) : 0);
                     $new_array['balance'] = $balance_prepaid;
 
-                    $credit_limit = $default_fields['posttoexternal'] == 1 && ! empty($add_array["credit_limit-select"]) && ! empty($csv_data[$add_array["credit_limit-select"]]) > 0 ? $this->common_model->add_calculate_currency($csv_data[$add_array["credit_limit-select"]], '', '', false, false) : ($default_fields['posttoexternal'] == 1 && $add_array['credit_limit'] > 0 ? $this->common_model->add_calculate_currency($add_array['credit_limit'], '', '', false, false) : 0);
+                    $credit_limit = $default_fields['posttoexternal'] == 1 && ! empty($add_array["credit_limit-select"]) && astpp_gt(! empty($csv_data[$add_array["credit_limit-select"]]), 0) ? $this->common_model->add_calculate_currency($csv_data[$add_array["credit_limit-select"]], '', '', false, false) : ($default_fields['posttoexternal'] == 1 && astpp_gt($add_array['credit_limit'], 0) ? $this->common_model->add_calculate_currency($add_array['credit_limit'], '', '', false, false) : 0);
 
                     $new_array['credit_limit'] = $credit_limit;
 
-                    $new_array['pin'] = $default_fields['pin'] == 0 ? $pin_array[$i] : '';
+                    $new_array['pin'] = astpp_eq0($default_fields['pin']) ? $pin_array[$i] : '';
 
                     $new_array['is_recording'] = $default_fields['is_recording'];
 
@@ -324,7 +325,7 @@ class Account_import extends MX_Controller
 
                     $new_array['sweep_id'] = $default_fields['sweep_id'];
 
-                    $new_array['invoice_day'] = (($default_fields['sweep_id'] != 0) ? $default_fields['invoice_day'] : '');
+                    $new_array['invoice_day'] = (((!astpp_eq0($default_fields['sweep_id']))) ? $default_fields['invoice_day'] : '');
 
                     $new_array['local_call'] = $default_fields['local_call'];
 
@@ -341,7 +342,7 @@ class Account_import extends MX_Controller
                     $new_array['allow_ip_management'] = $default_fields['allow_ip_management'];
 
                     $new_array['creation'] = $current_date;
-                    $new_array['expiry'] = gmdate('Y-m-d H:i:s', strtotime($current_date . '+10 years'));
+                    $new_array['expiry'] = astpp_gmdate('Y-m-d H:i:s', strtotime($current_date . '+10 years'));
 
                     $new_array['notify_credit_limit'] = '';
 
@@ -350,7 +351,7 @@ class Account_import extends MX_Controller
                     $this->db->insert('accounts', $final_new_array);
 
                     $accountid = $this->db->insert_id();
-                    if ($default_fields['sipdevice_flag'] == 0 && $accountid > 0) {
+                    if (astpp_eq0($default_fields['sipdevice_flag']) && astpp_gt($accountid, 0)) {
                         $username = $username_array[$i];
                         if (! empty($add_array["sip_username-select"]) && isset($csv_data[$add_array["sip_username-select"]]) && ! isset($sip_username_array[$csv_data[$add_array["sip_username-select"]]])) {
                             $this->db->select('id');
@@ -422,7 +423,7 @@ class Account_import extends MX_Controller
                         $this->signup_lib->account_taxes($tax_id, $accountid, $current_date);
                     }
                     $new_array['id'] = $accountid;
-                    if ($balance_prepaid > 0 || $credit_limit > 0) {
+                    if (astpp_gt($balance_prepaid, 0) || astpp_gt($credit_limit, 0)) {
                         $this->signup_lib->generate_receipt($new_array, $balance_prepaid, $credit_limit);
                     }
                     $count ++;
@@ -537,7 +538,7 @@ class Account_import extends MX_Controller
 
             if ($value == "localization_id") {
                 $localization_value = isset($add_array[$value]) ? $add_array[$value] : Common_model::$global_config['system_config']['localization_id'];
-                if($localization_value == 0){
+                if(astpp_eq0($localization_value)){
                     $localization_array = "";
                     $custom_array[$value] =form_dropdown($params_arr, $localization_array, $localization_value);
                 }else{
@@ -625,7 +626,7 @@ class Account_import extends MX_Controller
                     "name" => $value
                 );
                 if ($value == "sip_username" || $value == "sip_password") {
-                    if ($sipdevice_flag == 0) {
+                    if (astpp_eq0($sipdevice_flag)) {
                         if ($value == "sip_username") {
                             $custom_array[$value] = str_replace('col-md-5', 'col-md-12', str_replace('form-control', '', form_dropdown($params_arr, $this->_sip_user_option(), '')));
                         }

@@ -22,6 +22,7 @@
 // ##############################################################################
 if (! defined ( 'BASEPATH' ))
 	exit ( 'No direct script access allowed' );
+#[\AllowDynamicProperties]
 class voice_broadcast_form extends common {
 	function get_voice_broadcast_form_fields($id=false) {
 		$accountinfo = $this->CI->session->userdata('accountinfo');

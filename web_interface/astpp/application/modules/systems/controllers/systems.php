@@ -21,6 +21,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 // ##############################################################################
+#[\AllowDynamicProperties]
 class Systems extends MX_Controller
 {
 
@@ -121,11 +122,11 @@ class Systems extends MX_Controller
         // Only when a welcome file was really uploaded: accept only .wav/.mp3 audio files and
         // never use the client supplied file name as is (the file is stored in the web root).
         if (isset($_FILES['calling_cards_welcome_file']['name']) && $_FILES['calling_cards_welcome_file']['name'] != ''
-            && isset($add_array['file_type']) && $add_array['file_type'] == 0) {
+            && isset($add_array['file_type']) && astpp_eq0($add_array['file_type'])) {
             $upload = $_FILES['calling_cards_welcome_file'];
             $file_name = preg_replace('/[^A-Za-z0-9._-]/', '', basename(str_replace(' ', '', (string) $upload['name'])));
             $extension = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
-            if ($file_name !== '' && in_array($extension, array('wav', 'mp3'), true) && is_uploaded_file($upload['tmp_name'])) {
+            if ($file_name !== '' && astpp_in_array($extension, array('wav', 'mp3'), true) && is_uploaded_file($upload['tmp_name'])) {
                 $path = getcwd() . "/upload/" . $file_name;
                 if (file_exists($path) || move_uploaded_file($upload['tmp_name'], $path)) {
                     $add_array['calling_cards_welcome_file'] = $file_name;
@@ -136,7 +137,7 @@ class Systems extends MX_Controller
         }
         if (! empty($add_array)) {
             if(isset($add_array['decimal_points'])){
-                if( $add_array['decimal_points'] < 0 || is_numeric($add_array['decimal_points'] ) == ''){
+                if( astpp_lt($add_array['decimal_points'], 0) || is_numeric($add_array['decimal_points'] ) == ''){
                     $add_array['decimal_points'] = '2';
                 }elseif($add_array['decimal_points'] < 6){
                     $add_array['decimal_points'] = $add_array['decimal_points'];
@@ -145,7 +146,7 @@ class Systems extends MX_Controller
                 }
             }
             if ($add_array['tax_type'] != '') {
-                $selected_tax = implode(",", $add_array['tax_type']);
+                $selected_tax = astpp_implode(",", $add_array['tax_type']);
                 $add_array['tax_type'] = $selected_tax;
                 if ($add_array['tax_type'] != '0') {
                     $add_array['tax_type'] = str_replace('0,', '', $add_array['tax_type']);
@@ -230,12 +231,12 @@ class Systems extends MX_Controller
         foreach ($account->result_array() as $key => $value) {
             $edit_data = $value;
         }
-        if($edit_data['gmtoffset'] >= 0){
-            $time = gmdate("H:i", $edit_data['gmtoffset']);
+        if(astpp_ge($edit_data['gmtoffset'], 0)){
+            $time = astpp_gmdate("H:i", $edit_data['gmtoffset']);
             $edit_data['gmtoffset'] = "+".$time;
         }else{
             $edit_data['gmtoffset'] = str_replace("-","",$edit_data['gmtoffset']);
-            $time = gmdate("H:i", $edit_data['gmtoffset']);
+            $time = astpp_gmdate("H:i", $edit_data['gmtoffset']);
             $edit_data['gmtoffset'] = "-".$time;
         }
         $data['form'] = $this->form->build_form($this->system_form->get_timezone_form_fields($edit_id), $edit_data);
@@ -278,9 +279,9 @@ class Systems extends MX_Controller
                 exit();
             } else {
                 $time_explode = explode(":",$add_array['gmtoffset']);
-                $hours = $time_explode[0] * 3600;
-                $minutes = $time_explode[1] * 60;
-                $time = $hours + $minutes;
+                $hours = astpp_n($time_explode[0]) * 3600;
+                $minutes = astpp_n($time_explode[1]) * 60;
+                $time = astpp_n($hours) + astpp_n($minutes);
                 $add_array['gmtoffset'] = $time;
                 $this->system_model->edit_timezone($add_array, $add_array['id']);
                 echo json_encode(array(
@@ -296,9 +297,9 @@ class Systems extends MX_Controller
                 exit();
             } else {
                 $time_explode = explode(":",$add_array['gmtoffset']);
-                $hours = $time_explode[0] * 3600;
-                $minutes = $time_explode[1] * 60;
-                $time = $hours + $minutes;
+                $hours = astpp_n($time_explode[0]) * 3600;
+                $minutes = astpp_n($time_explode[1]) * 60;
+                $time = astpp_n($hours) + astpp_n($minutes);
                 $add_array['gmtoffset'] = $time;
                 $response = $this->system_model->add_timezone($add_array);
                 echo json_encode(array(
@@ -364,7 +365,7 @@ class Systems extends MX_Controller
             $sms_template = $this->common->getContents($value['sms_template'], '#', '#');
             $edit_data = $value;
         }
-        $template_words = array_merge($subject, $template, $sms_template);
+        $template_words = astpp_array_merge($subject, $template, $sms_template);
         $data['template_words'] = $template_words;
         $data['form'] = $this->form->build_form($this->system_form->get_template_form_fields(), $edit_data);
         $this->load->view('view_template_add_edit', $data);
@@ -776,7 +777,7 @@ class Systems extends MX_Controller
                     exec($run_gzip, $output, $error_zip);
                 }
 
-                if ($error == 0 && $error_zip == 0) {
+                if (astpp_eq0($error) && astpp_eq0($error_zip)) {
                     $this->system_model->backup_insert($add_array);
                     echo json_encode(array(
                         "SUCCESS" => $add_array['backup_name'].' ' .gettext('Backup Exported Successfully!')
@@ -1146,7 +1147,7 @@ class Systems extends MX_Controller
                 if (! empty($response)) {
                     if (! empty($data['validation_errors'])) {
                         $json_decode = json_decode($data['validation_errors'], true);
-                        $data['validation_errors'] = json_encode(array_merge($json_decode, $response));
+                        $data['validation_errors'] = json_encode(astpp_array_merge($json_decode, $response));
                     } else {
                         $data['validation_errors'] = json_encode($response);
                     }
@@ -1167,7 +1168,7 @@ class Systems extends MX_Controller
                 if (! empty($response)) {
                     if (! empty($data['validation_errors'])) {
                         $json_decode = json_decode($data['validation_errors'], true);
-                        $data['validation_errors'] = json_encode(array_merge($json_decode, $response));
+                        $data['validation_errors'] = json_encode(astpp_array_merge($json_decode, $response));
                     } else {
                         $data['validation_errors'] = json_encode($response);
                     }
@@ -1272,7 +1273,7 @@ class Systems extends MX_Controller
     function translation_save()
     {
         $add_array = $this->input->post();
-        if (isset($add_array) && count($add_array) > 0) {
+        if (isset($add_array) && astpp_count($add_array) > 0) {
             foreach ($add_array as $key => $val) {
                 if ($key != "id" && $key != "action") {
                     if ($key == "module_name") {
@@ -1343,7 +1344,7 @@ class Systems extends MX_Controller
         $add_array = $this->input->post();
         if (! empty($add_array)) {
             if ($add_array['tax_type'] != '') {
-                $selected_tax = implode(",", $add_array['tax_type']);
+                $selected_tax = astpp_implode(",", $add_array['tax_type']);
                 $add_array['tax_type'] = $selected_tax;
             }
             if (isset($add_array['version'])) {

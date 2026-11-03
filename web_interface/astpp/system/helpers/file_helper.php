@@ -146,7 +146,7 @@ if ( ! function_exists('delete_files'))
 					// Ignore empty folders
 					if (substr($filename, 0, 1) != '.')
 					{
-						delete_files($path.DIRECTORY_SEPARATOR.$filename, $del_dir, $level + 1);
+						delete_files($path.DIRECTORY_SEPARATOR.$filename, $del_dir, astpp_n($level) + 1);
 					}
 				} else
 				{
@@ -156,7 +156,7 @@ if ( ! function_exists('delete_files'))
 		}
 		@closedir($current_dir);
 
-		if ($del_dir == TRUE AND $level > 0)
+		if ($del_dir == TRUE AND astpp_gt($level, 0))
 		{
 			return @rmdir($path);
 		}
@@ -373,12 +373,12 @@ if ( ! function_exists('get_mime_by_extension'))
 			}
 		}
 
-		if (array_key_exists($extension, $mimes))
+		if (astpp_array_key_exists($extension, $mimes))
 		{
 			if (is_array($mimes[$extension]))
 			{
 				// Multiple mime types, just give the first one
-				return current($mimes[$extension]);
+				return astpp_current($mimes[$extension]);
 			} else
 			{
 				return $mimes[$extension];
@@ -406,25 +406,25 @@ if ( ! function_exists('symbolic_permissions'))
 {
 	function symbolic_permissions($perms)
 	{
-		if (($perms & 0xC000) == 0xC000)
+		if (astpp_eq0(($perms & 0xC000)))
 		{
 			$symbolic = 's'; // Socket
-		} elseif (($perms & 0xA000) == 0xA000)
+		} elseif (astpp_eq0(($perms & 0xA000)))
 		{
 			$symbolic = 'l'; // Symbolic Link
-		} elseif (($perms & 0x8000) == 0x8000)
+		} elseif (astpp_eq0(($perms & 0x8000)))
 		{
 			$symbolic = '-'; // Regular
-		} elseif (($perms & 0x6000) == 0x6000)
+		} elseif (astpp_eq0(($perms & 0x6000)))
 		{
 			$symbolic = 'b'; // Block special
-		} elseif (($perms & 0x4000) == 0x4000)
+		} elseif (astpp_eq0(($perms & 0x4000)))
 		{
 			$symbolic = 'd'; // Directory
-		} elseif (($perms & 0x2000) == 0x2000)
+		} elseif (astpp_eq0(($perms & 0x2000)))
 		{
 			$symbolic = 'c'; // Character special
-		} elseif (($perms & 0x1000) == 0x1000)
+		} elseif (astpp_eq0(($perms & 0x1000)))
 		{
 			$symbolic = 'p'; // FIFO pipe
 		} else

@@ -28,6 +28,7 @@
  * @author		ExpressionEngine Dev Team
  * @link		http://codeigniter.com/user_guide/libraries/uri.html
  */
+#[\AllowDynamicProperties]
 class CI_URI {
 
 	/**
@@ -120,9 +121,9 @@ class CI_URI {
 			}
 
 			// As a last ditch effort lets try using the $_GET array
-			if (is_array($_GET) && count($_GET) == 1 && trim(key($_GET), '/') != '')
+			if (is_array($_GET) && astpp_count($_GET) == 1 && trim(astpp_key($_GET), '/') != '')
 			{
-				$this->_set_uri_string(key($_GET));
+				$this->_set_uri_string(astpp_key($_GET));
 				return;
 			}
 
@@ -162,7 +163,7 @@ class CI_URI {
 		$str = remove_invisible_characters($str, FALSE);
 //================ITPL=======================
   $pos = strpos($str, "_json");
- if($pos > 0 && !isset($_SERVER['HTTP_X_REQUESTED_WITH'])){
+ if(astpp_gt($pos, 0) && !isset($_SERVER['HTTP_X_REQUESTED_WITH'])){
 	   $this->uri_string = str_replace('_json', '', trim($str, '/'));
  }else{
 		// If the URI contains only a slash we'll kill it
@@ -240,9 +241,9 @@ $this->uri_string = ($str == '/') ? '' : $str;
 	 */
 	private function _parse_cli_args()
 	{
-		$args = array_slice($_SERVER['argv'], 1);
+		$args = astpp_array_slice($_SERVER['argv'], 1);
 
-		return $args ? '/'.implode('/', $args) : '';
+		return $args ? '/'.astpp_implode('/', $args) : '';
 	}
 
 	// --------------------------------------------------------------------
@@ -444,7 +445,7 @@ $this->uri_string = ($str == '/') ? '' : $str;
 
 		if ($this->{$total_segments}() < $n)
 		{
-			if (count($default) == 0)
+			if (astpp_count($default) == 0)
 			{
 				return array();
 			}
@@ -457,14 +458,14 @@ $this->uri_string = ($str == '/') ? '' : $str;
 			return $retval;
 		}
 
-		$segments = array_slice($this->{$segment_array}(), ($n - 1));
+		$segments = astpp_array_slice($this->{$segment_array}(), (astpp_n($n) - 1));
 
 		$i = 0;
 		$lastval = '';
 		$retval  = array();
 		foreach ($segments as $seg)
 		{
-			if ($i % 2)
+			if (astpp_n($i) % 2)
 			{
 				$retval[$lastval] = $seg;
 			} else
@@ -476,11 +477,11 @@ $this->uri_string = ($str == '/') ? '' : $str;
 			$i++;
 		}
 
-		if (count($default) > 0)
+		if (astpp_count($default) > 0)
 		{
 			foreach ($default as $val)
 			{
-				if ( ! array_key_exists($val, $retval))
+				if ( ! astpp_array_key_exists($val, $retval))
 				{
 					$retval[$val] = FALSE;
 				}
@@ -511,7 +512,7 @@ $this->uri_string = ($str == '/') ? '' : $str;
 			$temp[] = $val;
 		}
 
-		return implode('/', $temp);
+		return astpp_implode('/', $temp);
 	}
 
 	// --------------------------------------------------------------------
@@ -608,7 +609,7 @@ $this->uri_string = ($str == '/') ? '' : $str;
 	 */
 	function total_segments()
 	{
-		return count($this->segments);
+		return astpp_count($this->segments);
 	}
 
 	// --------------------------------------------------------------------
@@ -621,7 +622,7 @@ $this->uri_string = ($str == '/') ? '' : $str;
 	 */
 	function total_rsegments()
 	{
-		return count($this->rsegments);
+		return astpp_count($this->rsegments);
 	}
 
 	// --------------------------------------------------------------------
@@ -648,7 +649,7 @@ $this->uri_string = ($str == '/') ? '' : $str;
 	 */
 	function ruri_string()
 	{
-		return '/'.implode('/', $this->rsegment_array());
+		return '/'.astpp_implode('/', $this->rsegment_array());
 	}
 
 }

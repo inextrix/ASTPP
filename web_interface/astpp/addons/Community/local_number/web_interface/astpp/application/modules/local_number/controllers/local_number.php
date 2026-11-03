@@ -20,6 +20,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 // ##############################################################################
+#[\AllowDynamicProperties]
 class Local_number extends MX_Controller {
 	function __construct() {
 		parent::__construct ();		
@@ -160,7 +161,7 @@ class Local_number extends MX_Controller {
 			if ((isset($extension[1])) && (! isset($extension[2]))) {
 				if (isset ( $_FILES ['localnumberimport'] ['name'] ) && $_FILES ['localnumberimport'] ['name'] != "") {
 					list ( $txt, $ext ) = explode ( ".", $_FILES ['localnumberimport'] ['name'] );
-					if ($ext == "csv" && $_FILES ["localnumberimport"] ['size'] > 0) {
+					if ($ext == "csv" && astpp_gt($_FILES ["localnumberimport"] ['size'], 0)) {
 						$error = $_FILES ['localnumberimport'] ['error'];
 						$finfo = finfo_open(FILEINFO_MIME_TYPE);
                         $mime_type = finfo_file($finfo, $_FILES["localnumberimport"]["tmp_name"]);
@@ -173,10 +174,10 @@ class Local_number extends MX_Controller {
                             'text/tab-separated-values',
                             'text/plain'
                         );
-                        if (! in_array($mime_type, $acceptable_mime_types)) {
+                        if (! astpp_in_array($mime_type, $acceptable_mime_types)) {
                             $data['error'] = gettext("Invalid file format : Only CSV file allows to import records(Can't import empty file)");
                         } else {
-							if ($error == 0) {
+							if (astpp_eq0($error)) {
 								$uploadedFile = $_FILES ["localnumberimport"] ["tmp_name"];
 								$full_path = $this->config->item ( 'rates-file-path' );
 								$actual_file_name = "ASTPP-Local-Number-" . date ( "Y-m-d H:i:s" ) . "." . $ext;
@@ -242,11 +243,11 @@ class Local_number extends MX_Controller {
 					$invalid_array [$i] ['error'] = $str;
 				} else {
 
-					if (! in_array ( $csv_data ['number'], $number_arr )) {
+					if (! astpp_in_array ( $csv_data ['number'], $number_arr )) {
 						$number_count = $this->db_model->countQuery ( 'id', 'local_number', array (
 								'number' => $csv_data ['number'] 
 						) );
-						if ($number_count > 0) {
+						if (astpp_gt($number_count, 0)) {
 							$invalid_array [$i] = $csv_data;
 							$invalid_array [$i] ['error'] = 'Duplicate Local number found from database';
 						} else {
@@ -281,7 +282,7 @@ class Local_number extends MX_Controller {
 			$result = $this->local_number_model->bulk_insert_local_number ( $new_final_arr );
 		}
 		unlink ( $full_path . $local_number_file_name );
-		$count = count ( $invalid_array );
+		$count = astpp_count ( $invalid_array );
 		if ($count > 0) {
 			$session_id = "-1";
 			$fp = fopen ( $full_path . $session_id . '.csv', 'w' );
@@ -289,19 +290,19 @@ class Local_number extends MX_Controller {
 				$custom_array [0] [$key] = ucfirst ( $key );
 			}
 			$custom_array [0] ['error'] = "Error";
-			$invalid_array = array_merge ( $custom_array, $invalid_array );
+			$invalid_array = astpp_array_merge ( $custom_array, $invalid_array );
 			foreach ( $invalid_array as $err_data ) {
 				fputcsv ( $fp, $err_data );
 			}
 			fclose ( $fp );
 			$this->session->set_userdata ( 'import_local_number_csv_error', $session_id . ".csv" );
 			$data ["error"] = $invalid_array;
-			$data ['import_record_count'] = count ( $new_final_arr );
-			$data ['failure_count'] = count ( $invalid_array ) - 1;
+			$data ['import_record_count'] = astpp_count ( $new_final_arr );
+			$data ['failure_count'] = astpp_count ( $invalid_array ) - 1;
 			$data ['page_title'] = gettext ( 'Local Number Import Error' );
 			$this->load->view ( 'view_import_error', $data );
 		} else {
-			$this->session->set_flashdata ( 'astpp_errormsg', 'Total ' . count ( $new_final_arr ) . ' Local Number Imported Successfully!' );
+			$this->session->set_flashdata ( 'astpp_errormsg', 'Total ' . astpp_count ( $new_final_arr ) . ' Local Number Imported Successfully!' );
 			redirect ( base_url () . "local_number/local_number_list/" );
 		}
 	}
@@ -321,12 +322,12 @@ class Local_number extends MX_Controller {
 		$str .= $csvdata ['number'] != '' ? null : 'Number,';
 		$str = rtrim ( $str, ',' );
 		if (! $str) {
-			$str .= ! empty ( $csvdata ['number'] ) && is_numeric ( $csvdata ['number'] ) && ( $csvdata ['number'] > 0) ? null : (empty ( $csvdata ['number'] ) ? null : 'Number,');
+			$str .= ! empty ( $csvdata ['number'] ) && is_numeric ( $csvdata ['number'] ) && ( astpp_gt($csvdata ['number'], 0)) ? null : (empty ( $csvdata ['number'] ) ? null : 'Number,');
 			$str .= $csvdata['country_id'] != '' ? null : 'Country,';
 			if ($str) {
 				$str = rtrim ( $str, ',' );
 				$error_field = explode ( ',', $str );
-				$count = count ( $error_field );
+				$count = astpp_count ( $error_field );
 				$str .= $count > 1 ? ' are not valid' : ' is not Valid';
 				return $str;
 			} else {
@@ -335,7 +336,7 @@ class Local_number extends MX_Controller {
 		} else {
 			$str = rtrim ( $str, ',' );
 			$error_field = explode ( ',', $str );
-			$count = count ( $error_field );
+			$count = astpp_count ( $error_field );
 			$str .= $count > 1 ? ' are required' : ' is Required';
 			return $str;
 		}
@@ -1015,7 +1016,7 @@ class Local_number extends MX_Controller {
 		foreach ( $account->result_array () as $key => $value ) {
 			$edit_data = $value;
 		}
-		if(array_key_exists('resellers_id', $edit_data)) {
+		if(astpp_array_key_exists('resellers_id', $edit_data)) {
 			$edit_data ["resellers_id"] = explode ( ",", $edit_data ["resellers_id"] );
 		}
 		$data['country_id']  = '';

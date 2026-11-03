@@ -108,7 +108,7 @@ if ($this->session->userdata('logintype') == 1 || $this->session->userdata('logi
 <section class="slice color-three pb-4">
 	<div class="w-section inverse p-0">
 		<div class="card col-md-12 py-4">  
-     			<?php if(($logintype==1) &&  (isset($permissioninfo['did']['did_list']['available_did'])  and $permissioninfo['did']['did_list']['available_did'] == 0)) { ?>
+     			<?php if(($logintype==1) &&  (isset($permissioninfo['did']['did_list']['available_did'])  and astpp_eq0($permissioninfo['did']['did_list']['available_did']))) { ?>
 				<div>
 				<input type="button" class="btn btn-line-warning"
 					onclick="return redirect_page('/did/did_list/')"

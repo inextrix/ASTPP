@@ -9,6 +9,7 @@
  * @version   4.03
  */
 
+#[\AllowDynamicProperties]
 class HTML2PDF_locale
 {
 	/**
@@ -64,7 +65,7 @@ class HTML2PDF_locale
 		self::$_list = array();
 		$handle = fopen($file, 'r');
 		while (!feof($handle)) {
-			$line = fgetcsv($handle);
+			$line = fgetcsv($handle, null, ',', '"', '\\');
 
 			$line = array($line);
 

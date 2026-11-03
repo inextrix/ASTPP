@@ -22,6 +22,7 @@
 // ##############################################################################
 if (! defined ( 'BASEPATH' ))
 	exit ( 'No direct script access allowed' );
+#[\AllowDynamicProperties]
 class Internationalcredits_form extends common {
 	function __construct() {
 		$this->CI = & get_instance ();

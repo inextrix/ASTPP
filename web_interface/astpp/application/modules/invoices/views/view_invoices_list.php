@@ -153,7 +153,7 @@ $account_data = $this->session->userdata("accountinfo");
 $id = $account_data['id'];
 $permissioninfo = $this->session->userdata('permissioninfo');
 $logintype = $this->session->userdata('logintype');
-if ((isset($permissioninfo['invoices']['invoice_list']['generate'])) && ($permissioninfo['invoices']['invoice_list']['generate'] == 0) && ($permissioninfo['login_type'] == '2' or $permissioninfo['login_type'] == '1' or $permissioninfo['login_type'] == '0' or $permissioninfo['login_type'] == '3') or ($permissioninfo['login_type'] == '-1')) {
+if ((isset($permissioninfo['invoices']['invoice_list']['generate'])) && (astpp_eq0($permissioninfo['invoices']['invoice_list']['generate'])) && ($permissioninfo['login_type'] == '2' or $permissioninfo['login_type'] == '1' or $permissioninfo['login_type'] == '0' or $permissioninfo['login_type'] == '3') or ($permissioninfo['login_type'] == '-1')) {
     ?>
 
 <div class="col-md-12 pb-4 px-0 text-right">

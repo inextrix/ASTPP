@@ -30,6 +30,7 @@
  * @author		ExpressionEngine Dev Team
  * @link		http://codeigniter.com/user_guide/database/
  */
+#[\AllowDynamicProperties]
 class CI_DB_driver {
 
 	var $username;
@@ -223,7 +224,7 @@ class CI_DB_driver {
 		// SQL queries per se. In these instances, just return the result.
 		$driver_version_exceptions = array('oci8', 'sqlite', 'cubrid');
 
-		if (in_array($this->dbdriver, $driver_version_exceptions))
+		if (astpp_in_array($this->dbdriver, $driver_version_exceptions))
 		{
 			return $sql;
 		} else
@@ -337,11 +338,11 @@ class CI_DB_driver {
 
 		// Stop and aggregate the query time results
 		$time_end = list($em, $es) = explode(' ', microtime());
-		$this->benchmark += ($em + $es) - ($sm + $ss);
+		$this->benchmark = astpp_n($this->benchmark) + astpp_n((astpp_n($em) + astpp_n($es)) - (astpp_n($sm) + astpp_n($ss)));
 
 		if ($this->save_queries == TRUE)
 		{
-			$this->query_times[] = ($em + $es) - ($sm + $ss);
+			$this->query_times[] = (astpp_n($em) + astpp_n($es)) - (astpp_n($sm) + astpp_n($ss));
 		}
 
 		// Increment the query counter
@@ -502,9 +503,9 @@ class CI_DB_driver {
 		}
 
 		// When transactions are nested we only begin/commit/rollback the outermost ones
-		if ($this->_trans_depth > 0)
+		if (astpp_gt($this->_trans_depth, 0))
 		{
-			$this->_trans_depth += 1;
+			$this->_trans_depth = astpp_n($this->_trans_depth) + 1;
 			return;
 		}
 
@@ -529,7 +530,7 @@ class CI_DB_driver {
 		// When transactions are nested we only begin/commit/rollback the outermost ones
 		if ($this->_trans_depth > 1)
 		{
-			$this->_trans_depth -= 1;
+			$this->_trans_depth = astpp_n($this->_trans_depth) - 1;
 			return TRUE;
 		}
 
@@ -595,8 +596,8 @@ class CI_DB_driver {
 
 		// The count of bind should be 1 less then the count of segments
 		// If there are more bind arguments trim it down
-		if (count($binds) >= count($segments)) {
-			$binds = array_slice($binds, 0, count($segments) - 1);
+		if (astpp_count($binds) >= astpp_count($segments)) {
+			$binds = astpp_array_slice($binds, 0, astpp_count($segments) - 1);
 		}
 
 		// Construct the binded query
@@ -640,7 +641,7 @@ class CI_DB_driver {
 	 */
 	function elapsed_time($decimals = 6)
 	{
-		return number_format($this->benchmark, $decimals);
+		return astpp_number_format($this->benchmark, $decimals);
 	}
 
 	// --------------------------------------------------------------------
@@ -666,7 +667,7 @@ class CI_DB_driver {
 	 */
 	function last_query()
 	{
-		return end($this->queries);
+		return astpp_end($this->queries);
 	}
 
 	// --------------------------------------------------------------------
@@ -735,7 +736,7 @@ class CI_DB_driver {
 			return FALSE;
 		}
 
-		return current($fields);
+		return astpp_current($fields);
 	}
 
 	// --------------------------------------------------------------------
@@ -793,7 +794,7 @@ class CI_DB_driver {
 	 */
 	function table_exists($table_name)
 	{
-		return ( ! in_array($this->_protect_identifiers($table_name, TRUE, FALSE, FALSE), $this->list_tables())) ? FALSE : TRUE;
+		return ( ! astpp_in_array($this->_protect_identifiers($table_name, TRUE, FALSE, FALSE), $this->list_tables())) ? FALSE : TRUE;
 	}
 
 	// --------------------------------------------------------------------
@@ -841,7 +842,7 @@ class CI_DB_driver {
 				$retval[] = $row['COLUMN_NAME'];
 			} else
 			{
-				$retval[] = current($row);
+				$retval[] = astpp_current($row);
 			}
 		}
 
@@ -860,7 +861,7 @@ class CI_DB_driver {
 	 */
 	function field_exists($field_name, $table_name)
 	{
-		return ( ! in_array($field_name, $this->list_fields($table_name))) ? FALSE : TRUE;
+		return ( ! astpp_in_array($field_name, $this->list_fields($table_name))) ? FALSE : TRUE;
 	}
 
 	// --------------------------------------------------------------------
@@ -944,7 +945,7 @@ class CI_DB_driver {
 			$dest = array();
 			foreach ($where as $key => $val)
 			{
-				$prefix = (count($dest) == 0) ? '' : ' AND ';
+				$prefix = (astpp_count($dest) == 0) ? '' : ' AND ';
 
 				if ($val !== '')
 				{
@@ -1283,19 +1284,19 @@ class CI_DB_driver {
 			// Does the first segment of the exploded item match
 			// one of the aliases previously identified?  If so,
 			// we have nothing more to do other than escape the item
-			if (in_array($parts[0], $this->ar_aliased_tables))
+			if (astpp_in_array($parts[0], $this->ar_aliased_tables))
 			{
 				if ($protect_identifiers === TRUE)
 				{
 					foreach ($parts as $key => $val)
 					{
-						if ( ! in_array($val, $this->_reserved_identifiers))
+						if ( ! astpp_in_array($val, $this->_reserved_identifiers))
 						{
 							$parts[$key] = $this->_escape_identifiers($val);
 						}
 					}
 
-					$item = implode('.', $parts);
+					$item = astpp_implode('.', $parts);
 				}
 				return $item.$alias;
 			}
@@ -1343,7 +1344,7 @@ class CI_DB_driver {
 				}
 
 				// Put the parts back together
-				$item = implode('.', $parts);
+				$item = astpp_implode('.', $parts);
 			}
 
 			if ($protect_identifiers === TRUE)
@@ -1370,7 +1371,7 @@ class CI_DB_driver {
 			}
 		}
 
-		if ($protect_identifiers === TRUE AND ! in_array($item, $this->_reserved_identifiers))
+		if ($protect_identifiers === TRUE AND ! astpp_in_array($item, $this->_reserved_identifiers))
 		{
 			$item = $this->_escape_identifiers($item);
 		}

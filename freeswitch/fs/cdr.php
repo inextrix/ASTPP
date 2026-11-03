@@ -1,4 +1,6 @@
 <?php
+// PHP8: PHP 7 comparison semantics for rewritten comparisons
+require_once __DIR__ . '/lib/astpp.php7compat.php';
 // ##############################################################################
 // ASTPP - Open Source VoIP Billing Solution
 //
@@ -55,7 +57,7 @@ $lib = new lib ();
 $config = $lib->get_configurations ( $db );
 
 // Set default decimal points
-$decimal_points = ($config ['decimal_points'] <= 0) ? 4 : $config ['decimal_points'];
+$decimal_points = (astpp_le($config ['decimal_points'], 0)) ? 4 : $config ['decimal_points'];
 
 // Define logger object
 $logger = new logger ( $lib );
@@ -65,7 +67,7 @@ if (isset ( $_SERVER ["CONTENT_TYPE"] ) && $_SERVER ["CONTENT_TYPE"] == "applica
 	$db->run ( "SET NAMES utf8" );
 	//$data = json_decode ( file_get_contents ( "php://input" ), true );
 	$data = file_get_contents("php://input");
-    $data = utf8_encode($data);
+    $data = mb_convert_encoding($data, 'UTF-8', 'ISO-8859-1') /* PHP8: utf8_encode() is deprecated */;
 	$data = json_decode($data,true);
 
 	// error_log(print_r($data,true));

@@ -1,6 +1,7 @@
 <?php
 
 require APPPATH . '/controllers/common/account.php';
+#[\AllowDynamicProperties]
 class Gateways extends Account {
 	
 	protected $postdata = "";
@@ -48,7 +49,7 @@ class Gateways extends Account {
 		if ($function != '') {
 
 			$function = '_' . $function;
-			if (( int ) method_exists ( $this, $function ) > 0) {
+			if (astpp_gt(( int ) method_exists ( $this, $function ), 0)) {
 				$this->$function ();
 			} else {
 				$this->response ( array (

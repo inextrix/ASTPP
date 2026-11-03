@@ -26,6 +26,7 @@
  * @author		ExpressionEngine Dev Team
  * @link		http://codeigniter.com/user_guide/helpers/
  */
+#[\AllowDynamicProperties]
 class CI_Typography {
 
 	// Block level elements that should not be wrapped inside <p> tags
@@ -88,7 +89,7 @@ class CI_Typography {
 		{
 			if (preg_match_all("#(<!\-\-.*?\-\->)#s", $str, $matches))
 			{
-				for ($i = 0, $total = count($matches[0]); $i < $total; $i++)
+				for ($i = 0, $total = astpp_count($matches[0]); $i < $total; $i++)
 				{
 					$html_comments[] = $matches[0][$i];
 					$str = str_replace($matches[0][$i], '{@HC'.$i.'}', $str);
@@ -133,7 +134,7 @@ class CI_Typography {
 		$process = TRUE;
 		$paragraph = FALSE;
 		$current_chunk = 0;
-		$total_chunks = count($chunks);
+		$total_chunks = astpp_count($chunks);
 
 		foreach ($chunks as $chunk)
 		{
@@ -183,7 +184,7 @@ class CI_Typography {
 		$str = $this->format_characters($str);
 
 		// restore HTML comments
-		for ($i = 0, $total = count($html_comments); $i < $total; $i++)
+		for ($i = 0, $total = astpp_count($html_comments); $i < $total; $i++)
 		{
 			// remove surrounding paragraph tags, but only if there's an opening paragraph tag
 			// otherwise HTML comments at the ends of paragraphs will have the closing tag removed
@@ -237,7 +238,7 @@ class CI_Typography {
 			$table['#<p></p>#'] = '<p>&nbsp;</p>';
 		}
 
-		return preg_replace(array_keys($table), $table, $str);
+		return preg_replace(astpp_array_keys($table), $table, $str);
 
 	}
 
@@ -305,7 +306,7 @@ class CI_Typography {
 						);
 		}
 
-		return preg_replace(array_keys($table), $table, $str);
+		return preg_replace(astpp_array_keys($table), $table, $str);
 	}
 
 	// --------------------------------------------------------------------
@@ -326,7 +327,7 @@ class CI_Typography {
 			return $str;
 		}
 
-		if (strpos($str, "\n") === FALSE && ! in_array($this->last_block_element, $this->inner_block_required))
+		if (strpos($str, "\n") === FALSE && ! astpp_in_array($this->last_block_element, $this->inner_block_required))
 		{
 			return $str;
 		}
@@ -384,12 +385,12 @@ class CI_Typography {
 	function nl2br_except_pre($str)
 	{
 		$ex = explode("pre>", $str);
-		$ct = count($ex);
+		$ct = astpp_count($ex);
 
 		$newstr = "";
 		for ($i = 0; $i < $ct; $i++)
 		{
-			if (($i % 2) == 0)
+			if ((astpp_n($i) % 2) == 0)
 			{
 				$newstr .= nl2br($ex[$i]);
 			} else
@@ -397,7 +398,7 @@ class CI_Typography {
 				$newstr .= $ex[$i];
 			}
 
-			if ($ct - 1 != $i) {
+			if (astpp_n($ct) - 1 != $i) {
 							$newstr .= "pre>";
 			}
 		}

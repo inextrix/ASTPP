@@ -22,6 +22,7 @@
 // ##############################################################################
 if (! defined ( 'BASEPATH' ))
 	exit ( 'No direct script access allowed' );
+#[\AllowDynamicProperties]
 class common {
 	protected $CI; 
 	function __construct($library_name = '') {
@@ -83,7 +84,7 @@ class common {
 		} else {
 			$this->CI->db->where('accountid', (int) $accountinfo['id']);
 		}
-		return $this->CI->db->count_all_results() > 0 ? $path : false;
+		return astpp_gt($this->CI->db->count_all_results(), 0) ? $path : false;
 	}
 	/*
 	 * Generated passwords have at least 16 characters and pass the portal password rule
@@ -103,7 +104,7 @@ class common {
 
 		// at most 64: above 255 no candidate passes the password rules and generate_password()
 		// would never return
-		$length=min((int)$length, 64);
+		$length=astpp_min((int)$length, 64);
 		$password_type  = common_model::$global_config ['system_config'] ['password_type'];
 		$type = !empty($type) ? $type : ($password_type == '0' ? 'hard':'simple');
 
@@ -129,15 +130,15 @@ class common {
 				$chars[] = $set[random_int(0, strlen($set) - 1)];
 				$all .= $set;
 			}
-			for($i = 0; $i < $length - count($sets); $i++)
+			for($i = 0; $i < astpp_n($length) - astpp_count($sets); $i++)
 				$chars[] = $all[random_int(0, strlen($all) - 1)];
-			for ($i = count($chars) - 1; $i > 0; $i--) {
+			for ($i = astpp_count($chars) - 1; $i > 0; $i--) {
 				$j = random_int(0, $i);
 				$tmp = $chars[$i];
 				$chars[$i] = $chars[$j];
 				$chars[$j] = $tmp;
 			}
-			$pass = implode('', $chars);
+			$pass = astpp_implode('', $chars);
 
 		} else {
 		
@@ -149,7 +150,7 @@ class common {
 			    $n = random_int(0, $alphaLength);
 			    $pass[] = $alphabet[$n];
 			}
-   		 return implode($pass); 
+   		 return astpp_implode($pass); 
 		}
 		return $pass;
 	}
@@ -159,15 +160,15 @@ class common {
 	// below checks every new candidate (before, the old condition was checked again or
 	// a result object was used as array).
 	private function astpp_random_digits($size) {
-		$size = max(1, min(18, (int) $size));
-		return random_int((int) pow(10, $size - 1), (int) pow(10, $size) - 1);
+		$size = astpp_max(1, astpp_min(18, (int) $size));
+		return random_int((int) pow(10, astpp_n($size) - 1), (int) pow(10, $size) - 1);
 	}
 
 	private function astpp_unique_random_digits($size, $field, $tablename) {
 		do {
 			$uname = $this->astpp_random_digits($size);
 			$acc_result = (array) $this->CI->db_model->getSelect('Count(*) as count', $tablename, array($field => $uname))->first_row();
-		} while ($acc_result['count'] != 0);
+		} while ((!astpp_eq0($acc_result['count'])));
 		return $uname;
 	}
 
@@ -182,7 +183,7 @@ class common {
 	function find_uniq_rendno_customer($size = '', $field = '', $tablename = '') {
 
 		//ASTPPCOM-1183 Start
-		$size=(isset($size) && $size>0)?$size:'10';
+		$size=(isset($size) && astpp_gt($size, 0))?$size:'10';
 		//ASTPPCOM-1183 End
 
 		if ($tablename != '') {
@@ -191,7 +192,7 @@ class common {
 			$uname = $this->astpp_random_digits($size);
 		}
 		$start_prifix_value = common_model::$global_config ['system_config'] ['startingdigit'];
-		if ($tablename == 'accounts' && $start_prifix_value != 0) {
+		if ($tablename == 'accounts' && (!astpp_eq0($start_prifix_value))) {
 			$length = strlen ( $start_prifix_value );
 			$uname = substr ( $uname, $length );
 			$uname = $start_prifix_value . $uname;
@@ -218,7 +219,7 @@ class common {
 				);
 				$acc_result = $this->CI->db_model->getSelect ( 'Count(*) as count', $tablename, $where );
 				$acc_result = (array)$acc_result->first_row ();
-				while ( $acc_result['count'] != 0 ) {
+				while ( (!astpp_eq0($acc_result['count'])) ) {
 					$uname = random_int ((int) $min, (int) $max);
 					$length=strlen($max);
 					$uname=str_pad($uname,$length, '0', STR_PAD_LEFT);
@@ -240,7 +241,7 @@ class common {
 		}
 		return $final_rand;
 	}
-	function find_uniq_rendno_accno($length = '', $field = '', $tablename = '', $default, $creation_count) {
+	function find_uniq_rendno_accno($length, $field, $tablename, $default, $creation_count) {
 		$number = array ();
 		$j = 0;
 
@@ -252,13 +253,13 @@ class common {
 			$uname = strtolower ( $uname );
 			if (isset ( $default ))
 				$uname = $default . $uname;
-			if (! in_array ( $uname, $number )) {
+			if (! astpp_in_array ( $uname, $number )) {
 				$where = array (
 						$field => $uname
 				);
 				$acc_result = $this->CI->db_model->getSelect ( 'Count(id) as count', $tablename, $where );
 				$acc_result = $acc_result->result_array ();
-				if ($acc_result [0] ['count'] == 0 && ! in_array ( $uname, $number )) {
+				if (astpp_eq0($acc_result [0] ['count']) && ! astpp_in_array ( $uname, $number )) {
 					$number [] = $uname;
 					$j ++;
 				}
@@ -329,13 +330,13 @@ class common {
 		$field_name = $field_name->result ();
 		if (isset ( $field_name ) && ! empty ( $field_name )) {
 			if($select == 'gmtoffset'){
-				if($field_name [0]->{$select} >= 0){
-					$time = gmdate("H:i", $field_name [0]->{$select});
+				if(astpp_ge($field_name [0]->{$select}, 0)){
+					$time = astpp_gmdate("H:i", $field_name [0]->{$select});
 					$gmthours = "+".$time;
 					return $gmthours;
 				}else{
 					$gmtoffset = str_replace("-","",$field_name [0]->{$select});
-					$time = gmdate("H:i", $gmtoffset);
+					$time = astpp_gmdate("H:i", $gmtoffset);
 					$gmthours = "-".$time;
 					return $gmthours;
 				}
@@ -357,7 +358,7 @@ class common {
 			$where = explode ( ',', $where );
 		}
 		$select1 = explode ( ',', $select );
-		for($i = 0; $i < count ( $where ); $i ++) {
+		for($i = 0; $i < astpp_count ( $where ); $i ++) {
 			$where_in = array (
 					"id" => $where [$i]
 			);
@@ -395,20 +396,20 @@ class common {
 		$field_name = $field_name->result ();
 		if (isset ( $field_name ) && ! empty ( $field_name )) { 
 			if (isset ( $field_name [0] ) && $accountinfo ['type'] != 1) { 
-				if ($field_name [0]->accountid != 0 && $field_name [0]->parent_id == 0) { 
-					if($accountinfo['type'] == 0 || $accountinfo['type'] == 3 ){
+				if ((!astpp_eq0($field_name [0]->accountid)) && astpp_eq0($field_name [0]->parent_id)) { 
+					if(astpp_eq0($accountinfo['type']) || $accountinfo['type'] == 3 ){
 					$flag_status = "<a href='../user_list_release/" . $field_name [0]->id . "' title='Release' onClick='return get_reliase_msg();'><span class=' label label-sm label-inverse_blue arrowed_blue-in' title='release'>Release(C)<span></a>";
 					}else{
 					$flag_status = "<a href='../did_list_release/" . $field_name [0]->id . "' title='Release' onClick='return get_reliase_msg();'><span class=' label label-sm label-inverse_blue arrowed_blue-in' title='release'>Release(C)<span></a>";
 					}
-				}else if ($field_name [0]->parent_id != 0 && $field_name [0]->accountid != 0 ) {
-					if($accountinfo['type'] == 0 || $accountinfo['type'] == 3){
+				}else if ((!astpp_eq0($field_name [0]->parent_id)) && (!astpp_eq0($field_name [0]->accountid)) ) {
+					if(astpp_eq0($accountinfo['type']) || $accountinfo['type'] == 3){
 						$flag_status = "<a href='../user_list_release/" . $field_name [0]->id . "' title='Release' onClick='return get_reliase_msg();'><span class=' label label-sm label-inverse_blue arrowed_blue-in' title='release'>Release(C)<span></a>";
 
 					}else{
 						$flag_status = "<a href='../did_list_release/" . $field_name [0]->id . "' title='Release' onClick='return get_reliase_msg();'><span class=' label label-sm label-inverse_blue arrowed_blue-in' title='release'>Release(C)<span></a>";
 					}
-				} else if ($field_name [0]->parent_id != 0) { 
+				} else if ((!astpp_eq0($field_name [0]->parent_id))) { 
 					$flag_status = "<a href='../did_list_release/" . $field_name [0]->id . "' title='Release' onClick='return get_reliase_msg();'><span class=' label label-sm label-inverse_blue arrowed_blue-in' title='release'>Release(R)</span></a>";
 				}else {
 					$flag_status = "<a href='../did_assgin_reseller/" . $field_name [0]->id . "' title='Assign Number' rel='facebox'><span class=' label label-sm label-inverse_blue arrowed_blue-in' title='release'>Assign Number</span></a>";
@@ -438,13 +439,13 @@ class common {
 		$status = null;
 		$did_info = ( array ) $this->CI->db->get ( 'dids' )->first_row ();
 		$accountinfo = $this->CI->session->userdata ( 'accountinfo' );
-		if ($did_info ['accountid'] == 0 && $did_info ['parent_id'] == 0) {
+		if (astpp_eq0($did_info ['accountid']) && astpp_eq0($did_info ['parent_id'])) {
 			$status = 'Not in use';
 		} elseif ($accountinfo ['type'] != 1) {
-			if ($did_info ['accountid'] == 0 && $did_info ['parent_id'] > 0) {
+			if (astpp_eq0($did_info ['accountid']) && astpp_gt($did_info ['parent_id'], 0)) {
 				$status = 'Purchase by Reseller';
 			}
-			if ($did_info ['accountid'] > 0 && $did_info ['parent_id'] == 0) {
+			if (astpp_gt($did_info ['accountid'], 0) && astpp_eq0($did_info ['parent_id'])) {
 				$status = 'Purchase by Customer';
 			}
 		} else {
@@ -455,10 +456,10 @@ class common {
 			$this->db->where ( $where );
 			$this->CI->db->select ( 'reseller_id,parent_id' );
 			$reseller_pricing = ( array ) $this->db->get ( 'reseller_pricing' )->first_row ();
-			if ($reseller_pricing ['reseller_id'] == 0 && $did_info ['accountid'] == 0 && $did_info ['parent_id'] == $accountinfo ['id']) {
+			if (astpp_eq0($reseller_pricing ['reseller_id']) && astpp_eq0($did_info ['accountid']) && $did_info ['parent_id'] == $accountinfo ['id']) {
 				$status = 'Not in use';
 			}
-			if ($reseller_pricing ['reseller_id'] == 0 && $did_info ['accountid'] == 0) {
+			if (astpp_eq0($reseller_pricing ['reseller_id']) && astpp_eq0($did_info ['accountid'])) {
 				$status = 'Not in use';
 			}
 		}
@@ -471,7 +472,7 @@ class common {
 		} else {
 			$where = explode ( ',', $where );
 		}
-		for($i = 0; $i < count ( $where ); $i ++) {
+		for($i = 0; $i < astpp_count ( $where ); $i ++) {
 			$where_in = array (
 					"id" => $where [$i]
 			);
@@ -490,7 +491,7 @@ class common {
 	function set_invoice_option($select = "", $table = "", $call_type = "", $edit_value = '') {
 		$invoice_date = false;
 		$uri_segment = $this->CI->uri->segments;
-		if (isset ( $uri_segment [3] ) && $uri_segment [3] > 0 && empty ( $edit_value )) {
+		if (isset ( $uri_segment [3] ) && astpp_gt($uri_segment [3], 0) && empty ( $edit_value )) {
 			$field_name = $this->CI->db_model->getSelect ( "sweep_id,invoice_day", "accounts", array (
 					"id" => $uri_segment [3]
 			) );
@@ -517,7 +518,7 @@ class common {
 					"7" => "Sunday"
 			);
 			$rawDate = date ( "Y-m-d" );
-			$day = date ( 'N', strtotime ( $rawDate ) );
+			$day = astpp_date ( 'N', strtotime ( $rawDate ) );
 			if (isset ( $uri_segment [3] )) {
 				return $week_arr;
 			} else {
@@ -529,14 +530,14 @@ class common {
 				return $week_drp;
 			}
 		}
-		if ($select != 0 && $select != 1) {
+		if ((!astpp_eq0($select)) && $select != 1) {
 			for($i = 1; $i < 29; $i ++) {
 				$mon_arr [$i] = $i;
 			}
-			if (isset ( $uri_segment [3] ) && $uri_segment [3] > 0 && empty ( $edit_value )) {
+			if (isset ( $uri_segment [3] ) && astpp_gt($uri_segment [3], 0) && empty ( $edit_value )) {
 				return $mon_arr;
 			} else {
-				$day = $invoice_date > 0 ? $invoice_date : date ( 'd' );
+				$day = astpp_gt($invoice_date, 0) ? $invoice_date : date ( 'd' );
 				$month_drp = form_dropdown ( array (
 						"name" => 'invoice_day',
 						"id" => 'invoice_day',
@@ -597,7 +598,7 @@ class common {
 		);
 		return $package_applicable;
 	}
-	function get_package_type($status = '', $table = "", $applicable_for) {
+	function get_package_type($status, $table, $applicable_for) {
 		$package_applicable = array (
 				'0' => gettext ( 'Outbound' ),
 				'1' => gettext ( 'Inbound' ),
@@ -633,7 +634,7 @@ class common {
 		);
 		return $status_array;
 	}
-	function get_allow($select = "", $table = "", $status) {
+	function get_allow($select, $table, $status) {
 		return ($status == 1) ? "Yes" : "No";
 	}
 	function set_call_type($call_type = "") {
@@ -657,7 +658,7 @@ class common {
 		}
 		return $call_type_array;
 	}
-	function get_call_type($select = "", $table = "", $call_type) {
+	function get_call_type($select, $table, $call_type) {
 		$call_type_array = array (
 				'' => ""
 		);
@@ -694,7 +695,7 @@ class common {
                 );
                 return $config_option;
         }
-	function get_entity_type($select = "", $table = "", $entity_type) {
+	function get_entity_type($select, $table, $entity_type) {
 		$entity_array = array (
 				'-1' => "Administrator",
 				'0' => 'Customer',
@@ -777,14 +778,14 @@ class common {
 		);
 		return $status_array;
 	}
-	function get_status($select = "", $table = "", $status) {
+	function get_status($select, $table, $status) {
 		if(isset($status['reseller_status'])){
 			$status['status'] = $status['reseller_status'];
 		}
 		if ($select != 'export') {
 			$status_tab = $this->encode ( $table );
 			$status ['table'] = "'" . $status_tab . "'";
-			if ($status ['status'] == 0) {
+			if (astpp_eq0($status ['status'])) {
 				$status_array = '<label class="switch">
 				  <input type="checkbox" name="onoffswitch" class="onoffswitch-checkbox" id=switch' . $status ['id'] . ' value=' . $status ['status'] . ' onclick="javascript:processForm(' . $status ['id'] . ',' . $status ['table'] . ')" checked>
 				  <span class="slider round"></span>
@@ -797,17 +798,17 @@ class common {
 				</label>';
 			}
 		} else {
-			return ($status == 0) ? "Active" : "Inactive";
+			return (astpp_eq0($status)) ? "Active" : "Inactive";
 		}
 		return $status_array;
 	}
 	
-	function get_email_status($select = "", $table = "", $email_status) {
+	function get_email_status($select, $table, $email_status) {
 		
 		if ($select != 'export') {
 			$status_tab = $this->encode ( $table );
 			$email_status ['table'] = "'" . $status_tab . "'";
-			if ($email_status ['is_email_enable'] == 0) {
+			if (astpp_eq0($email_status ['is_email_enable'])) {
 				$email_status_array = '<label class="switch">
 										  <input type="checkbox" name="onoffswitch_email" class="onoffswitch-checkbox" id=switch_email' . $email_status ['id'] . ' value=' . $email_status ['is_email_enable'] . ' onclick="javascript:process_email(' . $email_status ['id'] . ',' . $email_status ['table'] . ')" checked>
 										  <span class="slider round"></span>
@@ -819,16 +820,16 @@ class common {
 										</label>';
 			}
 		} else {
-			return ($email_status == 0) ? "Active" : "Inactive";
+			return (astpp_eq0($email_status)) ? "Active" : "Inactive";
 		}
 		return $email_status_array;
 	}
 	
-	function get_sms_status($select = "", $table = "", $sms_status) {
+	function get_sms_status($select, $table, $sms_status) {
 		if ($select != 'export') {
 			$status_tab = $this->encode ( $table );
 			$sms_status ['table'] = "'" . $status_tab . "'";
-			if ($sms_status ['is_sms_enable'] == 0) {
+			if (astpp_eq0($sms_status ['is_sms_enable'])) {
 				$sms_status_array = '<label class="switch">
 									  <input type="checkbox" name="onoffswitch_sms" class="onoffswitch-checkbox" id=switch_sms' . $sms_status ['id'] . ' value=' . $sms_status ['is_sms_enable'] . ' onclick="javascript:process_sms(' . $sms_status ['id'] . ',' . $sms_status ['table'] . ')" checked>
 									  <span class="slider round"></span>
@@ -840,16 +841,16 @@ class common {
 									</label>';
 			}
 		} else {
-			return ($sms_status == 0) ? "Active" : "Inactive";
+			return (astpp_eq0($sms_status)) ? "Active" : "Inactive";
 		}
 		return $sms_status_array;
 	}
 	
-	function get_alert_status($select = "", $table = "", $alert_status) {
+	function get_alert_status($select, $table, $alert_status) {
 		if ($select != 'export') {
 			$status_tab = $this->encode ( $table );
 			$alert_status ['table'] = "'" . $status_tab . "'";
-			if ($alert_status ['is_alert_enable'] == 0) {
+			if (astpp_eq0($alert_status ['is_alert_enable'])) {
 				$alert_status_array = '<label class="switch">
 										  <input type="checkbox" name="onoffswitch_alert" class="onoffswitch-checkbox" id=switch_alert' . $alert_status ['id'] . ' value=' . $alert_status ['is_alert_enable'] . ' onclick="javascript:process_alert(' . $alert_status ['id'] . ',' . $alert_status ['table'] . ')" checked>
 										  <span class="slider round"></span>
@@ -861,29 +862,29 @@ class common {
 										</label>';
 			}
 		} else {
-			return ($alert_status == 0) ? "Active" : "Inactive";
+			return (astpp_eq0($alert_status)) ? "Active" : "Inactive";
 		}
 		return $alert_status_array;
 	}
 
-	function get_routetype($select = "", $table = "", $status) {
-		return ($status == 0) ? "LCR" : "COST";
+	function get_routetype($select, $table, $status) {
+		return (astpp_eq0($status)) ? "LCR" : "COST";
 	}
-	function get_prorate($select = "", $table = "", $status) {
-		return ($status == 0) ? "Yes" : "No";
+	function get_prorate($select, $table, $status) {
+		return (astpp_eq0($status)) ? "Yes" : "No";
 	}
 	function get_import_status($status) {
 		return strtolower ( trim ( $status ) ) == 'active' ? 0 : 1;
 	}
 	function get_did_status($select, $table, $status) {
-		return ($status ['status'] == 0) ? "<span class='label label-sm label-inverse arrowed-in' title='release'>Active<span>" : "<span class='label label-sm' title='release'>Inactive<span>";
+		return (astpp_eq0($status ['status'])) ? "<span class='label label-sm label-inverse arrowed-in' title='release'>Active<span>" : "<span class='label label-sm' title='release'>Inactive<span>";
 	}
-	function get_invoice_date($select, $accountid = 0, $reseller_id, $order_by = 'id') {
+	function get_invoice_date($select, $accountid, $reseller_id, $order_by = 'id') {
 
 		$where = array (
 				"reseller_id" => $reseller_id
 		);
-		if ($accountid > 0) {
+		if (astpp_gt($accountid, 0)) {
 			$where ['accountid'] = $accountid;
 			$posttoexternal = $this->get_field_name ( "posttoexternal", "accounts", array (
 					"id" => $accountid
@@ -900,13 +901,13 @@ class common {
 
 		return false;
 	}
-	function convert_to_date($select = '', $table = '', $from_date) {
-		$from_date = date ( 'Y-m-d', strtotime ( $from_date ) );
+	function convert_to_date($select, $table, $from_date) {
+		$from_date = astpp_date ( 'Y-m-d', strtotime ( $from_date ) );
 		return $from_date;
 	}
-	function get_account_balance($select = "", $table = "", $amount) {
+	function get_account_balance($select, $table, $amount) {
 		$this->CI->load->model ( 'common_model' );
-		if ($amount == 0) {
+		if (astpp_eq0($amount)) {
 			return $amount;
 		} else {
 			$balance = $this->CI->common_model->add_calculate_currency ( ($amount), "", '', true, true );
@@ -914,18 +915,18 @@ class common {
 			return $balance;
 		}
 	}
-	function convert_to_currency($select = "", $table = "", $amount) {
+	function convert_to_currency($select, $table, $amount) {
 		$this->CI->load->model ( 'common_model' );
 		return $this->CI->common_model->calculate_currency ( $amount, '', '', true, false );
 	}
-	function account_number_icon($select = "", $table = "", $number) {
+	function account_number_icon($select, $table, $number) {
 		$return_value = '';
 		$where = array (
 				'number' => $number
 		);
 		$this->CI->db->where("deleted",0);
 		$account_res = ( array ) $this->CI->db->get_where ( "accounts", $where )->first_row ();
-		if ($account_res ['type'] == 0) {
+		if (astpp_eq0($account_res ['type'])) {
 			$return_value = " <span title='Edit'>" . $account_res ['number'] . " </span>" . '<span class="badge badge-success float-left mt-1" title="Customer">'.gettext("Customer").'</span>';
 		}
 		if ($account_res ['type'] == 3) {
@@ -939,14 +940,14 @@ class common {
 		}
 		return $return_value;
 	}
-	function convert_to_currency_account($select = "", $table = "", $amount) {
+	function convert_to_currency_account($select, $table, $amount) {
 		$this->CI->load->model ( 'common_model' );
 		return $this->CI->common_model->calculate_currency_customer ( $amount );
 	}
-	function get_paid_status($select = "", $table = "", $status) {
+	function get_paid_status($select, $table, $status) {
 		return ($status == 1) ? "Paid" : "Unpaid";
 	}
-	function set_account_type_recharge($select = "", $table = "", $status) {
+	function set_account_type_recharge($select, $table, $status) {
 		return ($status == 1) ? "Postpaid" : "Prepaid";
 	}
 	function set_account_type($status = '') {
@@ -964,10 +965,10 @@ class common {
 		);
 		return $status_array;
 	}
-	function get_account_type($select = "", $table = "", $PTE) {
+	function get_account_type($select, $table, $PTE) {
 		return ($PTE == 1) ? gettext("Postpaid") : gettext("Prepaid");
 	}
-	function get_refill_by($select = "", $table = "", $type) {
+	function get_refill_by($select, $table, $type) {
 		if ($type == '-1') {
 			$type = "Admin";
 		} else {
@@ -975,7 +976,7 @@ class common {
 		}
 		return $type;
 	}
-	function get_payment_by($select = "", $table = "", $type) {
+	function get_payment_by($select, $table, $type) {
 		if ($type == '-1') {
 			$type = "Admin";
 		} else {
@@ -1062,11 +1063,11 @@ class common {
 		);
 		return $status_array;
 	}
-	function convert_to_percentage($select = "", $table = "", $amount) {
-		return round ( $amount, 2 ) . " %";
+	function convert_to_percentage($select, $table, $amount) {
+		return astpp_round ( $amount, 2 ) . " %";
 	}
-	function convert_to_minutes($select = "", $table = "", $amount) {
-		return str_replace ( '.', ':', round ( $amount / 60, 2 ) );
+	function convert_to_minutes($select, $table, $amount) {
+		return str_replace ( '.', ':', astpp_round ( astpp_n($amount) / 60, 2 ) );
 	}
 	function set_filter_type_search($status = '') {
 		$status_array = array (
@@ -1208,7 +1209,7 @@ class common {
                         $permissioninfo = $this->CI->session->userdata('permissioninfo');
                         $logintype = $this->CI->session->userdata('logintype');
 			foreach ( $buttons_arr as $button_key => $buttons_params ) {
-			if((isset($permissioninfo[$module_name][$sub_module_name][strtolower($button_key)]) && $permissioninfo[$module_name][$sub_module_name][strtolower($button_key)] == 0  or $permissioninfo['login_type'] == '-1' or $permissioninfo['login_type'] == '0' or $permissioninfo['login_type'] == '3')){
+			if((isset($permissioninfo[$module_name][$sub_module_name][strtolower($button_key)]) && astpp_eq0($permissioninfo[$module_name][$sub_module_name][strtolower($button_key)])  or $permissioninfo['login_type'] == '-1' or $permissioninfo['login_type'] == '0' or $permissioninfo['login_type'] == '3')){
 				if (strtoupper ( $button_key ) == "EDIT") {
 					$ret_url .= $this->build_edit_button ( $buttons_params, $linkid );
 				}
@@ -1343,7 +1344,7 @@ class common {
 					'pricelist_id' => $linkid
 			);
 			$rategroup_cnt = $this->get_field_count ( 'id', 'routes', $where );
-			if ($rategroup_cnt > 0 || $customer_cnt > 0) {
+			if (astpp_gt($rategroup_cnt, 0) || astpp_gt($customer_cnt, 0)) {
 
 				return '<a href="' . $link . '" class="btn btn-royelblue btn-sm" title="Delete" onClick="return get_alert_message(' . $rategroup_cnt . ',' . $customer_cnt . ',' . $linkid . ',1);"><i class="fa fa-trash fa-fw"></i></a>';
 			} else {
@@ -1355,7 +1356,7 @@ class common {
 					'trunk_id' => $linkid
 			);
 			$trunk_cnt = $this->get_field_count ( 'id', 'outbound_routes', $where );
-			if ($trunk_cnt > 0) {
+			if (astpp_gt($trunk_cnt, 0)) {
 				return '<a href="' . $link . '" class="btn btn-royelblue btn-sm" title="Delete" onClick="return get_alert_message(' . $trunk_cnt . ',null,' . $linkid . ',2);"><i class="fa fa-trash fa-fw"></i></a>';
 			} else {
 				return '<a href="' . $link . '" class="btn btn-royelblue btn-sm" title="Delete" onClick="return get_alert_msg();"><i class="fa fa-trash fa-fw"></i></a>';
@@ -1436,7 +1437,7 @@ class common {
 			return '<a href="' . $link . '" class="btn btn-royelblue btn-sm" title="Resend Mail"><i class="fa fa-repeat"></i></a>&nbsp;';
 		}
 	}
-	function get_only_numeric_val($select = "", $table = "", $string) {
+	function get_only_numeric_val($select, $table, $string) {
 		if($table=='routes' || $table=='outbound_routes'){
 			return preg_replace('/[^\d+0-9]/', '', $string);
 		}else{
@@ -1448,7 +1449,7 @@ class common {
 	// Kinjal ASTPPCOM-978 END
 		$subject              = "";
 		$settings_reply_email = 'astpp@astpp.com';
-		$reseller_id          = $accountinfo['reseller_id'] > 0 ? $accountinfo['reseller_id'] : 0;
+		$reseller_id          = astpp_gt($accountinfo['reseller_id'], 0) ? $accountinfo['reseller_id'] : 0;
 		$invoiceconf = (array)$this->CI->db_model->getSelect('company_name,website,emailaddress' , 'invoice_conf' , array("accountid" => 1))->first_row();
 		if($type == 'email_sent_support_ticket' || $type == 'auto_reply_mail_support'){
 			$department_id = $this->get_field_name('department_id','support_ticket' , array("support_ticket_number" => $accountinfo['ticket_number']));
@@ -1514,7 +1515,7 @@ class common {
         	$message = str_replace('#PRODUCT_NAME#', $accountinfo['name'], $message);
         	$message = str_replace('#NEXT_BILL_DATE#', $accountinfo['next_billing_date'], $message);
 			$message = str_replace('#QUANTITY#', $accountinfo['quantity'], $message);
-			$message = str_replace('#TOTAL_PRICE#', isset($accountinfo['quantity']) && $accountinfo['quantity'] != 0 ?$accountinfo['price'] * $accountinfo['quantity'] : $accountinfo['price'], $message);
+			$message = str_replace('#TOTAL_PRICE#', isset($accountinfo['quantity']) && (!astpp_eq0($accountinfo['quantity'])) ?astpp_n($accountinfo['price']) * astpp_n($accountinfo['quantity']) : $accountinfo['price'], $message);
 			$message = str_replace('#PRODUCT_AMOUNT#', $accountinfo['price'], $message);
 		break;
 
@@ -1604,7 +1605,7 @@ class common {
 			{
 				$today_date = gmdate('Y-m-d H:i:s');
 				$purge_date = common_model::$global_config['system_config']['automated_report_attachment_deleted'];
-				$last_date = date('Y-m-d' , strtotime("+ ".$purge_date." day"));
+				$last_date = astpp_date('Y-m-d' , strtotime("+ ".$purge_date." day"));
 				$filelink = $purge_date != -1 ? '<p>You can download Automated report from following link until '.$last_date.' </p>' : '<p>You can download Automated report from following link </p>';
 				$filelink .= '<a href="'.$filePath.'" target="_blank">'.$filePath.'</a>';
 				$message = $message.'<br/>'.$filelink;
@@ -1720,7 +1721,7 @@ class common {
 
 			case 'product_purchase':
 				// Kinjal ASTPPENT-1028 Start		
-				$accountinfo['total_price_amount'] = isset($accountinfo['quantity']) && $accountinfo['quantity'] != 0 ?$accountinfo['price'] * $accountinfo['quantity'] : (isset($accountinfo['price']) ?$accountinfo['price']:'' );
+				$accountinfo['total_price_amount'] = isset($accountinfo['quantity']) && (!astpp_eq0($accountinfo['quantity'])) ?astpp_n($accountinfo['price']) * astpp_n($accountinfo['quantity']) : (isset($accountinfo['price']) ?$accountinfo['price']:'' );
 				// Kinjal ASTPPENT-1028 END		
                 $subject = str_replace('#NAME#', $accountinfo['first_name'], $subject);
                 $subject = str_replace('#PRODUCT_NAME#', $accountinfo['name'], $subject);
@@ -1740,7 +1741,7 @@ class common {
             break;
 
     		// Ashish ASTPPCOM-743
-            case 'product_release';
+            case 'product_release':
 
 			$product_name = (isset($accountinfo['name'])) ? $accountinfo['name'] : (isset($accountinfo['product_name'])  ? $accountinfo['product_name'] : $product_name);
 
@@ -1765,7 +1766,7 @@ class common {
             break;
             // // Ashish ASTPPCOM-743 End
 
-            case 'product_renewal_notice';
+            case 'product_renewal_notice':
 
                 $subject = str_replace('#PRODUCT_NAME#', $accountinfo['product_name'], $subject);
 				$subject = str_replace('#NUMBER#', $accountinfo['number'], $subject);
@@ -1777,7 +1778,7 @@ class common {
 
             break;
 
-             case 'product_commission';
+             case 'product_commission':
 				$subject = str_replace('#AMOUNT#', $accountinfo['amount'], $subject);
 				$subject = str_replace('#PRODUCT_NAME#', $accountinfo['product_name'], $subject);
 				$message = str_replace('#NAME#', $accountinfo['first_name'] . " " . $accountinfo['last_name'], $message);
@@ -1787,7 +1788,7 @@ class common {
                 $message = str_replace('#COMPANY_EMAIL#', $settings_reply_email, $message);
             break;
 
-            case 'fraud_whitelisted_login';
+            case 'fraud_whitelisted_login':
 				$message = str_replace('#NAME#', $accountinfo['first_name'] . " " . $accountinfo['last_name'], $message);
                 $message = str_replace('#THRESHOLD#.', $accountinfo['number'], $message);
                 $message = str_replace('#IP#', $accountinfo['password'], $message);
@@ -1864,7 +1865,7 @@ class common {
 
     }
 
-    function emailFunction($from, $to, $subject, $message,$alert_template="",$usermobile="",$sms_message, $company_name = "", $attachment = "", $account_id, $reseller_id,$sip_user_name='',$callkit_token='',$status_code='',$type,$emailstatus = '') {
+    function emailFunction($from, $to, $subject, $message,$alert_template,$usermobile,$sms_message, $company_name, $attachment, $account_id, $reseller_id,$sip_user_name,$callkit_token,$status_code,$type,$emailstatus = '') {
 
     				$sms_message = '';
 					$alert_template = '';
@@ -1937,7 +1938,7 @@ class common {
 					return $last_id;
     }
 
-	function convert_GMT_to($select = "", $table = "", $date, $timezone_id = '') {
+	function convert_GMT_to($select, $table, $date, $timezone_id = '') {
 
 		if ($date == '0000-00-00 00:00:00') {
 			return $date;
@@ -1949,13 +1950,13 @@ class common {
 	function convert_GMT($date) { 
 		return $this->CI->timezone->convert_to_GMT ($date );
 	}
-	function convert_GMT_to_new($select = "", $table = "", $date, $timezone_id = '') {
+	function convert_GMT_to_new($select, $table, $date, $timezone_id = '') {
 
 		if ($date == '0000-00-00 00:00:00') {
 			return $date;
 		} else {
 
-			return  date("Y-m-d" , strtotime($this->CI->timezone->display_GMT ( $date, 1, $timezone_id )));
+			return  astpp_date("Y-m-d" , strtotime($this->CI->timezone->display_GMT ( $date, 1, $timezone_id )));
 		}
 	}
 
@@ -1968,7 +1969,7 @@ class common {
 		return $this->CI->timezone->convert_to_GMT_new ( $date );
 	}
 	
-	function convert_to_ucfirst($select = "", $table = "", $str_value) {
+	function convert_to_ucfirst($select, $table, $str_value) {
 		return ucfirst ( $str_value );
 	}
 	function set_charge_type($status = '') {
@@ -2015,7 +2016,7 @@ class common {
 			return $drp_array [0]->{$select_params [0]};
 		}
 	}
-	function get_invoice_total($select = '', $table = '', $id) {
+	function get_invoice_total($select, $table, $id) {
 		$where_arr = array (
 				'invoiceid' => $id,
 				'item_type <>' => "FREE"
@@ -2084,7 +2085,7 @@ class common {
 
 			$timezone_result = $timezone_result->result_array ();
 			foreach ( $timezone_result as $data ) {
-				$gmtoffset += $data ['gmtoffset'];
+				$gmtoffset = astpp_n($gmtoffset) + astpp_n($data ['gmtoffset']);
 			}
 		}
 		return $gmtoffset;
@@ -2101,7 +2102,7 @@ class common {
 		);
 		return $refill_coupon_array;
 	}
-	function get_refill_coupon_status($select = '', $table = '', $status) {
+	function get_refill_coupon_status($select, $table, $status) {
 		$refill_coupon_array = array (
 				'0' => gettext ( 'Unused' ),
 				'1' => gettext ( 'Active' ),
@@ -2110,13 +2111,13 @@ class common {
 		);
 		return $refill_coupon_array [$status];
 	}
-	function firstused_check($select = '', $table = '', $status) {
+	function firstused_check($select, $table, $status) {
 		if ($status == '0000-00-00 00:00:00') {
 			return '-';
 		}
 		return $status;
 	}
-	function get_refill_coupon_used($select = '', $table = '', $status) {
+	function get_refill_coupon_used($select, $table, $status) {
 		return $status ['status'] == 2 ? '<img src= "' . base_url () . 'assets/images/true.png" style="height:20px;width:20px;" title="Yes">' : '<img src= "' . base_url () . '/assets/images/false.png" style="height:20px;width:20px;" title="No">';
 	}
 	function encode_params($string) {
@@ -2135,7 +2136,7 @@ class common {
 
 	function encode($value) {
 		$ivSize = openssl_cipher_iv_length('BF-ECB');
-		$iv = ($ivSize > 0) ? openssl_random_pseudo_bytes($ivSize) : false;
+		$iv = (astpp_gt($ivSize, 0)) ? openssl_random_pseudo_bytes($ivSize) : false;
 		$encrypted = openssl_encrypt($value, 'BF-ECB', $this->CI->config->item ( 'private_key' ), OPENSSL_RAW_DATA, $iv);
 		$encrypted = $this->encode_params($encrypted);
 		return  $encrypted;
@@ -2258,21 +2259,21 @@ class common {
 		return $day_array;
 	}
 	
-	function convert_GMT_to_date($select = "", $table = "", $date, $timezone_id = '' ) {
+	function convert_GMT_to_date($select, $table, $date, $timezone_id = '' ) {
 		return $this->CI->timezone->display_GMT ( $date,2,$timezone_id);
 	}
 	function set_automated_report_status($select='',$table='',$status = '') {
 		if($table == 'automated_reports'){
-			return ($status == 0) ? "Day" : (($status == 1)  ? "Week" : (($status == 2) ? "Month" : "Biweekly" ));
+			return (astpp_eq0($status)) ? "Day" : (($status == 1)  ? "Week" : (($status == 2) ? "Month" : "Biweekly" ));
 		}else{
-			return ($status == 0) ? "Day" : (($status == 1)  ? "Week" : "Month");
+			return (astpp_eq0($status)) ? "Day" : (($status == 1)  ? "Week" : "Month");
 		}
 	}
 	function get_automatedreport_date($automated_fields){
 		switch ($automated_fields['interval_frequency_on']) {
 			case 1:
 				$next_week = strtotime('next week');
-				$add_array['execution_date'] = date("Y-m-d", strtotime($automated_fields['week_day'], $next_week));
+				$add_array['execution_date'] = astpp_date("Y-m-d", strtotime($automated_fields['week_day'], $next_week));
 				return $add_array['execution_date'];
 			break;
 		}		
@@ -2282,9 +2283,9 @@ class common {
 		return $decoded_fields['module'];
 	}
 	// Kinjal ASTPPCOM-978 END
-	function email_status($select = "", $table = "", $status) {
+	function email_status($select, $table, $status) {
 		// ASTPPCOM-924 Start
-		if($status['status'] == 0){
+		if(astpp_eq0($status['status'])){
 			$status= gettext("Sent");
 		}else if($status['status'] == 2){
 			$status=gettext("Failed");
@@ -2516,9 +2517,9 @@ class common {
 		$decimal_points = $currency_info ['decimalpoints'];
 		$system_currency_rate = $currency_info ['base_currency'] ['currencyrate'];
 		$user_currency_rate = $currency_info ['user_currency'] ['currencyrate'];
-		$calculated_amount = ( float ) (($amount * $currency_info ['user_currency'] ['currencyrate']) / $currency_info ['base_currency'] ['currencyrate']);
+		$calculated_amount = ( float ) (astpp_div(astpp_n($amount) * astpp_n($currency_info ['user_currency'] ['currencyrate']), $currency_info ['base_currency'] ['currencyrate']));
 		if ($number_format) {
-			$calculated_amount = number_format ( $calculated_amount, $currency_info ['decimalpoints'] );
+			$calculated_amount = astpp_number_format ( $calculated_amount, $currency_info ['decimalpoints'] );
 		}
 		if ($show_currency_flag) {
 			return $calculated_amount . " " . $currency_info ['user_currency'] ['currency'];
@@ -2547,9 +2548,9 @@ class common {
 		if($accountinfo['type'] == -1 || $accountinfo['type'] == 2)
 		{
 			$trunk=array('trunk_id'=>gettext("Trunk"));
-			$status_array=array_merge($status_array,$trunk);
+			$status_array=astpp_array_merge($status_array,$trunk);
 			$calltype=array('calltype'=>gettext("Call Type"));
-			$status_array=array_merge($status_array,$calltype);
+			$status_array=astpp_array_merge($status_array,$calltype);
 		}
 		return $status_array;
 	}
@@ -2565,7 +2566,7 @@ class common {
 	function get_currency_info() {
 		$base_currency = Common_model::$global_config ['system_config'] ['base_currency'];
 		$accountinfo = $this->CI->session->userdata ( 'accountinfo' );
-		$user_currency_id = $accountinfo ['currency_id'] > 0 ? $accountinfo ['currency_id'] : $base_currency;
+		$user_currency_id = astpp_gt($accountinfo ['currency_id'], 0) ? $accountinfo ['currency_id'] : $base_currency;
 		$where = "currency = '" . $base_currency . "' OR id= " . $user_currency_id;
 		$this->CI->db->where ( $where );
 		$this->CI->db->select ( '*' );
@@ -2587,10 +2588,10 @@ class common {
 		$currency_info ['decimalpoints'] = Common_model::$global_config ['system_config'] ['decimalpoints'];
 		return $currency_info;
 	}
-	function convert_to_show_in($search_name = "", $table = "", $second) {
+	function convert_to_show_in($search_name, $table, $second) {
 		$search_arr = $this->CI->session->userdata ( $search_name );
 		$show_seconds = (! empty ( $search_arr ['search_in'] )) ? $search_arr ['search_in'] : 'minutes';
-		return ($show_seconds === 'minutes') ? ($second > 0) ? sprintf ( '%02d', $second / 60 ) . ":" . sprintf ( '%02d', ($second % 60) ) : "00:00" : sprintf ( '%02d', $second );
+		return ($show_seconds === 'minutes') ? (astpp_gt($second, 0)) ? sprintf ( '%02d', astpp_n($second) / 60 ) . ":" . sprintf ( '%02d', (astpp_n($second) % 60) ) : "00:00" : sprintf ( '%02d', $second );
 	}
 	function array_column($input, $columnKey, $indexKey = null) {
 		$array = array ();
@@ -2630,24 +2631,24 @@ class common {
 	function currency_decimal($amount) {
 		$amount = str_replace ( ',', '', $amount );	
 		$decimal_amount = Common_model::$global_config ['system_config'] ['decimalpoints'];
-		$number_convert = number_format ( ( float ) $amount, $decimal_amount, '.', '' );
+		$number_convert = astpp_number_format ( ( float ) $amount, $decimal_amount, '.', '' );
 		return $number_convert;
 	}
 	function commission_decimal($select,$table,$id_where='') {
 		$this->CI->db->select('commission');
 		$commission=(array)$this->CI->db->get_where("commission",array("id"=>$id_where))->first_row();	
 		$decimal_amount = Common_model::$global_config ['system_config'] ['decimalpoints'];
-		$number_convert = number_format ( ( float ) $commission['commission'], $decimal_amount, '.', '' );
+		$number_convert = astpp_number_format ( ( float ) $commission['commission'], $decimal_amount, '.', '' );
 		return $number_convert;
 	}
 	function decimal_currency($select,$table,$id_where='') {
 
 		$amount = str_replace ( ',', '', $id_where );
-		return number_format ( $amount, Common_model::$global_config ['system_config'] ['decimalpoints'] );
+		return astpp_number_format ( $amount, Common_model::$global_config ['system_config'] ['decimalpoints'] );
 	}
 	function add_invoice_details($account_arr, $charge_type, $amount, $description) {		
 		$accountinfo = $this->CI->session->userdata ( 'accountinfo' );
-		$reseller_id = ($account_arr['reseller_id'] > 0)?$account_arr['reseller_id']:1;
+		$reseller_id = (astpp_gt($account_arr['reseller_id'], 0))?$account_arr['reseller_id']:1;
 		$where = "accountid IN ('" . $reseller_id . "')";
 		$this->CI->db->where ( $where );
 		$this->CI->db->select ( '*' );
@@ -2657,8 +2658,8 @@ class common {
 		$invoice_conf = ( array ) $invoiceconf->first_row ();
 		$last_invoiceid = $this->get_invoice_date ( 'invoiceid', '', $account_arr ['reseller_id'] );
 
-		if ($last_invoiceid && $last_invoiceid > 0) {
-			$last_invoiceid = ($last_invoiceid + 1);			
+		if ($last_invoiceid && astpp_gt($last_invoiceid, 0)) {
+			$last_invoiceid = (astpp_n($last_invoiceid) + 1);			
 			if ($last_invoiceid < $invoice_conf ['invoice_start_from'])
 					$last_invoiceid = $invoice_conf ['invoice_start_from'];	
 		} else {
@@ -2666,11 +2667,11 @@ class common {
 		}
 		$last_invoiceid = str_pad ( $last_invoiceid, 6 , '0', STR_PAD_LEFT );
 		$invoice_prefix = $invoice_conf ['invoice_prefix'];
-		$due_date = $invoice_conf ['interval']  > 0 ? date ( "Y-m-d H:i:s", strtotime ( gmdate ( "Y-m-d H:i:s" ) . " +" . $invoice_conf ['interval'] . " days" ) ) : gmdate ( "Y-m-d H:i:s" );
+		$due_date = astpp_gt($invoice_conf ['interval'], 0) ? astpp_date ( "Y-m-d H:i:s", strtotime ( gmdate ( "Y-m-d H:i:s" ) . " +" . $invoice_conf ['interval'] . " days" ) ) : gmdate ( "Y-m-d H:i:s" );
 
-		$invoiceid = $account_arr ['posttoexternal'] == 0 ? $this->CI->common_model->generate_receipt ( $account_arr ['id'], $amount, $account_arr, $last_invoiceid, $invoice_prefix, $due_date ) : 0;
+		$invoiceid = astpp_eq0($account_arr ['posttoexternal']) ? $this->CI->common_model->generate_receipt ( $account_arr ['id'], $amount, $account_arr, $last_invoiceid, $invoice_prefix, $due_date ) : 0;
 
-		$balance = ($account_arr ['posttoexternal'] == 1) ? $account_arr ['credit_limit'] - $account_arr ['balance'] : $account_arr ['balance'];
+		$balance = ($account_arr ['posttoexternal'] == 1) ? astpp_n($account_arr ['credit_limit']) - astpp_n($account_arr ['balance']) : $account_arr ['balance'];
 
 		$insert_arr = array (
 				"accountid" => $account_arr ['id'],
@@ -2683,7 +2684,7 @@ class common {
 				"item_type" => $charge_type,
 				"item_id" => '0',
 				"before_balance" => $balance,
-				"after_balance" => $balance - $amount
+				"after_balance" => astpp_n($balance) - astpp_n($amount)
 		);
 		$this->CI->db->insert ( "invoice_details", $insert_arr );
 		return true;
@@ -2691,7 +2692,7 @@ class common {
 	function customer_delete_dependencies($id,$entity=0) {
 		// An empty selection (id '' or 0) deleted the records without account (accountid 0)
 		$id = ( int ) $id;
-		if ($id <= 0) {
+		if (astpp_le($id, 0)) {
 			return;
 		}
 		$this->delete_data ( 'ani_map', array (
@@ -2759,7 +2760,7 @@ class common {
 	function reseller_delete_dependencies($id) {
 		// Id '' or 0 worked on the data of the admin (reseller_id 0)
 		$id = ( int ) $id;
-		if ($id <= 0) {
+		if (astpp_le($id, 0)) {
 			return;
 		}
 		$accountinfo = $this->CI->session->userdata ( 'accountinfo' );
@@ -2839,7 +2840,7 @@ class common {
 	function subreseller_list($parent_id = '') {
 		// An empty selection (id '' or 0) deleted the customers of the admin (reseller_id 0)
 		$parent_id = ( int ) $parent_id;
-		if ($parent_id <= 0) {
+		if (astpp_le($parent_id, 0)) {
 			return;
 		}
 		$customer_id = $parent_id;
@@ -2893,8 +2894,8 @@ class common {
 		);
 		return $status_array;
 	}
-	function get_call_waiting($select = "", $table = "", $status) {
-		return ($status == 0) ? "Enable" : "Disable";
+	function get_call_waiting($select, $table, $status) {
+		return (astpp_eq0($status)) ? "Enable" : "Disable";
 	}
 	function set_invoice_details($select = '') {
 		$status_array = array (
@@ -2958,7 +2959,7 @@ class common {
 		} else {
 			$str = null;
 		}
-		if ($child_id > 0) {
+		if (astpp_gt($child_id, 0)) {
 			$query = "select reseller_id from accounts where id = '$child_id'";
 			$result = $this->CI->db->query ( $query );
 			if ($result->num_rows () > 0) {
@@ -2981,12 +2982,12 @@ class common {
 		return $account_name;
 	}
 	function get_status_new($select = "", $table = "", $status = "") {
-		return ($status ['status'] == 0) ? "<span class='label label-sm label-inverse arrowed-in' title='release'>Active<span>" : "<span class='label label-sm' title='release'>Inactive<span>";
+		return (astpp_eq0($status ['status'])) ? "<span class='label label-sm label-inverse arrowed-in' title='release'>Active<span>" : "<span class='label label-sm' title='release'>Inactive<span>";
 	}
 	function Get_Invoice_configuration($AccountData) {
 	    	    
 		$InvoiceConf = array ();
-		$reseller_id = ($AccountData ['reseller_id'] == 0) ? 1 : $AccountData ['reseller_id'];
+		$reseller_id = (astpp_eq0($AccountData ['reseller_id'])) ? 1 : $AccountData ['reseller_id'];
 		$where = "accountid IN ('" . $reseller_id . "','1')";
 		$this->CI->db->select ( '*' );
 		$this->CI->db->where ( $where );
@@ -3005,13 +3006,13 @@ class common {
 		$header = NULL;
 		$data = array ();
 		if (($handle = fopen ( $filename, 'r' )) !== FALSE) {
-			while ( ($row = fgetcsv ( $handle, 1000, $delimiter )) !== FALSE ) {
+			while ( ($row = fgetcsv ( $handle, 1000, $delimiter, '"', '\\' )) !== FALSE ) {
 				
 				if (! $header)
 					$header = $row;
 				else{
 					if(!empty($row)){
-						$data [] = array_combine ( $header, $row );
+						$data [] = astpp_array_combine ( $header, $row );
 					}	
 				}	
 			}
@@ -3024,7 +3025,7 @@ class common {
 	function utf8_converter($array) {
 		array_walk_recursive ( $array, function (&$item, $key) {
 			if (! mb_detect_encoding ( $item, 'utf-8', true )) {
-				$item = utf8_encode ( $item );
+				$item = mb_convert_encoding($item, 'UTF-8', 'ISO-8859-1') /* PHP8: utf8_encode() is deprecated */;
 			}
 		} );
 		return $array;
@@ -3065,7 +3066,7 @@ class common {
         }
         return $status_array;
     }
-    function get_did_destination($select = "", $table = "", $id){ 
+    function get_did_destination($select, $table, $id){ 
 		$name='';
 		if($this->CI->db->table_exists('pbx_ringgroup') && $this->CI->db->table_exists('tbl_conference_specification') && $this->CI->db->table_exists('tbl_ivr_specification')) {
 			$accountinfo = $this->CI->session->userdata ( 'accountinfo' );
@@ -3116,7 +3117,7 @@ class common {
 			$uname = $this->astpp_random_digits($size);
 		}
 		$start_prifix_value = common_model::$global_config ['system_config'] ['startingdigit'];
-		if ($tablename == 'accounts' && $start_prifix_value != 0) {
+		if ($tablename == 'accounts' && (!astpp_eq0($start_prifix_value))) {
 			$length = strlen ( $start_prifix_value );
 			$uname = substr ( $uname, $length );
 			$uname = $start_prifix_value . $uname;
@@ -3190,8 +3191,8 @@ class common {
 		);
 		return $status_array;
 	}
-	function get_tax_type($select = "", $table = "", $status) {
-		return ($status == 0) ? "Default" : "Other";
+	function get_tax_type($select, $table, $status) {
+		return (astpp_eq0($status)) ? "Default" : "Other";
 	}
 	function set_tax_search_type($select = '') {
 		$status_array = array (
@@ -3214,7 +3215,7 @@ class common {
 		return $cron_type_array;
 	}
 	
-	function get_cron_type($select = "", $table = "", $cron_type) {
+	function get_cron_type($select, $table, $cron_type) {
 		$cron_type_array = array (
 				"" => gettext ( "--Select--" ),
 				'minutes' => gettext ( 'Minute' ),
@@ -3248,7 +3249,7 @@ class common {
 		);
 		return $status_array;
 	}
-	function get_renewal_type_category_list($status = '', $table = "", $category) {
+	function get_renewal_type_category_list($status, $table, $category) {
 		
 		$plans_category = array (
 				'0' => gettext ( 'One Time' ),
@@ -3256,7 +3257,7 @@ class common {
 		);
 		return $plans_category[$category];
 	}
-	function get_renewal_type_category($status = '', $table = "", $id) {
+	function get_renewal_type_category($status, $table, $id) {
 		$renewal_data=$this->CI->db_model->getSelect('renew_count,renewal_type',$table,array('id'=>$id));
 		$renewaldata=$renewal_data->result_array();
 		
@@ -3278,10 +3279,10 @@ class common {
 		$included_seconds = $this->get_field_name ( "included_seconds", "plans", array (
 					"id" => $plan_result['plans_id'] 
 			) );
-		$available_seconds = $included_seconds - $used_seconds;
+		$available_seconds = astpp_n($included_seconds) - astpp_n($used_seconds);
 		return  $available_seconds;	
 	 }
-	function get_type($select = "", $table = "", $type){
+	function get_type($select, $table, $type){
 		$get_type_array = array (
 				"" => gettext ( "--Select--" ),
 				'0' => gettext ( 'Black List' ),
@@ -3311,7 +3312,7 @@ class common {
 	}
 	
 	
-	function get_number_type($select = "", $table = "", $number_type){
+	function get_number_type($select, $table, $number_type){
 		$get_number_type = array (
 				"" => gettext ( "--Select--" ),
 				'0' => gettext ( 'CLI' ),
@@ -3349,7 +3350,7 @@ class common {
 		return $set_action_type;		
 	}
 	
-	function get_action_type($select = "", $table = "", $action_type){
+	function get_action_type($select, $table, $action_type){
 		$get_action_type= array (
 				"" => gettext ( "--Select--" ),
 				'0' => gettext ( 'Allow' ),
@@ -3374,7 +3375,7 @@ class common {
 		);
 		return $set_destination_type;		
 	}
-	function get_destination_type($select = "", $table = "",$destination_type){
+	function get_destination_type($select, $table,$destination_type){
 		$get_destination_type = array (
 				"" => gettext ( "--Select--" ),
 				'0' => gettext ( 'Inbound' ),
@@ -3419,13 +3420,13 @@ class common {
 		);
 		return $status_array;
 	}
-	function optin_status($select = "", $table = "", $status) {
+	function optin_status($select, $table, $status) {
 		$link =  base_url () ."products/products_edit_reseller_optinproduct/" . $status;
 		return  '<a href="'.$link.'" class="btn btn-royelblue btn-sm animap_image" rel="facebox" title="Optin" onclick="return javascript:optinproduct(' . $status  . ')"><i class="fa fa-reorder fa-fw"></i></a>';
 				
 	}
 	
-	function check_did_available_reseller($select='', $table='', $number) 
+	function check_did_available_reseller($select, $table, $number) 
 	{
 		//ASTPPCOM - 1342 start
 		$did_id =(array)$this->CI->db->get_where("dids",array("number"=>$number))->first_row();
@@ -3433,9 +3434,9 @@ class common {
         //ASTPPCOM - 1342 end
 		return  '<a href="'.$link.'" <span  class="label label-sm label-inverse_blue arrowed_blue-in" rel="facebox" title="release">Purchase<span></a>';
 	}
-	function build_did_forward($select='', $table='', $id) {
+	function build_did_forward($select, $table, $id) {
 		$accountinfo = $this->CI->session->userdata ( 'accountinfo' );
-		if($accountinfo['type'] == 0 || $accountinfo['type'] == 3  ){
+		if(astpp_eq0($accountinfo['type']) || $accountinfo['type'] == 3  ){
 			$link =  base_url () ."user/user_did_forward/" . $id;
 		}else{
 			$link =  base_url () ."did/did_forward/" . $id;
@@ -3456,13 +3457,13 @@ class common {
 
 	 function order_date($select="",$table= "",$date= ""){ 
 		$date = $this->convert_GMT_to($select = "", $table = "", $date, $timezone_id = '');
-		$converted_date = date("Y-m-d",strtotime($date));
+		$converted_date = astpp_date("Y-m-d",strtotime($date));
 		return $converted_date;
 	}
 	
 	function get_did_billing_type($select="",$table= "",$product_id= ""){
 		$billing_type = $this->get_field_name("billing_type","products",array("id"=>$product_id));
-		return $billing_type = ($billing_type == 0) ?"One Time" :"Reccuring";
+		return $billing_type = (astpp_eq0($billing_type)) ?"One Time" :"Reccuring";
 	}
 
 	function get_localization($select = "", $table = "", $type = '') {
@@ -3475,7 +3476,7 @@ class common {
 		return $status_array;
 
 	}
-	function get_order_id($select='', $table='', $where) {
+	function get_order_id($select, $table, $where) {
 		if (is_array ( $where )) {
 			$where = $where;
 		} else {
@@ -3492,7 +3493,7 @@ class common {
 		}
 	}
 	
-	function payment_status_icon($select = "", $table = "", $commission_status) {
+	function payment_status_icon($select, $table, $commission_status) {
 		$return_value = '';
 		$where = array (
 				'commission_status' => $commission_status
@@ -3522,7 +3523,7 @@ class common {
 		);
 		return $status_array;
 	}
-	function get_cli_pool($select = "", $table = "",$status){
+	function get_cli_pool($select, $table,$status){
 		$status_array = array(
 			'0' => 'Disable',
 			'1' => 'DID (CLI Match, If not matched then use random allocated DID)',
@@ -3572,8 +3573,8 @@ class common {
 		$permission_array['login_type'] = $accountinfo['type'];
 		return $permission_array;
 	}
-	function permission_login_type($select = "", $table = "", $status) {
-		return ($status == 0) ? "Admin" : "Reseller";
+	function permission_login_type($select, $table, $status) {
+		return (astpp_eq0($status)) ? "Admin" : "Reseller";
 	}
 	function set_search_permission_login_type($select = '') {
 		$status_array = array (
@@ -3656,7 +3657,7 @@ class common {
 		);
 		return $set_search_localization_type_type;		
 	}
-	function convert_to_currency_cdrs_debit($select = "", $table = "", $uniqueid) {
+	function convert_to_currency_cdrs_debit($select, $table, $uniqueid) {
 		$query = $this->CI->db->get_where ( "cdrs", array("uniqueid" => $uniqueid));
 		$data=$query->row_array();
 		$this->CI->load->model ( 'common_model' );
@@ -3676,13 +3677,13 @@ class common {
 		);
 		return $direction_array;
 	}
-	function get_price_orders($select = "", $table = "", $orderid){
+	function get_price_orders($select, $table, $orderid){
 		$price = $this->get_field_name("price","order_items",array("order_id"=>$orderid));
 		$setup_fee = $this->get_field_name("setup_fee","order_items",array("order_id"=>$orderid));
-		$amount = $price+$setup_fee;
+		$amount = astpp_n($price)+astpp_n($setup_fee);
 		return $this->CI->common_model->calculate_currency ( $amount, '', '', true, false );
 	}
-	function check_recording_exist($select = "", $table = "" ,$uid){
+	function check_recording_exist($select, $table,$uid){
 		$accountinfo = $this->CI->session->userdata ( 'accountinfo' );
 
 		$cdrs_result = $this->CI->db_model->getSelect ( 'calltype,call_direction,billseconds', "cdrs", array("uniqueid"=>$uid) );
@@ -3706,7 +3707,7 @@ class common {
 
 			$action .= "<button onclick='pauseAudio(\"$uid\")' type='button'  class='btnplay' id='pause_".$uid."' style='display: none;margin:0px 0 0 25px;border:0px !important; float:left;padding:0px'><img src=".$pause_img_url." height='25px' width='25px' style='cursor: pointer;'/></button>";
 
-			$recording = ($accountinfo['is_recording'] == 0) ? '<a title="Recording file" href="'.$url.'"><img src="' . base_url() . 'assets/images/download.png" height="20px" width="20px"/></a>' : '<img src="' . base_url() . 'assets/images/false.png" height="20px" alt="file not found" width="20px"/>';
+			$recording = (astpp_eq0($accountinfo['is_recording'])) ? '<a title="Recording file" href="'.$url.'"><img src="' . base_url() . 'assets/images/download.png" height="20px" width="20px"/></a>' : '<img src="' . base_url() . 'assets/images/false.png" height="20px" alt="file not found" width="20px"/>';
 					
 		}else{
 			$recording='<img src="' . base_url() . 'assets/images/false.png" height="20px" title="Record file is not available" width="20px"/>';
@@ -3750,14 +3751,14 @@ class common {
 		$endDelimiterLength = strlen($endDelimiter);
 		$startFrom = $contentStart = $contentEnd = 0;
 		while (false !== ($contentStart = strpos($str, $startDelimiter, $startFrom))) {
-			$contentStart += $startDelimiterLength;
+			$contentStart = astpp_n($contentStart) + astpp_n($startDelimiterLength);
 			$contentEnd = strpos($str, $endDelimiter, $contentStart);
 			if (false === $contentEnd) {
 				break;
 			}
-			$temp = substr($str, $contentStart, $contentEnd - $contentStart);
+			$temp = substr($str, $contentStart, astpp_n($contentEnd) - astpp_n($contentStart));
 			$contents[$temp] = isset($static_templete_words[$temp]) ? $static_templete_words[$temp] :'';
-			$startFrom = $contentEnd + $endDelimiterLength;
+			$startFrom = astpp_n($contentEnd) + astpp_n($endDelimiterLength);
 		}
 	
 		return $contents;
@@ -3798,7 +3799,7 @@ class common {
 		return $drop_down;
   }
   
-  function ipsettigs_account_number_icon($select = "", $table = "", $number) {
+  function ipsettigs_account_number_icon($select, $table, $number) {
 		$return_value = '';
 		$where = array (
 				'number' => $number
@@ -3806,13 +3807,13 @@ class common {
 		$this->CI->db->where("deleted",0);
 		$account_res = ( array ) $this->CI->db->get_where ( "accounts", $where )->first_row ();
 		
-		if ($account_res ['type'] == 0) {
+		if (astpp_eq0($account_res ['type'])) {
 			$return_value .= " <span title='Edit'> </span>" . '<div class="col-md-12 p-0"><span class="badge badge-success float-left mr-2 mt-1" title="Customer">'.gettext("Customer").'</span>';
 		}
 		if ($account_res ['type'] == 3) {
 			$return_value .= " <span title='Edit'> </span>" . '<div class="col-md-12 p-0"><span class="badge badge-primary float-left mr-2 mt-1" title="Provider">'.gettext("Provider").'</span>';
 		}
-		if ($account_res ['posttoexternal'] == 0 || $account_res ['posttoexternal'] == 1) {
+		if (astpp_eq0($account_res ['posttoexternal']) || $account_res ['posttoexternal'] == 1) {
 			$return_value .= "<span class='badge badge-dark float-left ml-1 mt-1'>".$this->get_account_type ( "", "", $account_res ['posttoexternal'] ) ."</span></div>"; 
 		}
 		return $return_value;
@@ -3886,12 +3887,12 @@ class common {
 		return $status_array;
 	}
 
-	function get_available_seconds_for_package($productid = '',$free_minutes,$used_seconds, $show_seconds=""){ 
+	function get_available_seconds_for_package($productid,$free_minutes,$used_seconds, $show_seconds=""){ 
 		 $reseller_id = $this->CI->session->userdata('logintype') == 1 || $this->CI->session->userdata('logintype') == 5 ? $this->CI->session->userdata['accountinfo']['id'] : 0;
-					$available_seconds =  $free_minutes - $used_seconds;
+					$available_seconds =  astpp_n($free_minutes) - astpp_n($used_seconds);
 					 if ($show_seconds == 'minutes') {
 						$available_seconds = $available_seconds;
-						$available_seconds = $available_seconds > 0 ? sprintf('%02d', $available_seconds / 60) . ":" . sprintf('%02d', ($available_seconds % 60)) : "00:00";						
+						$available_seconds = astpp_gt($available_seconds, 0) ? sprintf('%02d', astpp_n($available_seconds) / 60) . ":" . sprintf('%02d', (astpp_n($available_seconds) % 60)) : "00:00";						
 					    } else { 
 						$available_seconds = $available_seconds;
 						$available_seconds = sprintf('%02d', $available_seconds);	
@@ -3899,7 +3900,7 @@ class common {
 					return  $available_seconds;	
 	 }
 	function get_total_available_minutes($free_minutes,$used_seconds){ 
-					$available_seconds =  $free_minutes - $used_seconds;
+					$available_seconds =  astpp_n($free_minutes) - astpp_n($used_seconds);
 					return  $available_seconds;	
 	}
 	function get_current_login_type_timezone(){
@@ -3926,7 +3927,7 @@ class common {
 		$prepaid='';
 		$acc_creditlimit='';
 		if($field_name['posttoexternal'] == 1){
-			$acc_creditlimit = $field_name['credit_limit'] - $field_name['balance'];
+			$acc_creditlimit = astpp_n($field_name['credit_limit']) - astpp_n($field_name['balance']);
 		}else{
 			$prepaid = $field_name['balance'];
 		}
@@ -3949,7 +3950,7 @@ class common {
 		return $status_array;
 	}
 
-	function get_sip_cid_type($select = "", $table = "", $value) {
+	function get_sip_cid_type($select, $table, $value) {
 		$data=array("none"=>"None","rpid"=>"Remote-Party-ID","pid"=>" P-Asserted-Identity");
 		return  $data[$value] ;
 	} 
@@ -3988,13 +3989,13 @@ class common {
 		$field_name = $field_name->result ();
 		if (isset ( $field_name ) && ! empty ( $field_name )) {
 			if($select == 'gmtoffset'){
-				if($field_name [0]->{$select} >= 0){
-					$time = gmdate("H:i", $field_name [0]->{$select});
+				if(astpp_ge($field_name [0]->{$select}, 0)){
+					$time = astpp_gmdate("H:i", $field_name [0]->{$select});
 					$gmthours = "+".$time;
 					return $gmthours;
 				}else{
 					$gmtoffset = str_replace("-","",$field_name [0]->{$select});
-					$time = gmdate("H:i", $gmtoffset);
+					$time = astpp_gmdate("H:i", $gmtoffset);
 					$gmthours = "-".$time;
 					return $gmthours;
 				}
@@ -4034,7 +4035,7 @@ class common {
 			if($accountinfo['type'] != -1){
 				$account_permission = $permissioninfo[$module_name][$module_url];
 			}
-			if (is_array($permissioninfo) && !array_key_exists($type, $account_permission) || $accountinfo['type'] == 3) {
+			if (is_array($permissioninfo) && !astpp_array_key_exists($type, $account_permission) || $accountinfo['type'] == 3) {
 				if($accountinfo['type'] != -1){
 					$this->CI->session->set_flashdata ( 'astpp_notification','Permission Denied!');
 					if($redirect_url != ''){
@@ -4051,8 +4052,8 @@ class common {
 		}
 	// End
 	// ASTPPCOM-982 Ashish start
-	function get_status_voice_broadcast($select = "", $table = "", $status) {
-		if($status['status'] == 0){
+	function get_status_voice_broadcast($select, $table, $status) {
+		if(astpp_eq0($status['status'])){
 			$status = gettext("InProgress");
 		}elseif($status['status'] == 1){
 			$status = gettext("Pending");
@@ -4080,14 +4081,14 @@ class common {
 	// ASTPPCOM-982 Ashish End
 
 	//Gautam ASTPPENT-6696 Start ASTPPCOM-1348_kanu_start
-	function convert_to_currency_change($select = "", $table = "", $amount) {
+	function convert_to_currency_change($select, $table, $amount) {
 		$this->CI->load->model ( 'common_model' );
 		return $this->CI->common_model->calculate_currency_locale( $amount, '', '', true, false );
 	}
 	//Gautam ASTPPENT-6696 End ASTPPCOM-1348_kanu_end
 
 	//Gautam ASTPPENT-6696 Start ASTPPCOM-1348_kanu_start
-	function convert_currency_in_locale_new($select = "", $table = "", $amount,$key = ""){
+	function convert_currency_in_locale_new($select, $table, $amount,$key = ""){
 		$current_language =$this->CI->session->userdata('user_language'); 
 		$amount = $this->convert_to_currency_change('','',$amount);
 			if(isset($current_language) && ($current_language == 'es_ES' ||  $current_language == 'pt_BR') && strpos($amount, ',') !== false){

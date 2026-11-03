@@ -21,6 +21,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 // ##############################################################################
+#[\AllowDynamicProperties]
 class Accounts_model extends CI_Model
 {
 
@@ -32,7 +33,7 @@ class Accounts_model extends CI_Model
     function add_account($accountinfo)
     {
         $account_data = $this->session->userdata("accountinfo");
-        $accountinfo['reseller_id'] = ($account_data['type'] == 1) ? $account_data['id'] : ($accountinfo['reseller_id'] > 0 ? $accountinfo['reseller_id'] : 0);
+        $accountinfo['reseller_id'] = ($account_data['type'] == 1) ? $account_data['id'] : (astpp_gt($accountinfo['reseller_id'], 0) ? $accountinfo['reseller_id'] : 0);
         unset($accountinfo['action']);
         $accountinfo['permission_id'] = ($accountinfo['type'] == 1 || $accountinfo['type'] == 2) ? (isset($accountinfo['permission_id']) ? $accountinfo['permission_id'] : $account_data['permission_id']) : 0;
         $accountinfo['is_distributor'] = $account_data['type'] == 1 ? $account_data['is_distributor'] : (isset($accountinfo['is_distributor']) ? $accountinfo['is_distributor'] : 1);
@@ -149,7 +150,11 @@ class Accounts_model extends CI_Model
         }
         $this->db_model->build_search('customer_list_search');
         $this->db->where('type !=', '1');
-        $this->db_model->build_batch_update_array($update_array);
+        if (! $this->db_model->build_batch_update_array($update_array)) {
+            // BUGFIX: nothing selected -> CodeIgniter failed with "You must use the set
+            // method". A no-op SET keeps the flow and resets the query builder.
+            $this->db->set('id', 'id', FALSE);
+        }
         $this->db->update("accounts");
         if (isset($update_array['balance']['balance']) && $update_array['balance']['balance'] != '') {
             $account_data = $this->session->userdata("accountinfo");
@@ -208,7 +213,7 @@ class Accounts_model extends CI_Model
     {
         unset($accountinfo['action']);
         unset($accountinfo['onoffswitch']);
-        $accountinfo = array_map('trim', $accountinfo);
+        $accountinfo = astpp_array_map('trim', $accountinfo);
         $this->db->where('id', $edit_id);
         $result = $this->db->update('accounts', $accountinfo);
         return true;
@@ -236,10 +241,10 @@ class Accounts_model extends CI_Model
         $count = $result[0]['count'];
         $remaining_length = 0;
         if (! empty($add_array['account_length'] || $add_array['prefix'])) {
-            $remaining_length = $add_array['account_length'] - strlen($add_array['prefix']);
+            $remaining_length = astpp_n($add_array['account_length']) - strlen($add_array['prefix']);
         }
         $currentlength = pow(10, $remaining_length);
-        $currentlength = $currentlength - $count;
+        $currentlength = astpp_n($currentlength) - astpp_n($count);
         return $currentlength;
     }
 
@@ -250,7 +255,7 @@ class Accounts_model extends CI_Model
             "id" => $data['accountid']
         ))->first_row();
         $accountinfo = $this->session->userdata('accountinfo');
-        $data["payment_by"] = $accountdata['reseller_id'] > 0 ? $accountdata['reseller_id'] : '-1';
+        $data["payment_by"] = astpp_gt($accountdata['reseller_id'], 0) ? $accountdata['reseller_id'] : '-1';
         $data['payment_mode'] = $data['payment_type'];
         unset($data['action'], $data['id'], $data['account_currency'], $data['payment_type']);
         if (isset($data) && ! empty($accountdata)) {
@@ -344,7 +349,7 @@ class Accounts_model extends CI_Model
             $this->db->where_not_in('reseller_id', array( "0"
             ));
         }        
-        if(($accountinfo['type'] == 1 || $accountinfo['type'] == 5) && $accountinfo['reseller_id'] != 0)
+        if(($accountinfo['type'] == 1 || $accountinfo['type'] == 5) && (!astpp_eq0($accountinfo['reseller_id'])))
         {
             $this->db->where_not_in('reseller_id',array( "0", $accountinfo['reseller_id']
             ));
@@ -543,7 +548,7 @@ class Accounts_model extends CI_Model
         // amount and id are concatenated into SQL - numbers only (decimal(20,5))
         $amount = sprintf('%.5F', (float) $amount);
         $accountid = (int) $accountid;
-        if ($payment_type == 0) {
+        if (astpp_eq0($payment_type)) {
             $query = "update accounts set balance =  IF(posttoexternal=1,balance-" . $amount . ",balance+" . $amount . ") where id ='" . $accountid . "'";
 
             return $this->db->query($query);

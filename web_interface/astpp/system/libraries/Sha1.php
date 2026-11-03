@@ -44,6 +44,7 @@
  * @author		ExpressionEngine Dev Team
  * @link		http://codeigniter.com/user_guide/general/encryption.html
  */
+#[\AllowDynamicProperties]
 class CI_SHA1 {
 
 	public function __construct()
@@ -62,19 +63,19 @@ class CI_SHA1 {
 	{
 		$n = ((strlen($str) + 8) >> 6) + 1;
 
-		for ($i = 0; $i < $n * 16; $i++)
+		for ($i = 0; $i < astpp_n($n) * 16; $i++)
 		{
 			$x[$i] = 0;
 		}
 
 		for ($i = 0; $i < strlen($str); $i++)
 		{
-			$x[$i >> 2] |= ord(substr($str, $i, 1)) << (24 - ($i % 4) * 8);
+			$x[$i >> 2] |= ord(substr($str, $i, 1)) << (24 - (astpp_n($i) % 4) * 8);
 		}
 
-		$x[$i >> 2] |= 0x80 << (24 - ($i % 4) * 8);
+		$x[$i >> 2] |= 0x80 << (24 - (astpp_n($i) % 4) * 8);
 
-		$x[$n * 16 - 1] = strlen($str) * 8;
+		$x[astpp_n($n) * 16 - 1] = strlen($str) * 8;
 
 		$a = 1732584193;
 		$b = -271733879;
@@ -82,7 +83,7 @@ class CI_SHA1 {
 		$d = 271733878;
 		$e = -1009589776;
 
-		for ($i = 0; $i < count($x); $i += 16)
+		for ($i = 0; $i < astpp_count($x); $i = astpp_n($i) + 16)
 		{
 			$olda = $a;
 			$oldb = $b;
@@ -94,10 +95,10 @@ class CI_SHA1 {
 			{
 				if ($j < 16)
 				{
-					$w[$j] = $x[$i + $j];
+					$w[$j] = $x[astpp_n($i) + astpp_n($j)];
 				} else
 				{
-					$w[$j] = $this->_rol($w[$j - 3] ^ $w[$j - 8] ^ $w[$j - 14] ^ $w[$j - 16], 1);
+					$w[$j] = $this->_rol($w[astpp_n($j) - 3] ^ $w[astpp_n($j) - 8] ^ $w[astpp_n($j) - 14] ^ $w[astpp_n($j) - 16], 1);
 				}
 
 				$t = $this->_safe_add($this->_safe_add($this->_rol($a, 5), $this->_ft($j, $b, $c, $d)), $this->_safe_add($this->_safe_add($e, $w[$j]), $this->_kt($j)));
@@ -200,7 +201,7 @@ class CI_SHA1 {
 	 */
 	function _safe_add($x, $y)
 	{
-		$lsw = ($x & 0xFFFF) + ($y & 0xFFFF);
+		$lsw = (astpp_n($x & 0xFFFF)) + (astpp_n($y & 0xFFFF));
 		$msw = ($x >> 16) + ($y >> 16) + ($lsw >> 16);
 
 		return ($msw << 16) | ($lsw & 0xFFFF);
@@ -217,7 +218,7 @@ class CI_SHA1 {
 	 */
 	function _rol($num, $cnt)
 	{
-		return ($num << $cnt) | $this->_zero_fill($num, 32 - $cnt);
+		return ($num << $cnt) | $this->_zero_fill($num, 32 - astpp_n($cnt));
 	}
 
 	// --------------------------------------------------------------------
@@ -237,7 +238,7 @@ class CI_SHA1 {
 			$bin = 0;
 		} else
 		{
-			$bin = substr($bin, 0, strlen($bin) - $b);
+			$bin = substr($bin, 0, strlen($bin) - astpp_n($b));
 		}
 
 		for ($i = 0; $i < $b; $i++)

@@ -164,7 +164,7 @@ if ($this->session->userdata('logintype') == 1 || $this->session->userdata('logi
 			enctype="multipart/form-data" id="">
 				<?php
 
-if (isset($permissioninfo['did']['did_list']['buy_did']) and $permissioninfo['did']['did_list']['buy_did'] == 0 and ($permissioninfo['login_type'] == '1' or $permissioninfo['login_type'] == '2' or $permissioninfo['login_type'] == '4')) {
+if (isset($permissioninfo['did']['did_list']['buy_did']) and astpp_eq0($permissioninfo['did']['did_list']['buy_did']) and ($permissioninfo['login_type'] == '1' or $permissioninfo['login_type'] == '2' or $permissioninfo['login_type'] == '4')) {
         ?>
 				<input type="submit" class="btn btn-info mb-4" name="purchase_did"
 				value=<?php echo gettext("Buy DIDs")?> id="buy_did">    

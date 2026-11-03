@@ -30,6 +30,7 @@
  * @author		ExpressionEngine Dev Team
  * @link		http://codeigniter.com/user_guide/database/
  */
+#[\AllowDynamicProperties]
 class CI_DB_mysqli_driver extends CI_DB {
 
 	var $dbdriver = 'mysqli';
@@ -222,7 +223,7 @@ class CI_DB_mysqli_driver extends CI_DB {
 		}
 
 		// When transactions are nested we only begin/commit/rollback the outermost ones
-		if ($this->_trans_depth > 0)
+		if (astpp_gt($this->_trans_depth, 0))
 		{
 			return TRUE;
 		}
@@ -253,7 +254,7 @@ class CI_DB_mysqli_driver extends CI_DB {
 		}
 
 		// When transactions are nested we only begin/commit/rollback the outermost ones
-		if ($this->_trans_depth > 0)
+		if (astpp_gt($this->_trans_depth, 0))
 		{
 			return TRUE;
 		}
@@ -279,7 +280,7 @@ class CI_DB_mysqli_driver extends CI_DB {
 		}
 
 		// When transactions are nested we only begin/commit/rollback the outermost ones
-		if ($this->_trans_depth > 0)
+		if (astpp_gt($this->_trans_depth, 0))
 		{
 			return TRUE;
 		}
@@ -529,7 +530,7 @@ class CI_DB_mysqli_driver extends CI_DB {
 			$tables = array($tables);
 		}
 
-		return '('.implode(', ', $tables).')';
+		return '('.astpp_implode(', ', $tables).')';
 	}
 
 	// --------------------------------------------------------------------
@@ -547,7 +548,7 @@ class CI_DB_mysqli_driver extends CI_DB {
 	 */
 	function _insert($table, $keys, $values)
 	{
-		return "INSERT INTO ".$table." (".implode(', ', $keys).") VALUES (".implode(', ', $values).")";
+		return "INSERT INTO ".$table." (".astpp_implode(', ', $keys).") VALUES (".astpp_implode(', ', $values).")";
 	}
 
 	// --------------------------------------------------------------------
@@ -565,7 +566,7 @@ class CI_DB_mysqli_driver extends CI_DB {
 	 */
 	function _insert_batch($table, $keys, $values)
 	{
-		return "INSERT INTO ".$table." (".implode(', ', $keys).") VALUES ".implode(', ', $values);
+		return "INSERT INTO ".$table." (".astpp_implode(', ', $keys).") VALUES ".astpp_implode(', ', $values);
 	}
 
 	// --------------------------------------------------------------------
@@ -584,7 +585,7 @@ class CI_DB_mysqli_driver extends CI_DB {
 	 */
 	function _replace($table, $keys, $values)
 	{
-		return "REPLACE INTO ".$table." (".implode(', ', $keys).") VALUES (".implode(', ', $values).")";
+		return "REPLACE INTO ".$table." (".astpp_implode(', ', $keys).") VALUES (".astpp_implode(', ', $values).")";
 	}
 	
 	// --------------------------------------------------------------------
@@ -611,11 +612,11 @@ class CI_DB_mysqli_driver extends CI_DB {
 
 		$limit = ( ! $limit) ? '' : ' LIMIT '.$limit;
 
-		$orderby = (count($orderby) >= 1) ? ' ORDER BY '.implode(", ", $orderby) : '';
+		$orderby = (astpp_count($orderby) >= 1) ? ' ORDER BY '.astpp_implode(", ", $orderby) : '';
 
-		$sql = "UPDATE ".$table." SET ".implode(', ', $valstr);
+		$sql = "UPDATE ".$table." SET ".astpp_implode(', ', $valstr);
 
-		$sql .= ($where != '' AND count($where) >= 1) ? " WHERE ".implode(" ", $where) : '';
+		$sql .= ($where != '' AND astpp_count($where) >= 1) ? " WHERE ".astpp_implode(" ", $where) : '';
 
 		$sql .= $orderby.$limit;
 
@@ -638,13 +639,13 @@ class CI_DB_mysqli_driver extends CI_DB {
 	function _update_batch($table, $values, $index, $where = NULL)
 	{
 		$ids = array();
-		$where = ($where != '' AND count($where) >= 1) ? implode(" ", $where).' AND ' : '';
+		$where = ($where != '' AND astpp_count($where) >= 1) ? astpp_implode(" ", $where).' AND ' : '';
 
 		foreach ($values as $key => $val)
 		{
 			$ids[] = $val[$index];
 
-			foreach (array_keys($val) as $field)
+			foreach (astpp_array_keys($val) as $field)
 			{
 				if ($field != $index)
 				{
@@ -669,7 +670,7 @@ class CI_DB_mysqli_driver extends CI_DB {
 
 		$sql .= substr($cases, 0, -2);
 
-		$sql .= ' WHERE '.$where.$index.' IN ('.implode(',', $ids).')';
+		$sql .= ' WHERE '.$where.$index.' IN ('.astpp_implode(',', $ids).')';
 
 		return $sql;
 	}
@@ -709,16 +710,16 @@ class CI_DB_mysqli_driver extends CI_DB {
 	{
 		$conditions = '';
 
-		if (count($where) > 0 OR count($like) > 0)
+		if (astpp_count($where) > 0 OR astpp_count($like) > 0)
 		{
 			$conditions = "\nWHERE ";
-			$conditions .= implode("\n", $this->ar_where);
+			$conditions .= astpp_implode("\n", $this->ar_where);
 
-			if (count($where) > 0 && count($like) > 0)
+			if (astpp_count($where) > 0 && astpp_count($like) > 0)
 			{
 				$conditions .= " AND ";
 			}
-			$conditions .= implode("\n", $like);
+			$conditions .= astpp_implode("\n", $like);
 		}
 
 		$limit = ( ! $limit) ? '' : ' LIMIT '.$limit;
@@ -743,7 +744,7 @@ class CI_DB_mysqli_driver extends CI_DB {
 	{
 		$sql .= "LIMIT ".$limit;
 
-		if ($offset > 0)
+		if (astpp_gt($offset, 0))
 		{
 			$sql .= " OFFSET ".$offset;
 		}

@@ -20,6 +20,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 // ##############################################################################
+#[\AllowDynamicProperties]
 class Getstatus extends MX_Controller {
 	function __construct() {
 		parent::__construct ();
@@ -57,7 +58,7 @@ class Getstatus extends MX_Controller {
 		$logintype = $this->session->userdata ( 'logintype' );
 		$accountinfo = $this->session->userdata ( 'accountinfo' );
 		$self = isset ( $accountinfo ['id'] ) ? ( int ) $accountinfo ['id'] : 0;
-		if ($self <= 0 || $id <= 0 || ! is_string ( $table )) {
+		if (astpp_le($self, 0) || astpp_le($id, 0) || ! is_string ( $table )) {
 			return false;
 		}
 		if ($flags) {
@@ -70,13 +71,13 @@ class Getstatus extends MX_Controller {
 			$own_tables = array ('ani_map', 'ip_map', 'sip_devices');
 		}
 		if ($logintype == 2 || $logintype == 4) {
-			return in_array ( $table, $admin_tables, true );
+			return astpp_in_array ( $table, $admin_tables, true );
 		}
 		if ($logintype == 1 && $table === 'reseller_products' && ! $flags) {
 			// the grid row id is the product id
 			return $this->db->get_where ( 'reseller_products', array ('product_id' => $id, 'account_id' => $self) )->num_rows () > 0;
 		}
-		if ($logintype == 1 && in_array ( $table, $reseller_tables, true )) {
+		if ($logintype == 1 && astpp_in_array ( $table, $reseller_tables, true )) {
 			$row = $this->db->get_where ( $table, array ('id' => $id) )->row_array ();
 			if (empty ( $row )) {
 				return false;
@@ -84,9 +85,9 @@ class Getstatus extends MX_Controller {
 			if (isset ( $row ['reseller_id'] ) && ( int ) $row ['reseller_id'] === $self) {
 				return true;
 			}
-			return in_array ( $table, $own_tables, true ) && isset ( $row ['accountid'] ) && ( int ) $row ['accountid'] === $self;
+			return astpp_in_array ( $table, $own_tables, true ) && isset ( $row ['accountid'] ) && ( int ) $row ['accountid'] === $self;
 		}
-		if ($logintype != 1 && in_array ( $table, $own_tables, true )) {
+		if ($logintype != 1 && astpp_in_array ( $table, $own_tables, true )) {
 			$row = $this->db->get_where ( $table, array ('id' => $id) )->row_array ();
 			return ! empty ( $row ) && isset ( $row ['accountid'] ) && ( int ) $row ['accountid'] === $self;
 		}

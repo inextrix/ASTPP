@@ -246,7 +246,7 @@ function check_validation()
 													echo "<h3 class='bg-secondary text-light p-3 rounded-top'>".gettext($key1)."</h3>";?>
 														<?php $currency = Common_model::$global_config['system_config']['base_currency'];?>
 														<?php 
-														$count=count($val1);
+														$count=astpp_count($val1);
 														$class="tleft";
 														echo "<div class='col-md-12'>";
 														if($group_title!="term_and_condition"){
@@ -298,7 +298,7 @@ function check_validation()
 
 																							$drpstr = "<select name='".$val['name']."' class='col-md-12 form-control form-control-lg selectpicker sp'  data-live-search='true' data-live-search-style='begins' >";
 																								  foreach($option_array as $option_key=>$option_val){
-																									$selected = ($val['value'] == $option_key)? "selected='selected'":"";
+																									$selected = (astpp_loose_eq($val['value'], $option_key))? /* PHP8 */ "selected='selected'":"";
 																									$drpstr .= '<option value="'.$option_key.'"'.$selected.'>'.$option_val.'</option>';
 																								  }
 																							$drpstr .= '</select>';

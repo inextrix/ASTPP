@@ -21,6 +21,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 // ##############################################################################
+#[\AllowDynamicProperties]
 class Taxes extends MX_Controller
 {
 
@@ -58,7 +59,7 @@ class Taxes extends MX_Controller
         foreach ($account->result_array() as $key => $value) {
             $edit_data = $value;
         }
-        if ($edit_data['reseller_id'] == 0) {
+        if (astpp_eq0($edit_data['reseller_id'])) {
             $edit_data['reseller_id'] = 'Admin';
         } else {
             $edit_data['reseller_id'] = $this->common->get_field_name('number', 'accounts', array(
@@ -191,7 +192,7 @@ class Taxes extends MX_Controller
             }
             $this->db->where('id', $tax_row['id']);
             $this->db->update('system', array(
-                'value' => implode(',', $remaining)
+                'value' => astpp_implode(',', $remaining)
             ));
         }
         $where = "id IN ($ids)";

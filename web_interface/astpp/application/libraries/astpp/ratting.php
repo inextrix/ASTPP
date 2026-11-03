@@ -24,6 +24,7 @@ if (!defined('BASEPATH'))
     exit('No direct script access allowed');
 
 
+#[\AllowDynamicProperties]
 class Ratting {
 
     protected $CI; 
@@ -62,7 +63,7 @@ class Ratting {
 			redirect(base_url() . 'web2fax/web2fax_list/');
 			exit;
 		}	
-		if($balance <= 0){
+		if(astpp_le($balance, 0)){
 			$this->CI->session->set_flashdata('astpp_notification', 'Insuficient belance!');
 			redirect(base_url() . 'web2fax/web2fax_list/');
 			exit;
@@ -100,7 +101,7 @@ class Ratting {
 	$field = "pattern";
     	$max_len_prefix  = strlen($destination);
 	$number_prefix = '(';
-	while ($max_len_prefix  > 0){
+	while (astpp_gt($max_len_prefix, 0)){
 		$number_prefix .= "$field='^".substr($destination,0,$max_len_prefix).".*' OR ";
 		$max_len_prefix--;
 	}
@@ -116,12 +117,12 @@ class Ratting {
        $file_name=$data['text'];
  	$rate_group =$account_arr['pricelist_id'];
 	$balance =$account_arr['balance'];
-	if($balance <= 0)
+	if(astpp_le($balance, 0))
 	{
 
 	 $this->CI->session->set_flashdata('astpp_notification', 'Insuficient belance!');
         $logintype = $this->CI->session->userdata('logintype');	 
-		if($logintype == 0){
+		if(astpp_eq0($logintype)){
 			redirect(base_url() . 'user/user_web2fax_list/');
 
 		}else{

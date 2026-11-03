@@ -26,6 +26,7 @@
  * @author		ExpressionEngine Dev Team
  * @link		http://codeigniter.com/user_guide/libraries/ftp.html
  */
+#[\AllowDynamicProperties]
 class CI_FTP {
 
 	var $hostname	= '';
@@ -44,7 +45,7 @@ class CI_FTP {
 	 */
 	public function __construct($config = array())
 	{
-		if (count($config) > 0)
+		if (astpp_count($config) > 0)
 		{
 			$this->initialize($config);
 		}
@@ -86,7 +87,7 @@ class CI_FTP {
 	 */
 	function connect($config = array())
 	{
-		if (count($config) > 0)
+		if (astpp_count($config) > 0)
 		{
 			$this->initialize($config);
 		}
@@ -425,7 +426,7 @@ class CI_FTP {
 
 		$list = $this->list_files($filepath);
 
-		if ($list !== FALSE AND count($list) > 0)
+		if ($list !== FALSE AND astpp_count($list) > 0)
 		{
 			foreach ($list as $item)
 			{
@@ -585,7 +586,7 @@ class CI_FTP {
 		}
 
 		$x = explode('.', $filename);
-		return end($x);
+		return astpp_end($x);
 	}
 
 
@@ -618,7 +619,7 @@ class CI_FTP {
 							);
 
 
-		return (in_array($ext, $text_types)) ? 'ascii' : 'binary';
+		return (astpp_in_array($ext, $text_types)) ? 'ascii' : 'binary';
 	}
 
 	// ------------------------------------------------------------------------

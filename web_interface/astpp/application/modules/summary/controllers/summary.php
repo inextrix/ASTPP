@@ -22,6 +22,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 // ##############################################################################
+#[\AllowDynamicProperties]
 class Summary extends MX_Controller
 {
  
@@ -416,14 +417,14 @@ class Summary extends MX_Controller
         $currency_info = $this->common->get_currency_info();
         foreach ($query->result_array() as $row1) {
             $atmpt = $row1['attempts'];
-            $cmplt = ($row1['completed'] != 0) ? $row1['completed'] : 0;
-            $acd = ($row1['completed'] > 0) ? round($row1['duration'] / $row1['completed']) : 0;
+            $cmplt = ((!astpp_eq0($row1['completed']))) ? $row1['completed'] : 0;
+            $acd = (astpp_gt($row1['completed'], 0)) ? astpp_round(astpp_div($row1['duration'], $row1['completed'])) : 0;
             $mcd = $row1['mcd'];
             if ($show_seconds == 'minutes') {
-                $avgsec = $acd > 0 ? sprintf('%02d', $acd / 60) . ":" . sprintf('%02d', ($acd % 60)) : "00:00";
-                $maxsec = $mcd > 0 ? sprintf('%02d', $mcd / 60) . ":" . sprintf('%02d', ($mcd % 60)) : "00:00";
-                $duration = ($row1['duration'] > 0) ? sprintf('%02d', $row1['duration'] / 60) . ":" . sprintf('%02d', ($row1['duration'] % 60)) : "00:00";
-                $billsec = ($row1['billable'] > 0) ? sprintf('%02d', $row1['billable'] / 60) . ":" . sprintf('%02d', ($row1['billable'] % 60)) : "00:00";
+                $avgsec = astpp_gt($acd, 0) ? sprintf('%02d', astpp_n($acd) / 60) . ":" . sprintf('%02d', (astpp_n($acd) % 60)) : "00:00";
+                $maxsec = astpp_gt($mcd, 0) ? sprintf('%02d', astpp_n($mcd) / 60) . ":" . sprintf('%02d', (astpp_n($mcd) % 60)) : "00:00";
+                $duration = (astpp_gt($row1['duration'], 0)) ? sprintf('%02d', astpp_n($row1['duration']) / 60) . ":" . sprintf('%02d', (astpp_n($row1['duration']) % 60)) : "00:00";
+                $billsec = (astpp_gt($row1['billable'], 0)) ? sprintf('%02d', astpp_n($row1['billable']) / 60) . ":" . sprintf('%02d', (astpp_n($row1['billable']) % 60)) : "00:00";
             } else {
                 $duration = sprintf('%02d', $row1['duration']);
                 $avgsec = $acd;
@@ -431,11 +432,11 @@ class Summary extends MX_Controller
                 $billsec = sprintf('%02d', $row1['billable']);
             }
             if ($entity != 'provider') {
-                $profit = $this->common->calculate_currency_manually($currency_info, $row1['debit'] - $row1['cost'], false);
+                $profit = $this->common->calculate_currency_manually($currency_info, astpp_n($row1['debit']) - astpp_n($row1['cost']), false);
                 $debit = $this->common->calculate_currency_manually($currency_info, $row1['debit'], false);
             }
             $cost = $this->common->calculate_currency_manually($currency_info, $row1['cost'], false);
-            $asr = ($atmpt > 0) ? (round(($cmplt / $atmpt) * 100, 2)) : '0.00';
+            $asr = (astpp_gt($atmpt, 0)) ? (astpp_round((astpp_div($cmplt, $atmpt)) * 100, 2)) : '0.00';
             $new_arr = array();
  
             if ($this->session->userdata('advance_search') == 1) {
@@ -524,7 +525,7 @@ class Summary extends MX_Controller
                     $atmpt,
                     $cmplt,
                     $duration,
-                    round($asr, 2),
+                    astpp_round($asr, 2),
                     $avgsec,
                     $maxsec,
                     $billsec,
@@ -537,14 +538,14 @@ class Summary extends MX_Controller
                     $atmpt,
                     $cmplt,
                     $duration,
-                    round($asr, 2),
+                    astpp_round($asr, 2),
                     $avgsec,
                     $maxsec,
                     $billsec,
                     $cost
                 );
             }
-            $final_array = array_merge($new_arr, $custom_array);
+            $final_array = astpp_array_merge($new_arr, $custom_array);
             $json_data[] = array(
                 'cell' => $final_array
             );
@@ -554,16 +555,16 @@ class Summary extends MX_Controller
         $total_info = $this->summary_model->$function_name(true, '', '', '', $search_arr['select_str'], $search_arr['order_str'], true);
         $total_info = $total_info->result_array();
         $total_info = $total_info[0];
-        $total_asr = ($total_info['attempts'] > 0) ? round(($total_info['completed'] / $total_info['attempts']) * 100, 2) : 0;
-        $total_acd = ($total_info['completed'] > 0) ? round($total_info['duration'] / $total_info['completed']) : 0;
+        $total_asr = (astpp_gt($total_info['attempts'], 0)) ? astpp_round((astpp_div($total_info['completed'], $total_info['attempts'])) * 100, 2) : 0;
+        $total_acd = (astpp_gt($total_info['completed'], 0)) ? astpp_round(astpp_div($total_info['duration'], $total_info['completed'])) : 0;
         if ($show_seconds == 'minutes') {
-            $total_info['duration'] = $total_info['duration'] > 0 ? sprintf('%02d', $total_info['duration'] / 60) . ":" . sprintf('%02d', ($total_info['duration'] % 60)) : "00:00";
-            $total_info['billable'] = $total_info['billable'] > 0 ? sprintf('%02d', $total_info['billable'] / 60) . ":" . sprintf('%02d', ($total_info['billable'] % 60)) : "00:00";
-            $total_acd = $total_acd > 0 ? sprintf('%02d', $total_acd / 60) . ":" . sprintf('%02d', ($total_acd % 60)) : "00:00";
-            $total_info['mcd'] = $total_info['mcd'] > 0 ? sprintf('%02d', $total_info['mcd'] / 60) . ":" . sprintf('%02d', ($total_info['mcd'] % 60)) : "00:00";
+            $total_info['duration'] = astpp_gt($total_info['duration'], 0) ? sprintf('%02d', astpp_n($total_info['duration']) / 60) . ":" . sprintf('%02d', (astpp_n($total_info['duration']) % 60)) : "00:00";
+            $total_info['billable'] = astpp_gt($total_info['billable'], 0) ? sprintf('%02d', astpp_n($total_info['billable']) / 60) . ":" . sprintf('%02d', (astpp_n($total_info['billable']) % 60)) : "00:00";
+            $total_acd = astpp_gt($total_acd, 0) ? sprintf('%02d', astpp_n($total_acd) / 60) . ":" . sprintf('%02d', (astpp_n($total_acd) % 60)) : "00:00";
+            $total_info['mcd'] = astpp_gt($total_info['mcd'], 0) ? sprintf('%02d', astpp_n($total_info['mcd']) / 60) . ":" . sprintf('%02d', (astpp_n($total_info['mcd']) % 60)) : "00:00";
         }
         if ($entity != 'provider') {
-            $total_profit = $this->common->calculate_currency_manually($currency_info, $total_info['debit'] - $total_info['cost'], false);
+            $total_profit = $this->common->calculate_currency_manually($currency_info, astpp_n($total_info['debit']) - astpp_n($total_info['cost']), false);
             $total_debit = $this->common->calculate_currency_manually($currency_info, $total_info['debit'], false);
         }
         $total_cost = $this->common->calculate_currency_manually($currency_info, $total_info['cost'], false);
@@ -604,8 +605,8 @@ class Summary extends MX_Controller
             }
             $new_export_array[$key] = $value;
         }
-        $total_array = array_merge($search_arr['custom_total_array'], $last_array);
-        $custom_export_arr = array_merge($search_arr['custom_total_array'], $new_export_array);
+        $total_array = astpp_array_merge($search_arr['custom_total_array'], $last_array);
+        $custom_export_arr = astpp_array_merge($search_arr['custom_total_array'], $new_export_array);
         $export_arr[] = $custom_export_arr;
         $json_data[] = array(
             'cell' => $total_array
@@ -636,11 +637,11 @@ class Summary extends MX_Controller
             gettext('Cost').'(' . $currency . ')',
             gettext('Profit')
         );
-        $header_arr[] = array_merge($search_header, $fixed_header);
+        $header_arr[] = astpp_array_merge($search_header, $fixed_header);
         if ($query->num_rows() > 0) {
             $data_arr = $this->summary_report_grid($search_arr, $query, 'customer', 'export');
         }
-        $customer_array = array_merge($header_arr, $data_arr);
+        $customer_array = astpp_array_merge($header_arr, $data_arr);
  
         $this->load->helper('csv');
         array_to_csv($customer_array, 'Customer_Summary_Report_' . date("Y-m-d") . '.csv');
@@ -682,7 +683,7 @@ class Summary extends MX_Controller
         $timezone_info = (array) $this->db->get_where('timezone', array(
             "id" => $accountinfo['timezone_id']
         ))->first_row();
-        if (! empty($timezone_info['gmttime']) && $timezone_info['gmtoffset'] != 0) {
+        if (! empty($timezone_info['gmttime']) && (!astpp_eq0($timezone_info['gmtoffset']))) {
             $user_timezone = $timezone_info['gmttime'];
         } else {
             $user_timezone = "GMT+00:00";
@@ -913,11 +914,11 @@ class Summary extends MX_Controller
             gettext("Billable"),
             gettext("Cost")."($currency)"
         );
-        $header_arr[] = array_merge($search_header, $fixed_header);
+        $header_arr[] = astpp_array_merge($search_header, $fixed_header);
         if ($query->num_rows() > 0) {
             $data_arr = $this->summary_report_grid($search_arr, $query, 'provider', 'export');
         }
-        $provider_array = array_merge($header_arr, $data_arr);
+        $provider_array = astpp_array_merge($header_arr, $data_arr);
  
         $this->load->helper('csv');
         array_to_csv($provider_array, 'Provider_Summary_Report_' . date("Y-m-d") . '.csv');
@@ -1045,11 +1046,11 @@ class Summary extends MX_Controller
             gettext("Cost")."($currency)",
             gettext("Profit")
         );
-        $header_arr[] = array_merge($search_header, $fixed_header);
+        $header_arr[] = astpp_array_merge($search_header, $fixed_header);
         if ($query->num_rows() > 0) {
             $data_arr = $this->summary_report_grid($search_arr, $query, 'reseller', 'export');
         }
-        $reseller_array = array_merge($header_arr, $data_arr);
+        $reseller_array = astpp_array_merge($header_arr, $data_arr);
         $this->load->helper('csv');
         array_to_csv($reseller_array, 'Reseller_Summary_Report_' . date("Y-m-d") . '.csv');
     }
@@ -1165,7 +1166,7 @@ class Summary extends MX_Controller
         }else{
             /* $used_seconds = "select sum(used_seconds) as used_seconds from counters as C inner join packages_view as P on C.product_id=P.id where P.product_id=".$row1['product_id']."";
             $used_seconds = $this->db->query($used_seconds);*/
-         if($reseller_id > 0){
+         if(astpp_gt($reseller_id, 0)){
                $this->db->select_sum('used_seconds');
                $this->db->from('counters');
             //    $this->db->where_not_in("accountid",$row1['accountid']);
@@ -1188,19 +1189,19 @@ class Summary extends MX_Controller
         }
 
            if ($show_seconds == 'minutes') {
-        $free_minutes = $free_minutes*60;
-                $free_minutes_result = $free_minutes > 0 ? sprintf('%02d', $free_minutes / 60) . ":" . sprintf('%02d', ($free_minutes % 60)) : "00:00";
-        $used_seconds_result = $used_seconds > 0 ? sprintf('%02d', $used_seconds / 60) . ":" . sprintf('%02d', ($used_seconds % 60)) : "00:00";
+        $free_minutes = astpp_n($free_minutes)*60;
+                $free_minutes_result = astpp_gt($free_minutes, 0) ? sprintf('%02d', astpp_n($free_minutes) / 60) . ":" . sprintf('%02d', (astpp_n($free_minutes) % 60)) : "00:00";
+        $used_seconds_result = astpp_gt($used_seconds, 0) ? sprintf('%02d', astpp_n($used_seconds) / 60) . ":" . sprintf('%02d', (astpp_n($used_seconds) % 60)) : "00:00";
         
             } else {
-        $free_minutes = $free_minutes*60;
+        $free_minutes = astpp_n($free_minutes)*60;
                 $free_minutes_result = sprintf('%02d', $free_minutes);
-        $usedseconds = $used_seconds * 60;
+        $usedseconds = astpp_n($used_seconds) * 60;
         $usedseconds = sprintf('%02d', $usedseconds);
-        $used_seconds_result = $usedseconds > 0 ? sprintf('%02d', $usedseconds / 60) : "00";
+        $used_seconds_result = astpp_gt($usedseconds, 0) ? sprintf('%02d', astpp_n($usedseconds) / 60) : "00";
             }
 
-       $usedsec += $used_seconds;
+       $usedsec = astpp_n($usedsec) + astpp_n($used_seconds);
 
             if ($this->session->userdata('advance_search') == 1 || isset($search_arr) ) {
                 if (! empty($search_arr['groupby_time'])) {
@@ -1256,7 +1257,7 @@ class Summary extends MX_Controller
                 $free_minutes_result,
             $used_seconds_result,
             $this->common->get_available_seconds_for_package($row1['productid'],$free_minutes,$used_seconds,$show_seconds),
-            $this->common->convert_to_currency_account("","",($row1['price']+$row1['setup_fee'])),
+            $this->common->convert_to_currency_account("","",(astpp_n($row1['price'])+astpp_n($row1['setup_fee']))),
 
             $this->db_model->countQuery("*","order_items",array("product_id"=>$row1['productid'],"accountid"=>$row1['accountid'],"is_terminated"=>0)),
             $this->db_model->countQuery("*","order_items",array("product_id"=>$row1['productid'],"accountid"=>$row1['accountid'])),
@@ -1265,7 +1266,7 @@ class Summary extends MX_Controller
          if(isset($session_info['order_items.accountid']) && $session_info['order_items.accountid'] != "" ){
             $this->db->where('accountid',$session_info['order_items.accountid']); 
         }
-        if($reseller_id > 0){
+        if(astpp_gt($reseller_id, 0)){
             
             $active_user = $this->db_model->countQuery("*","order_items",array("product_id"=>$row1['productid'],"is_terminated"=>0,"reseller_id"=>$reseller_id),"accountid");
              if(isset($session_info['order_items.accountid']) && $session_info['order_items.accountid'] != "" ){
@@ -1287,7 +1288,7 @@ class Summary extends MX_Controller
                 $free_minutes_result,
             $used_seconds_result,
             $this->common->get_available_seconds_for_package($row1['productid'],$free_minutes,$used_seconds,$show_seconds),
-            $this->common->convert_to_currency_account("","",($row1['price']+$row1['setup_fee'])),
+            $this->common->convert_to_currency_account("","",(astpp_n($row1['price'])+astpp_n($row1['setup_fee']))),
             $active_user,
             $total_user,
         );
@@ -1305,7 +1306,7 @@ class Summary extends MX_Controller
          if(isset($session_info['order_items.accountid']) && $session_info['order_items.accountid'] != "" ){
             $this->db->where('accountid',$session_info['order_items.accountid']); 
         } 
-         if($reseller_id > 0){
+         if(astpp_gt($reseller_id, 0)){
             $active_user = $this->db_model->countQuery("*","order_items",array("product_id"=>$row1['productid'],"is_terminated"=>0,"reseller_id"=>$reseller_id),"accountid");
              if(isset($session_info['order_items.accountid']) && $session_info['order_items.accountid'] != "" ){
                 $this->db->where('accountid',$session_info['order_items.accountid']); 
@@ -1326,7 +1327,7 @@ class Summary extends MX_Controller
                 $free_minutes_result,
             $used_seconds_result,
             $this->common->get_available_seconds_for_package($row1['productid'],$free_minutes,$used_seconds,$show_seconds),
-            $this->common->convert_to_currency_account("","",($row1['price']+$row1['setup_fee'])),
+            $this->common->convert_to_currency_account("","",(astpp_n($row1['price'])+astpp_n($row1['setup_fee']))),
             $active_user,
             $total_user
               
@@ -1340,7 +1341,7 @@ class Summary extends MX_Controller
                 $row1['quantity'],
                 $row1['price'],
             $row1['setup_fee'],
-            $this->common->convert_to_currency_account("","",($row1['price']+$row1['setup_fee'])),
+            $this->common->convert_to_currency_account("","",(astpp_n($row1['price'])+astpp_n($row1['setup_fee']))),
             $this->db_model->countQuery("*","order_items",array("product_id"=>$row1['productid'],"accountid"=>$row1['accountid'],"is_terminated"=>0)),
             $this->db_model->countQuery("*","order_items",array("product_id"=>$row1['productid'],"accountid"=>$row1['accountid'])),
             );
@@ -1348,7 +1349,7 @@ class Summary extends MX_Controller
          if(isset($session_info['order_items.accountid']) && $session_info['order_items.accountid'] != "" ){
             $this->db->where('accountid',$session_info['order_items.accountid']); 
         }
-        if($reseller_id > 0){
+        if(astpp_gt($reseller_id, 0)){
             $active_user = $this->db_model->countQuery("*","order_items",array("product_id"=>$row1['productid'],"is_terminated"=>0,"reseller_id"=>$reseller_id),"accountid");
              if(isset($session_info['order_items.accountid']) && $session_info['order_items.accountid'] != "" ){
                 $this->db->where('accountid',$session_info['order_items.accountid']); 
@@ -1365,7 +1366,7 @@ class Summary extends MX_Controller
             $row1['quantity'],
                 $row1['price'],
             $row1['setup_fee'],
-            $this->common->convert_to_currency_account("","",($row1['price']+$row1['setup_fee'])),
+            $this->common->convert_to_currency_account("","",(astpp_n($row1['price'])+astpp_n($row1['setup_fee']))),
             $active_user,
             $total_user,
         );
@@ -1379,7 +1380,7 @@ class Summary extends MX_Controller
         if(isset($session_info['order_items.accountid']) && $session_info['order_items.accountid'] != "" ){
                 $this->db->where('accountid',$session_info['order_items.accountid']); 
                 }
-        if($reseller_id > 0){
+        if(astpp_gt($reseller_id, 0)){
             $active_user = $this->db_model->countQuery("*","order_items",array("product_id"=>$row1['productid'],"is_terminated"=>0,"reseller_id"=>$reseller_id),"accountid");
             if(isset($session_info['order_items.accountid']) && $session_info['order_items.accountid'] != "" ){
                 $this->db->where('accountid',$session_info['order_items.accountid']); 
@@ -1397,14 +1398,14 @@ class Summary extends MX_Controller
                 $row1['quantity'],
                 $row1['price'],
             $row1['setup_fee'],
-            $this->common->convert_to_currency_account("","",($row1['price']+$row1['setup_fee'])),
+            $this->common->convert_to_currency_account("","",(astpp_n($row1['price'])+astpp_n($row1['setup_fee']))),
             $active_user,
             $total_user,
             );
         }
        }
     }
-            $final_array = array_merge($new_arr, $custom_array);
+            $final_array = astpp_array_merge($new_arr, $custom_array);
 
             $json_data[] = array(
                 'cell' => $final_array
@@ -1448,7 +1449,7 @@ class Summary extends MX_Controller
         }else{
             /*$used_seconds = "select sum(used_seconds) as used_seconds from counters as C inner join packages_view as P on C.product_id=P.id where P.product_id=".$val['productid']."";
             $used_seconds = $this->db->query($used_seconds);*/
-         if($reseller_id > 0){
+         if(astpp_gt($reseller_id, 0)){
                $this->db->select_sum('used_seconds');
                $this->db->from('counters');
             //    $this->db->where_not_in("accountid",$reseller_id);
@@ -1469,57 +1470,57 @@ class Summary extends MX_Controller
             $used_seconds=$this->db->get();*/
         }
         if($used_seconds->num_rows > 0){
-            $usedsec+= $used_seconds->result_array()[0]['used_seconds'];
+            $usedsec = astpp_n($usedsec) + astpp_n($used_seconds->result_array()[0]['used_seconds']);
 
         }
               if((isset($search_arr['groupby_1']) || ($search_arr['groupby_2']) || ($search_arr['groupby_2'])) && ($search_arr['groupby_1'] == 'order_items.accountid' || $search_arr['groupby_2'] == 'order_items.accountid' ) ){
-            $quantity += $val['quantity'];
-            $price += $val['price'];
-            $setup_fee += $val['setup_fee'];
-            $minutes += $val['free_minutes'];
-            $totalamt += $this->common->convert_to_currency_account("","",($val['price']+$val['setup_fee']));
-            $active_user += $this->db_model->countQuery("*","order_items",array("product_id"=>$val['productid'],"accountid"=>$val['accountid'],"is_terminated"=>0, "reseller_id" => 0),"accountid");
-            $total_user += $this->db_model->countQuery("*","order_items",array("product_id"=>$val['productid'],"accountid"=>$val['accountid'], "reseller_id" => 0),"accountid");
-            $total_product_count += $this->db_model->countQuery("*","order_items",array("accountid"=>$val['accountid']));
+            $quantity = astpp_n($quantity) + astpp_n($val['quantity']);
+            $price = astpp_n($price) + astpp_n($val['price']);
+            $setup_fee = astpp_n($setup_fee) + astpp_n($val['setup_fee']);
+            $minutes = astpp_n($minutes) + astpp_n($val['free_minutes']);
+            $totalamt = astpp_n($totalamt) + astpp_n($this->common->convert_to_currency_account("","",(astpp_n($val['price'])+astpp_n($val['setup_fee']))));
+            $active_user = astpp_n($active_user) + astpp_n($this->db_model->countQuery("*","order_items",array("product_id"=>$val['productid'],"accountid"=>$val['accountid'],"is_terminated"=>0, "reseller_id" => 0),"accountid"));
+            $total_user = astpp_n($total_user) + astpp_n($this->db_model->countQuery("*","order_items",array("product_id"=>$val['productid'],"accountid"=>$val['accountid'], "reseller_id" => 0),"accountid"));
+            $total_product_count = astpp_n($total_product_count) + astpp_n($this->db_model->countQuery("*","order_items",array("accountid"=>$val['accountid'])));
        }else{
             if(isset($session_info['order_items.accountid']) && $session_info['order_items.accountid'] != "" ){
                 $this->db->where('accountid',$session_info['order_items.accountid']); 
                 }
-            if($reseller_id > 0){
-            $active_user += $this->db_model->countQuery("*","order_items",array("product_id"=>$val['productid'],"is_terminated"=>0,"reseller_id"=>$reseller_id),"accountid");
+            if(astpp_gt($reseller_id, 0)){
+            $active_user = astpp_n($active_user) + astpp_n($this->db_model->countQuery("*","order_items",array("product_id"=>$val['productid'],"is_terminated"=>0,"reseller_id"=>$reseller_id),"accountid"));
             if(isset($session_info['order_items.accountid']) && $session_info['order_items.accountid'] != "" ){
                 $this->db->where('accountid',$session_info['order_items.accountid']); 
                 }
-            $total_user += $this->db_model->countQuery("*","order_items",array("product_id"=>$val['productid'],"reseller_id"=>$reseller_id),"accountid");
+            $total_user = astpp_n($total_user) + astpp_n($this->db_model->countQuery("*","order_items",array("product_id"=>$val['productid'],"reseller_id"=>$reseller_id),"accountid"));
          }else{
-            $active_user += $this->db_model->countQuery("*","order_items",array("product_id"=>$val['productid'],"is_terminated"=>0, "reseller_id" => 0),"accountid");
+            $active_user = astpp_n($active_user) + astpp_n($this->db_model->countQuery("*","order_items",array("product_id"=>$val['productid'],"is_terminated"=>0, "reseller_id" => 0),"accountid"));
             if(isset($session_info['order_items.accountid']) && $session_info['order_items.accountid'] != "" ){
                 $this->db->where('accountid',$session_info['order_items.accountid']); 
                 }
-            $total_user += $this->db_model->countQuery("*","order_items",array("product_id"=>$val['productid'], "reseller_id" => 0),"accountid");
+            $total_user = astpp_n($total_user) + astpp_n($this->db_model->countQuery("*","order_items",array("product_id"=>$val['productid'], "reseller_id" => 0),"accountid"));
          }
-            $quantity += $val['quantity'];
-            $price += $val['price'];
-            $setup_fee += $val['setup_fee'];
-            $minutes += $val['free_minutes'];
-            $totalamt += $this->common->convert_to_currency_account("","",($val['price']+$val['setup_fee']));
+            $quantity = astpp_n($quantity) + astpp_n($val['quantity']);
+            $price = astpp_n($price) + astpp_n($val['price']);
+            $setup_fee = astpp_n($setup_fee) + astpp_n($val['setup_fee']);
+            $minutes = astpp_n($minutes) + astpp_n($val['free_minutes']);
+            $totalamt = astpp_n($totalamt) + astpp_n($this->common->convert_to_currency_account("","",(astpp_n($val['price'])+astpp_n($val['setup_fee']))));
             $active_user;
             $total_user;
-            $total_product_count += $this->db_model->countQuery("*","order_items",array("accountid"=>$val['accountid']));
+            $total_product_count = astpp_n($total_product_count) + astpp_n($this->db_model->countQuery("*","order_items",array("accountid"=>$val['accountid'])));
         }
         
         } 
 //echo $active_user; exit;
-    $free_min =$minutes *60;
-    $avaiable_minutes += $this->common->get_total_available_minutes($free_min,$usedsec);
+    $free_min =astpp_n($minutes) *60;
+    $avaiable_minutes = astpp_n($avaiable_minutes) + astpp_n($this->common->get_total_available_minutes($free_min,$usedsec));
         if ($show_seconds == 'minutes') {
-        $minutes = $minutes*60;
-            $free_minutes = $minutes > 0 ? sprintf('%02d', $minutes / 60) . ":" . sprintf('%02d', ($minutes % 60)) : "00:00";
-        $avaiable_minutes = $avaiable_minutes > 0 ? sprintf('%02d', $avaiable_minutes / 60) . ":" . sprintf('%02d', ($avaiable_minutes % 60)) : "00:00";
+        $minutes = astpp_n($minutes)*60;
+            $free_minutes = astpp_gt($minutes, 0) ? sprintf('%02d', astpp_n($minutes) / 60) . ":" . sprintf('%02d', (astpp_n($minutes) % 60)) : "00:00";
+        $avaiable_minutes = astpp_gt($avaiable_minutes, 0) ? sprintf('%02d', astpp_n($avaiable_minutes) / 60) . ":" . sprintf('%02d', (astpp_n($avaiable_minutes) % 60)) : "00:00";
         
-       $usedsec = $usedsec > 0 ? sprintf('%02d', $usedsec / 60) . ":" . sprintf('%02d', ($usedsec % 60)) : "00:00";
+       $usedsec = astpp_gt($usedsec, 0) ? sprintf('%02d', astpp_n($usedsec) / 60) . ":" . sprintf('%02d', (astpp_n($usedsec) % 60)) : "00:00";
         } else {
-        $minutes = $minutes*60;
+        $minutes = astpp_n($minutes)*60;
             $free_minutes = $minutes;
         $avaiable_minutes = sprintf('%02d', $avaiable_minutes);
         $usedsec = $usedsec;
@@ -1671,8 +1672,8 @@ class Summary extends MX_Controller
             }
             $new_export_array[$key] = $value;
         }
-        $total_array = array_merge($search_arr['custom_total_array'], $last_array);
-        $custom_export_arr = array_merge($search_arr['custom_total_array'], $new_export_array);
+        $total_array = astpp_array_merge($search_arr['custom_total_array'], $last_array);
+        $custom_export_arr = astpp_array_merge($search_arr['custom_total_array'], $new_export_array);
         $export_arr[] = $custom_export_arr;
         $json_data[] = array(
             'cell' => $total_array
@@ -1685,7 +1686,7 @@ class Summary extends MX_Controller
  function product_list_dropdown(){ 
 	$add_array = $this->input->post();
 	$reseller_id = $this->session->userdata('logintype') == 1 || $this->session->userdata('logintype') == 5 ? $this->session->userdata['accountinfo']['id'] : 0;
-	if($reseller_id > 0){
+	if(astpp_gt($reseller_id, 0)){
 		$product_item_list = $this->db_model->getJionQuery('products', ' products.id,products.name', array('reseller_products.account_id' =>$reseller_id,"products.product_category"=>$add_array['category_id']), 'reseller_products', 'products.id=reseller_products.product_id', 'inner', '', '', '', '');
 		if($product_item_list->num_rows  > 0){
 			 $product_list = $product_item_list->result_array();
@@ -1769,7 +1770,7 @@ class Summary extends MX_Controller
         if ($query->num_rows() > 0) {
             $data_arr = $this->product_summary_report_grid($search_arr, $query, 'product', 'export');
         }
-        $customer_array = array_merge($header_arr, $data_arr);
+        $customer_array = astpp_array_merge($header_arr, $data_arr);
         $this->load->helper('csv');
         array_to_csv($customer_array, 'Product_Summary_Report_' . date("Y-m-d") . '.csv');
     }

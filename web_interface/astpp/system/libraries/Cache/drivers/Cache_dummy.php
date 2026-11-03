@@ -27,6 +27,7 @@
  * @link
  */
 
+#[\AllowDynamicProperties]
 class CI_Cache_dummy extends CI_Driver {
 
 	/**
