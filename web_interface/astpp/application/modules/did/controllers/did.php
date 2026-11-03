@@ -971,7 +971,7 @@ class DID extends MX_Controller
             $custom_array[0]['error'] = "Error";
             $invalid_array = astpp_array_merge($custom_array, $invalid_array);
             foreach ($invalid_array as $err_data) {
-                fputcsv($fp, $err_data);
+                fputcsv($fp, $err_data, ',', '"', '\\');
             }
             fclose($fp);
             $this->session->set_userdata('import_did_csv_error', $session_id . ".csv");

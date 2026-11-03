@@ -249,7 +249,7 @@ class Rates extends MX_Controller
             $custom_array[0]['error'] = "Error";
             $invalid_array = astpp_array_merge($custom_array, $invalid_array);
             foreach ($invalid_array as $err_data) {
-                fputcsv($fp, $err_data);
+                fputcsv($fp, $err_data, ',', '"', '\\');
             }
             fclose($fp);
             $this->session->set_userdata('import_termination_rate_csv_error', $session_id . ".csv");
@@ -485,7 +485,7 @@ class Rates extends MX_Controller
             $custom_array[0]['error'] = "Error";
             $invalid_array = astpp_array_merge($custom_array, $invalid_array);
             foreach ($invalid_array as $err_data) {
-                fputcsv($fp, $err_data);
+                fputcsv($fp, $err_data, ',', '"', '\\');
             }
             fclose($fp);
             $this->session->set_userdata('import_origination_rate_csv_error', $session_id . ".csv");
@@ -1487,7 +1487,7 @@ class Rates extends MX_Controller
         $header = NULL;
         $data = array();
         if (($handle = fopen($filename, 'r')) !== FALSE) {
-            while (($row = fgetcsv($handle, 1000, $delimiter)) !== FALSE) {
+            while (($row = fgetcsv($handle, 1000, $delimiter, '"', '\\')) !== FALSE) {
 
                 if (! $header)
                     $header = $row;
@@ -1715,7 +1715,7 @@ class Rates extends MX_Controller
             $custom_array[0]['error'] = "Error";
             $invalid_array = astpp_array_merge($custom_array, $invalid_array);
             foreach ($invalid_array as $err_data) {
-                fputcsv($fp, $err_data);
+                fputcsv($fp, $err_data, ',', '"', '\\');
             }
 
             fclose($fp);

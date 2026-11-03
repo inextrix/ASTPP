@@ -136,7 +136,7 @@ class Login extends MX_Controller
                         // ASTPPCOM-941 Start
                         $login_activity_array=array(
                             "account_id"=>$result['id'],
-                            "country_name"=>ucwords(strtolower(geoip_country_name_by_name($this->input->server('REMOTE_ADDR')))),
+                            "country_name"=>(function_exists('geoip_country_name_by_name') ? ucwords(strtolower((string) @geoip_country_name_by_name($this->input->server('REMOTE_ADDR')))) : ''), // PHP 8: there is no geoip extension for PHP 8
                             "timestamp"=>gmdate("Y-m-d H:i:s"),
                             "user_agent"=> (string) $this->agent->agent_string(), // BUGFIX: NULL user agent -> DB error
                             "ip"=>$this->input->server('REMOTE_ADDR')

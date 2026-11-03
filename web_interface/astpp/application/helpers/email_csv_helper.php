@@ -7,7 +7,7 @@ function create_csv_string($data) {
 		return FALSE;
 	}
 	foreach ($data as $line) {
-		fputcsv($fp, $line);
+		fputcsv($fp, $line, ',', '"', '\\');
 	}
 	rewind($fp);
 	return stream_get_contents($fp);
