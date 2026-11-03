@@ -20,6 +20,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 // ##############################################################################
+#[\AllowDynamicProperties]
 class Internationalcredits_model extends CI_Model {
 	function __construct() {
 		parent::__construct ();
@@ -80,7 +81,7 @@ class Internationalcredits_model extends CI_Model {
 			$account_info = ( array ) $this->db->get_where ( 'accounts', array (
 					"id" => $add_array ['accountid']
 			) )->first_row ();
-			$add_array ['int_balance'] = $account_info['int_balance'] + $add_array ['int_balance'];
+			$add_array ['int_balance'] = astpp_n($account_info['int_balance']) + astpp_n($add_array ['int_balance']);
 			if(isset($add_array ['accountid']) && $add_array ['accountid'] != ''){
 					$this->db->where('id', $add_array ['accountid']);
 					unset($add_array ['accountid']);
@@ -92,7 +93,7 @@ class Internationalcredits_model extends CI_Model {
 			$account_info = ( array ) $this->db->get_where ( 'accounts', array (
 					"id" => $add_array ['accountid']
 			) )->first_row ();
-			$add_array ['int_credit_limit'] = $account_info['int_credit_limit'] + $add_array ['int_credit_limit'];
+			$add_array ['int_credit_limit'] = astpp_n($account_info['int_credit_limit']) + astpp_n($add_array ['int_credit_limit']);
 			if(isset($add_array ['accountid']) && $add_array ['accountid'] != '') {
 					$this->db->where('id', $add_array ['accountid']);
 					unset($add_array ['accountid']);

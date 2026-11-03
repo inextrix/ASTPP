@@ -188,7 +188,7 @@ body {
 				</p>
 				<p class="text-center px-4 m-0">
               <?php
-            if (Common_model::$global_config['system_config']['enable_signup'] == 0) {
+            if (astpp_eq0(Common_model::$global_config['system_config']['enable_signup'])) {
                 ?>
               <a class="btn btn-outline-primary btn-block btn_index"
 						href="/signup/"><?php echo gettext('Signup now!')?></a> 

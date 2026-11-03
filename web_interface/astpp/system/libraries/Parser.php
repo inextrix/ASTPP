@@ -26,6 +26,7 @@
  * @author		ExpressionEngine Dev Team
  * @link		http://codeigniter.com/user_guide/libraries/parser.html
  */
+#[\AllowDynamicProperties]
 class CI_Parser {
 
 	var $l_delim = '{';

@@ -21,6 +21,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 // ##############################################################################
+#[\AllowDynamicProperties]
 class Refill_coupon extends MX_Controller
 {
 
@@ -41,7 +42,7 @@ class Refill_coupon extends MX_Controller
 
     function refill_coupon_list()
     {
-        if ($this->session->userdata('logintype') == 0 || $this->session->userdata('logintype') == 3) {
+        if (astpp_eq0($this->session->userdata('logintype')) || $this->session->userdata('logintype') == 3) {
             redirect(base_url() . 'user/user/');
         }
         $accountinfo = $this->session->userdata("accountinfo");
@@ -115,7 +116,7 @@ class Refill_coupon extends MX_Controller
 
     function refill_coupon_add()
     {
-        if ($this->session->userdata('logintype') == 0 || $this->session->userdata('logintype') == 3) {
+        if (astpp_eq0($this->session->userdata('logintype')) || $this->session->userdata('logintype') == 3) {
             redirect(base_url() . 'user/user/');
         }
         $data['username'] = $this->session->userdata('user_name');
@@ -134,14 +135,14 @@ class Refill_coupon extends MX_Controller
         $result = $this->refill_coupon_model->refill_coupon_count($add_array);
         $count = $result[0]['count'];
         $remaining_length = 0;
-        $remaining_length = $account_length - strlen($add_array['prefix']);
+        $remaining_length = astpp_n($account_length) - strlen($add_array['prefix']);
         if ($remaining_length == 1) {
             $currentlength = pow(9, $remaining_length);
         } else {
             $currentlength = pow(5, $remaining_length);
         }
 
-        $currentlength = $currentlength - $count;
+        $currentlength = astpp_n($currentlength) - astpp_n($count);
         $data['page_title'] = gettext('Add Refill Coupon');
         if ($this->form_validation->run() == FALSE) {
             $data['validation_errors'] = validation_errors();
@@ -155,14 +156,14 @@ class Refill_coupon extends MX_Controller
                 ));
                 exit();
             }
-            if ($currentlength <= 0) {
+            if (astpp_le($currentlength, 0)) {
                 echo json_encode(array(
                     "count_error" => gettext('You can not create').' '.$add_array['count'] .' '.gettext('Refill coupon with').' '.  $add_array['prefix'].gettext('prefix')
                 ));
 
                 exit();
             }
-            if ($currentlength > 0 && $add_array['count'] > $currentlength) {
+            if (astpp_gt($currentlength, 0) && $add_array['count'] > $currentlength) {
                 echo json_encode(array(
                     "count_error" => gettext('You can create maximum').' '.$currentlength .' '.gettext('Refill coupon with').' '.  $add_array['prefix'].gettext('prefix')
                 ));
@@ -207,7 +208,7 @@ class Refill_coupon extends MX_Controller
                     $row['firstused'] = '';
                 }
                 $row['currency'] = $this->common->build_concat_string('currencyname,currency', 'currency', $row['currency_id']);
-                $row['acc_name'] = $row['account_id'] > 0 ? $this->common->get_field_name_coma_new('first_name,last_name,number', 'accounts', $row['account_id']) : "";
+                $row['acc_name'] = astpp_gt($row['account_id'], 0) ? $this->common->get_field_name_coma_new('first_name,last_name,number', 'accounts', $row['account_id']) : "";
                 $row['status'] = $this->common->get_refill_coupon_status('', '', $row['status']);
                 $cc_array[] = array(
                     $row['number'],

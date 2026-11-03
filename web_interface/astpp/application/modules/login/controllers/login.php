@@ -21,6 +21,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 // ##############################################################################
+#[\AllowDynamicProperties]
 class Login extends MX_Controller
 {
 
@@ -80,7 +81,7 @@ class Login extends MX_Controller
                 $user_valid = $this->Auth_model->verify_login($_POST['username'], $actual_password);
                 $_POST['password'] = '';
 
-                if ($user_valid > 0) {
+                if (astpp_gt($user_valid, 0)) {
                     $this->session->set_userdata('user_login', TRUE);
                     $where = array(
                         'id' => $user_valid,
@@ -97,7 +98,7 @@ class Login extends MX_Controller
                     $addon_status = $this->db_model->countQuery("*", "addons", array(
                         'package_name' => 'pbx'
                     ));
-                    if ($addon_status == 1 && $result['type'] == 0) {
+                    if ($addon_status == 1 && astpp_eq0($result['type'])) {
                         $multidomain = $this->db_model->getSelect("*", "domains", array(
                             'domain' => $_SERVER["HTTP_HOST"],
                             'accountid' => $result['id'],
@@ -110,7 +111,7 @@ class Login extends MX_Controller
                             $user_multi_level = 1;
                         }
                     }
-                    if ($user_multi_level == 0) {
+                    if (astpp_eq0($user_multi_level)) {
 
                         $logintype = $result['type'] == - 1 ? 2 : $result['type'];
                         $this->session->set_userdata('logintype', $logintype);
@@ -137,7 +138,7 @@ class Login extends MX_Controller
                             "account_id"=>$result['id'],
                             "country_name"=>ucwords(strtolower(geoip_country_name_by_name($this->input->server('REMOTE_ADDR')))),
                             "timestamp"=>gmdate("Y-m-d H:i:s"),
-                            "user_agent"=> $this->agent->agent_string(),
+                            "user_agent"=> (string) $this->agent->agent_string(), // BUGFIX: NULL user agent -> DB error
                             "ip"=>$this->input->server('REMOTE_ADDR')
                             );
                         $this->db->insert('login_activity_report', $login_activity_array);
@@ -153,7 +154,7 @@ class Login extends MX_Controller
                             if (($actual_password == 'admin') or ($this->password_policy->check($actual_password, array($result['number'], $result['email'])) !== '')) {
                                 if ($logintype == - 1 || $logintype == 2 || $logintype == 4)
                                     $url = "/accounts/admin_edit/" . $result['id'];
-                                elseif ($logintype == 0 || $logintype == 3 || $logintype == 1)
+                                elseif (astpp_eq0($logintype) || $logintype == 3 || $logintype == 1)
                                     $url = "/user/user_change_password";
                                 else
                                     $url = "#";
@@ -169,7 +170,7 @@ class Login extends MX_Controller
                                 "accountid" => "1"
                             ));
                         } else if ($result['type'] == '0') {
-                            if ($result['reseller_id'] == 0) {
+                            if (astpp_eq0($result['reseller_id'])) {
                                 $this->db->where(array(
                                     "accountid" => "1"
                                 ));
@@ -179,7 +180,7 @@ class Login extends MX_Controller
                                 ));
                             }
                         } else if ($result['type'] == '1') {
-                            if ($result['reseller_id'] == 0) {
+                            if (astpp_eq0($result['reseller_id'])) {
                                 $result_invoice = $this->common->get_field_name('id', 'invoice_conf', array(
                                     "accountid" => $result['id']
                                 ));
@@ -222,7 +223,7 @@ class Login extends MX_Controller
                         $this->session->set_userdata('user_header', $data['user_header']);
                         $this->session->set_userdata('user_footer', $data['user_footer']);
                         $this->session->set_userdata('user_favicon', $data['user_favicon']);
-                        if ($result['type'] == 0 || $result['type'] == 1 || $result['type'] == 3) {
+                        if (astpp_eq0($result['type']) || $result['type'] == 1 || $result['type'] == 3) {
                             $menu_list = $this->permission->get_module_access($result['type']);
                             $this->session->set_userdata('mode_cur', 'user');
                             if ($result['type'] == 1) {
@@ -427,7 +428,7 @@ class Login extends MX_Controller
     function encode($value)
     {
         $ivSize = openssl_cipher_iv_length('BF-ECB');
-        $iv = ($ivSize > 0) ? openssl_random_pseudo_bytes($ivSize) : false;
+        $iv = (astpp_gt($ivSize, 0)) ? openssl_random_pseudo_bytes($ivSize) : false;
         $encrypted = openssl_encrypt($value, 'BF-ECB', $this->config->item('private_key'), OPENSSL_RAW_DATA, $iv);
         $encrypted = $this->encode_params($encrypted);
         return $encrypted;
@@ -585,7 +586,7 @@ class Login extends MX_Controller
                 "accountid" => "1"
             ));
         } else if ($result['type'] == '0') {
-            if ($result['reseller_id'] == 0) {
+            if (astpp_eq0($result['reseller_id'])) {
                 $this->db->where(array(
                     "accountid" => "1"
                 ));
@@ -595,7 +596,7 @@ class Login extends MX_Controller
                 ));
             }
         } else if ($result['type'] == '1') {
-            if ($result['reseller_id'] == 0) {
+            if (astpp_eq0($result['reseller_id'])) {
                 $result_invoice = $this->common->get_field_name('id', 'invoice_conf', array(
                     "accountid" => $result['id']
                 ));
@@ -638,7 +639,7 @@ class Login extends MX_Controller
         $this->session->set_userdata('user_header', $data['user_header']);
         $this->session->set_userdata('user_footer', $data['user_footer']);
         $this->session->set_userdata('user_favicon', $data['user_favicon']);
-        if ($result['type'] == 0 || $result['type'] == 1 || $result['type'] == 3) {
+        if (astpp_eq0($result['type']) || $result['type'] == 1 || $result['type'] == 3) {
             $menu_list = $this->permission->get_module_access($result['type']);
 
             $this->session->set_userdata('mode_cur', 'user');
@@ -662,7 +663,7 @@ class Login extends MX_Controller
         $url_explode = explode('/', $currnet_url);
         $module_name = $url_explode[3];
         $sub_module_name = $url_explode[4];
-        if ((isset($permissioninfo[$module_name][$sub_module_name][$button_array['button_name']]) && $permissioninfo[$module_name][$sub_module_name][$button_array['button_name']] == 0) or $permissioninfo['login_type'] == '-1' or $permissioninfo['login_type'] == '0' or $permissioninfo['login_type'] == '3') {
+        if ((isset($permissioninfo[$module_name][$sub_module_name][$button_array['button_name']]) && astpp_eq0($permissioninfo[$module_name][$sub_module_name][$button_array['button_name']])) or $permissioninfo['login_type'] == '-1' or $permissioninfo['login_type'] == '0' or $permissioninfo['login_type'] == '3') {
             echo 0;
         } else {
             echo 1;

@@ -1,4 +1,5 @@
 <?php  (! defined('BASEPATH')) and exit('No direct script access allowed');
+#[\AllowDynamicProperties]
 class purge extends CI_Controller
 {
 	public function __construct()
@@ -16,7 +17,7 @@ class purge extends CI_Controller
 	function ProcessPurge(){
 
 	    $currentdate = gmdate("Y-m-d H:i:s");
-	    $start_date = date("Y-m-d 00:00:01",strtotime($currentdate. "-$previous_month months") -1);
+	    $start_date = astpp_date("Y-m-d 00:00:01",strtotime($currentdate. "-$previous_month months") -1);
 		
 		$get_value = $this->db_model->getselect('value,name','system',array('group_title'=>'purge'));
 		$system_config=array();
@@ -26,13 +27,13 @@ class purge extends CI_Controller
 				$system_config[$val['name']]=$val['value'];
 			}
 			if($system_config['purge_accounts_expired']!="" && $system_config['purge_accounts_expired']!="-1" && is_numeric($system_config['purge_accounts_expired'])){
-				$end_date =date("Y-m-d 00:00:00",strtotime($currentdate. "-".$system_config['purge_accounts_expired']." days") -1);
+				$end_date =astpp_date("Y-m-d 00:00:00",strtotime($currentdate. "-".$system_config['purge_accounts_expired']." days") -1);
 				$where ="expiry <= '".$end_date."' and expiry!='0000-00-00 00:00:00' and type!=-1";
 				$query = "delete from accounts where ".$where; 
 				$this->db->query($query);
 			}
 			if($system_config['purge_cdrs']!="" && $system_config['purge_cdrs']!="-1" && is_numeric($system_config['purge_cdrs'])){
-				$end_date =date("Y-m-d 00:00:00",strtotime($currentdate. "-".$system_config['purge_cdrs']." days") -1);
+				$end_date =astpp_date("Y-m-d 00:00:00",strtotime($currentdate. "-".$system_config['purge_cdrs']." days") -1);
 				$where ="callstart <= '".$end_date."'";
 				$query = "delete from cdrs where ".$where; 
 				$this->db->query($query);
@@ -40,7 +41,7 @@ class purge extends CI_Controller
 				$this->db->query($query);
 			}
 			if($system_config['purge_invoices']!="" && $system_config['purge_invoices']!="-1" && is_numeric($system_config['purge_invoices'])){
-				$end_date =date("Y-m-d 00:00:00",strtotime($currentdate. "-".$system_config['purge_invoices']." days") -1);
+				$end_date =astpp_date("Y-m-d 00:00:00",strtotime($currentdate. "-".$system_config['purge_invoices']." days") -1);
 				$where ="invoice_date <= '".$end_date."'";
 				$query = "delete from invoice_details where invoiceid in( select id from invoices where ".$where.")"; 
 				$this->db->query($query);
@@ -48,19 +49,19 @@ class purge extends CI_Controller
 				$this->db->query($query);
 			}
 			if($system_config['purge_emails']!="" && $system_config['purge_emails']!="-1" && is_numeric($system_config['purge_emails'])){
-				$end_date =date("Y-m-d 00:00:00",strtotime($currentdate. "-".$system_config['purge_emails']." days") -1);
+				$end_date =astpp_date("Y-m-d 00:00:00",strtotime($currentdate. "-".$system_config['purge_emails']." days") -1);
 				$where ="date <= '".$end_date."'";
 				$query = "delete from mail_details where ".$where; 
 				$this->db->query($query);
 			}
 			if($system_config['purge_audio_log']!="" && $system_config['purge_audio_log']!="-1" && is_numeric($system_config['purge_audio_log'])){
-				$end_date =date("Y-m-d 00:00:00",strtotime($currentdate. "-".$system_config['purge_audio_log']." days") -1);
+				$end_date =astpp_date("Y-m-d 00:00:00",strtotime($currentdate. "-".$system_config['purge_audio_log']." days") -1);
 				$where ="timestamp <= '".$end_date."'";
 				$query = "delete from usertracking where ".$where; 
 				$this->db->query($query);
 			}
 			if($system_config['purge_accounts_deleted']!="" && $system_config['purge_accounts_deleted']!="-1" && is_numeric($system_config['purge_accounts_deleted'])){
-				$end_date =date("Y-m-d 00:00:00",strtotime($currentdate. "-".$system_config['purge_accounts_deleted']." days") -1);
+				$end_date =astpp_date("Y-m-d 00:00:00",strtotime($currentdate. "-".$system_config['purge_accounts_deleted']." days") -1);
 				$where ="deleted_date <= '".$end_date."' and deleted_date!='0000-00-00 00:00:00' and deleted=1";
 
 				$query = "delete from cdrs where accountid in(select id from accounts where ".$where.")"; 

@@ -33,7 +33,7 @@ function process_cdr($data, $db, $logger, $decimal_points, $config) {
 	$dataVariable = $data ['variables'];
 	
 	// Use Milliseconds to calculate the billing of calls
-	$dataVariable['billsec'] = ceil($dataVariable['billmsec'] / 1000);
+	$dataVariable['billsec'] = astpp_ceil(astpp_n($dataVariable['billmsec']) / 1000);
 
 	//Added condition to remove bad cdr entries	
 	if ($dataVariable ['callstart'] == ""){return;}
@@ -51,7 +51,7 @@ function process_cdr($data, $db, $logger, $decimal_points, $config) {
 	$dataVariable ['effective_caller_id_name'] = (isset ( $dataVariable ['effective_caller_id_name'] )) ? $dataVariable ['effective_caller_id_name'] : $dataCallflow ['caller_profile'] ['caller_id_name'];
 	$dataVariable ['effective_caller_id_number'] = (isset ( $dataVariable ['effective_caller_id_number'] )) ? $dataVariable ['effective_caller_id_number'] : $dataCallflow ['caller_profile'] ['caller_id_number'];
 	
-	if ($dataVariable ['billsec'] == 0 && $dataVariable ['hangup_cause'] == 'NORMAL_CLEARING') {
+	if (astpp_eq0($dataVariable ['billsec']) && $dataVariable ['hangup_cause'] == 'NORMAL_CLEARING') {
 		$hangup_cause = isset ( $dataVariable ['last_bridge_hangup_cause'] ) ? $dataVariable ['last_bridge_hangup_cause'] : $dataVariable ['hangup_cause'];
 	} else {
 		$hangup_cause = $dataVariable ['hangup_cause'];
@@ -63,7 +63,7 @@ function process_cdr($data, $db, $logger, $decimal_points, $config) {
 	}
 	
 	/* #### PATCH FOR ONE WAY AUDIO #### */
-	if ($hangup_cause == "NORMAL_UNSPECIFIED" && $dataVariable ['billsec'] > 0) {
+	if ($hangup_cause == "NORMAL_UNSPECIFIED" && astpp_gt($dataVariable ['billsec'], 0)) {
 		$hangup_cause = "NORMAL_CLEARING";
 	}
 	/* #### ************* END *************#### */
@@ -102,8 +102,8 @@ function process_cdr($data, $db, $logger, $decimal_points, $config) {
 	//$logger->log(print_r($origination_rate,true));
 
 		
-	if($actual_duration > 0 || $dataVariable['hangup_cause'] == 'NORMAL_CLEARING' || $dataVariable['hangup_cause'] == 'SUCCESS' || $dataVariable['hangup_cause']  == 'ALLOTTED_TIMEOUT' || $dataVariable['hangup_cause'] == 'USER_BUSY' || $dataVariable['hangup_cause']  == 'INTERWORKING'){
-		if($dataVariable['force_trunk_flag'] > 0 ){
+	if(astpp_gt($actual_duration, 0) || $dataVariable['hangup_cause'] == 'NORMAL_CLEARING' || $dataVariable['hangup_cause'] == 'SUCCESS' || $dataVariable['hangup_cause']  == 'ALLOTTED_TIMEOUT' || $dataVariable['hangup_cause'] == 'USER_BUSY' || $dataVariable['hangup_cause']  == 'INTERWORKING'){
+		if(astpp_gt($dataVariable['force_trunk_flag'], 0) ){
 			$route_query = "update routes SET call_count = call_count-1 where id =".(int)$dataVariable['force_trunk_flag'];
 			$logger->log("GET Update routes count decrase  : " . $route_query);
 			$route_user = $db->run($route_query);
@@ -119,7 +119,7 @@ function process_cdr($data, $db, $logger, $decimal_points, $config) {
 		
 		$trunk_id= $termination_rate['TRUNK'];
 		$logger->log("*********************** Harsh_trunk in CDRs: **".$rate_group."***********");
-		if($dataVariable['force_trunk_flag'] > 0){
+		if(astpp_gt($dataVariable['force_trunk_flag'], 0)){
 			$trunk_query = "update routing SET call_count = call_count-1 where trunk_id=".(int)$trunk_id." and routes_id =".(int)$dataVariable['force_trunk_flag'];
 		}else{
 			//~ if($dataVariable['rate_flag'] == 3){
@@ -156,7 +156,7 @@ function process_cdr($data, $db, $logger, $decimal_points, $config) {
 //check custom end
 $logger->log("*********************** Harsh_trunk in package_id: **".$dataVariable ['package_id']."***********");	
 	// Check if cusotmer have any package seconds left to use
-	if ($actual_duration > 0 && isset($dataVariable ['package_id']) && $dataVariable ['package_id'] > 0 ) {
+	if (astpp_gt($actual_duration, 0) && isset($dataVariable ['package_id']) && astpp_gt($dataVariable ['package_id'], 0) ) {
 		$package_array = package_calculation ( $dataVariable ['effective_destination_number'], $dataVariable ['package_id'], $actual_duration, $dataVariable ['call_direction'], $accountid,$dataVariable, $db, $logger );
 //		$package_array = package_calculation ( $dataVariable ['effective_destination_number'], $dataVariable ['package_id'], $actual_duration, $actual_call_direction,$dataVariable, $accountid, $db, $logger );
 		if (! empty ( $package_array )) {
@@ -172,11 +172,11 @@ $logger->log("*********************** Harsh_trunk in package_id: **".$dataVariab
 	$provider_cost = calc_cost ( $dataVariable, $termination_rate, $logger, $decimal_points );
 	
 	// Calculate parent cost if customer have any parent
-	$parent_cost = ($parentid > 0) ? calc_cost ( $dataVariable, $origination_rate [$parentid], $logger, $decimal_points ) : $provider_cost;
+	$parent_cost = (astpp_gt($parentid, 0)) ? calc_cost ( $dataVariable, $origination_rate [$parentid], $logger, $decimal_points ) : $provider_cost;
 	$logger->log ( "Debit :" . $debit . " Cost : " . $cost . " Provider Cost : " . $parent_cost );
 	
 	// Initialize final cost variable to use for billing
-	$cost = ($parent_cost > 0) ? $parent_cost : $provider_cost;
+	$cost = (astpp_gt($parent_cost, 0)) ? $parent_cost : $provider_cost;
 	
 	// Outbound call entry for all type of calls
 	$logger->log ( "*********************** OUTBOUND CALL ENTRY START *************" );
@@ -188,13 +188,13 @@ $logger->log("*********************** Harsh_trunk in package_id: **".$dataVariab
 	$db->run ( $query );
 	
 	// Update customer balance
-	if ($debit > 0 && $dataVariable ['calltype'] != "FREE") {
+	if (astpp_gt($debit, 0) && $dataVariable ['calltype'] != "FREE") {
 		update_balance ( $accountid, $debit, 0, $logger, $db, $config,$dataVariable );
 	}
 	
 	// Update parent or provider balance
-	if ($parent_cost > 0) {
-		update_balance ( $termination_rate ['PROVIDER'], ($parent_cost * - 1), 3, $logger, $db, $config,$dataVariable );
+	if (astpp_gt($parent_cost, 0)) {
+		update_balance ( $termination_rate ['PROVIDER'], (astpp_n($parent_cost) * - 1), 3, $logger, $db, $config,$dataVariable );
 	}
 	
 	// Resellers CDR entry
@@ -214,7 +214,7 @@ $logger->log("*********************** Harsh_trunk in package_id: **".$dataVariab
 			$dataVariable ['sip_user'] = '';
 		//$dataVariable ['calltype'] = "DID";
 		// For inbound package calculation
-		if ($actual_duration > 0 && isset($dataVariable ['package_id']) && $dataVariable ['package_id'] > 0) {
+		if (astpp_gt($actual_duration, 0) && isset($dataVariable ['package_id']) && astpp_gt($dataVariable ['package_id'], 0)) {
 			$package_array = package_calculation ( $dataVariable ['effective_destination_number'], $dataVariable ['package_id'], $actual_duration, $dataVariable ['call_direction'], $accountid,$dataVariable, $db, $logger );
 			if (! empty ( $package_array )) {
 				$dataVariable ['calltype'] = "FREE";
@@ -256,7 +256,7 @@ $logger->log("*********************** Harsh_trunk in package_id: **".$dataVariab
  * @param boolean $flag_parent        	
  */
 function insert_parent_data($dataVariable, $actual_calltype, $parentid, $origination_rate, $actual_duration, $provider_cost, $flag_parent, $logger, $db, $decimal_points, $config, $trunk_id='') {
-	while ( $parentid > 0 ) {
+	while ( astpp_gt($parentid, 0) ) {
 		$logger->log ( "*************** IN PARENT DATA SECTION ********" );
 		$dataVariable ['calltype'] = $actual_calltype;
 		$carddata = get_accounts ( $parentid, $logger, $db );
@@ -276,7 +276,7 @@ function insert_parent_data($dataVariable, $actual_calltype, $parentid, $origina
 		 */
 		
 		// Check if reseller have any package seconds left to use
-		if ($actual_duration > 0 && isset($dataVariable ['package_id']) && $dataVariable ['package_id'] > 0) {
+		if (astpp_gt($actual_duration, 0) && isset($dataVariable ['package_id']) && astpp_gt($dataVariable ['package_id'], 0)) {
 			$package_array = package_calculation ( $dataVariable ['effective_destination_number'],$dataVariable ['package_id'], $actual_duration, $dataVariable ['call_direction'], $accountid,$dataVariable, $db, $logger );
 			if (! empty ( $package_array )) {
 				$dataVariable ['calltype'] = "FREE";
@@ -286,8 +286,8 @@ function insert_parent_data($dataVariable, $actual_calltype, $parentid, $origina
 		
 		// Get parent id for cost calculation
 		$parentid = $carddata ['reseller_id'];
-		$parent_cost = ($parentid > 0) ? calc_cost ( $dataVariable, $origination_rate [$parentid], $logger, $decimal_points ) : $provider_cost;
-		$cost = ($parent_cost > 0) ? $parent_cost : $provider_cost;
+		$parent_cost = (astpp_gt($parentid, 0)) ? calc_cost ( $dataVariable, $origination_rate [$parentid], $logger, $decimal_points ) : $provider_cost;
+		$cost = (astpp_gt($parent_cost, 0)) ? $parent_cost : $provider_cost;
 		
 		if (isset ( $dataVariable ['receiver_accid'] ) && $dataVariable ['receiver_accid'] != "" && $flag_parent == true) {
 			$logger->log ( "********* IN RESELLER FOR RECEIVER ENTRY START ******" );
@@ -303,7 +303,7 @@ function insert_parent_data($dataVariable, $actual_calltype, $parentid, $origina
 			$db->run ( $query );
 			
 			// Update reseller balance
-			if ($debit > 0 && $dataVariable ['calltype'] != "FREE") {
+			if (astpp_gt($debit, 0) && $dataVariable ['calltype'] != "FREE") {
 				update_balance ( $accountid, $debit, 0, $logger, $db, $config,$dataVariable );
 			}
 		}
@@ -354,7 +354,7 @@ function insert_extra_receiver_entry($dataVariable, $origination_rate, $terminat
 	$db->run ( $query );
 	
 	//if ($debit > 0 && ($dataVariable ['calltype'] != "FREE" && $dataVariable ['calltype'] != "LOCAL")) {
-	if ($debit > 0 && ($dataVariable ['calltype'] != "FREE" && $dataVariable ['calltype'] != "LOCAL")) {
+	if (astpp_gt($debit, 0) && ($dataVariable ['calltype'] != "FREE" && $dataVariable ['calltype'] != "LOCAL")) {
 		update_balance ( $accountid, $debit, 0, $logger, $db, $config,$dataVariable );
 	}
 	return true;
@@ -379,7 +379,7 @@ function astpp_cdr_escape($data, $db) {
 		if (is_array ( $value )) {
 			$data [$key] = astpp_cdr_escape ( $value, $db );
 		} elseif (is_string ( $value )) {
-			if (in_array ( $key, $urldecoded_keys, true )) {
+			if (astpp_in_array ( $key, $urldecoded_keys, true )) {
 				$data [$key] = str_replace ( array (
 						'%',
 						'+'
@@ -402,7 +402,7 @@ function get_cdr_string($dataVariable, $accountid, $account_type, $actual_durati
 	$origination_rate = astpp_cdr_escape ( $origination_rate, $db );
 
 	$get_current_time = gmdate("Y-m-d H:i:s"); // progress_media_stamp
-	$get_current_microseconds = round(microtime(true)/1000); // progress_mediamsec
+	$get_current_microseconds = astpp_round(astpp_n(microtime(true))/1000); // progress_mediamsec
 	
 	$dataVariable ['calltype'] = ($dataVariable ['calltype'] == 'DID-LOCAL' || $dataVariable ['calltype'] == 'SIP-DID' || $dataVariable ['calltype'] == 'OTHER') ? "DID" : $dataVariable ['calltype'];
 	// $callerIdNumber = isset($dataVariable['effective_caller_id_number']) && !empty($dataVariable['effective_caller_id_number'])? $dataVariable['effective_caller_id_number'] :$dataVariable['caller_id'];
@@ -416,7 +416,7 @@ function get_cdr_string($dataVariable, $accountid, $account_type, $actual_durati
 	if($dataVariable ['calltype'] == 'CALLINGCARD'){
 		$dataVariable ['uuid']=isset($dataVariable ['originating_leg_uuid']) ? $dataVariable ['originating_leg_uuid'] : $dataVariable ['uuid'];
 	}
-	return $cdr_string = "'" . ($dataVariable ['uuid']) . "','" . $accountid . "','" . $account_type . "','" . (urldecode ( $callerIdNumber )) . "','" . ($dataVariable ['effective_destination_number']) . "','" . $actual_duration . "'," . (($termination_rate ['TRUNK']) ? $termination_rate ['TRUNK'] : '0') . "," . (($dataVariable ['sip_via_host']) ? "'" . $dataVariable ['sip_via_host'] . "'" : '""') . "," . (($dataVariable ['sip_contact_host']) ? "'" . $dataVariable ['sip_contact_host'] . "'" : '""') . ",'" . ($dataVariable ['hangup_cause']) . "','" . urldecode ( $dataVariable ['callstart'] ) . "','" . $debit . "','" . $cost . "'," . (($termination_rate ['PROVIDER']) ? $termination_rate ['PROVIDER'] : '0') . ",'" . $origination_rate [$accountid] ['RATEGROUP'] . "','" . $dataVariable ['package_id'] . "','" . ($origination_rate [$accountid] ['CODE']) . "'," . (($origination_rate [$accountid] ['DESTINATION']) ? "'" . htmlentities ( $origination_rate [$accountid] ['DESTINATION'], ENT_COMPAT, 'UTF-8' ) . "'" : "'" . '' . "'") . "," . (($origination_rate [$accountid] ['COST']) ? "'" . $origination_rate [$accountid] ['COST'] . "'" : "'" . '0' . "'") . ",'" . $parentid . "'," . (($origination_rate [$parentid] ['CODE']) ? "'" . $origination_rate [$parentid] ['CODE'] . "'" : "'" . '0' . "'") . "," . (($origination_rate [$parentid] ['DESTINATION']) ? "'" . $origination_rate [$parentid] ['DESTINATION'] . "'" : "'" . '' . "'") . "," . (($origination_rate [$parentid] ['COST']) ? "'" . $origination_rate [$parentid] ['COST'] . "'" : '0') . "," . (($termination_rate ['CODE']) ? "'" . $termination_rate ['CODE'] . "'" : "'" . '' . "'") . "," . (($termination_rate ['DESTINATION']) ? "'" . $termination_rate ['DESTINATION'] . "'" : "'" . '' . "'") . "," . (($termination_rate ['COST']) ? "'" . $termination_rate ['COST'] . "'" : '0') . ",'" . $provider_cost . "'," . (($dataVariable ['call_direction']) ? "'" .ucfirst($dataVariable ['call_direction']) . "'" : "'internal'") . ",'" . ($dataVariable ['calltype']) . "','" . $dataVariable ['call_request'] . "','" . $origination_rate [$accountid] ['CI'] . "','".$dataVariable ['sip_user']."','".$dataVariable ['origination_call_type']."','" .date("Y-m-d H:i:s", (strtotime(date(urldecode ( $dataVariable ['callstart'] ))) + $actual_duration)) . "'";
+	return $cdr_string = "'" . ($dataVariable ['uuid']) . "','" . $accountid . "','" . $account_type . "','" . (urldecode ( $callerIdNumber )) . "','" . ($dataVariable ['effective_destination_number']) . "','" . $actual_duration . "'," . (($termination_rate ['TRUNK']) ? $termination_rate ['TRUNK'] : '0') . "," . (($dataVariable ['sip_via_host']) ? "'" . $dataVariable ['sip_via_host'] . "'" : '""') . "," . (($dataVariable ['sip_contact_host']) ? "'" . $dataVariable ['sip_contact_host'] . "'" : '""') . ",'" . ($dataVariable ['hangup_cause']) . "','" . urldecode ( $dataVariable ['callstart'] ) . "','" . $debit . "','" . $cost . "'," . (($termination_rate ['PROVIDER']) ? $termination_rate ['PROVIDER'] : '0') . ",'" . $origination_rate [$accountid] ['RATEGROUP'] . "','" . $dataVariable ['package_id'] . "','" . ($origination_rate [$accountid] ['CODE']) . "'," . (($origination_rate [$accountid] ['DESTINATION']) ? "'" . htmlentities ( $origination_rate [$accountid] ['DESTINATION'], ENT_COMPAT, 'UTF-8' ) . "'" : "'" . '' . "'") . "," . (($origination_rate [$accountid] ['COST']) ? "'" . $origination_rate [$accountid] ['COST'] . "'" : "'" . '0' . "'") . ",'" . $parentid . "'," . (($origination_rate [$parentid] ['CODE']) ? "'" . $origination_rate [$parentid] ['CODE'] . "'" : "'" . '0' . "'") . "," . (($origination_rate [$parentid] ['DESTINATION']) ? "'" . $origination_rate [$parentid] ['DESTINATION'] . "'" : "'" . '' . "'") . "," . (($origination_rate [$parentid] ['COST']) ? "'" . $origination_rate [$parentid] ['COST'] . "'" : '0') . "," . (($termination_rate ['CODE']) ? "'" . $termination_rate ['CODE'] . "'" : "'" . '' . "'") . "," . (($termination_rate ['DESTINATION']) ? "'" . $termination_rate ['DESTINATION'] . "'" : "'" . '' . "'") . "," . (($termination_rate ['COST']) ? "'" . $termination_rate ['COST'] . "'" : '0') . ",'" . $provider_cost . "'," . (($dataVariable ['call_direction']) ? "'" .ucfirst($dataVariable ['call_direction']) . "'" : "'internal'") . ",'" . ($dataVariable ['calltype']) . "','" . $dataVariable ['call_request'] . "','" . $origination_rate [$accountid] ['CI'] . "','".$dataVariable ['sip_user']."','".$dataVariable ['origination_call_type']."','" .astpp_date("Y-m-d H:i:s", (strtotime(date(urldecode ( $dataVariable ['callstart'] ))) + astpp_n($actual_duration))) . "'";
 	
 }
 
@@ -435,7 +435,7 @@ function get_reseller_cdr_string($dataVariable, $accountid, $account_type, $actu
 	$dataVariable ['hangup_cause'] = get_q850code($dataVariable, $db);
 	
 	//return $cdr_string = "'" . ($dataVariable ['uuid']) . "','" . $accountid . "','" . (urldecode ( $callerIdNumber )) . "','" . ($dataVariable ['effective_destination_number']) . "','" . $actual_duration . "','" . ($dataVariable ['hangup_cause']) . "','" . urldecode ( $dataVariable ['callstart'] ) . "','" . $debit . "','" . $cost . "','" . $origination_rate [$accountid] ['RATEGROUP'] . "','" . $dataVariable ['package_id'] . "','" . ($origination_rate [$accountid] ['CODE']) . "'," . (($origination_rate [$accountid] ['DESTINATION']) ? "'" . $origination_rate [$accountid] ['DESTINATION'] . "'" : "'" . '' . "'") . "," . (($origination_rate [$accountid] ['COST']) ? "'" . $origination_rate [$accountid] ['COST'] . "'" : "'" . '0' . "'") . ",'" . $parentid . "'," . (($origination_rate [$parentid] ['CODE']) ? "'" . $origination_rate [$parentid] ['CODE'] . "'" : "'" . '0' . "'") . "," . (($origination_rate [$parentid] ['DESTINATION']) ? "'" . $origination_rate [$parentid] ['DESTINATION'] . "'" : "'" . '' . "'") . "," . (($origination_rate [$parentid] ['COST']) ? "'" . $origination_rate [$parentid] ['COST'] . "'" : '0') . "," . (($dataVariable ['call_direction']) ? "'" . $dataVariable ['call_direction'] . "'" : "'internal'") . ",'" . ($dataVariable ['calltype']) . "','" . ($dataVariable ['call_request']) . "','" . $origination_rate [$accountid]['CI'] . "','" . urldecode ( $dataVariable ['end_stamp'] ) . "'";
-	return $cdr_string = "'" . ($dataVariable ['uuid']) . "','" . $accountid . "','" . (urldecode ( $callerIdNumber )) . "','" . ($dataVariable ['effective_destination_number']) . "','" . $actual_duration . "','" . ($dataVariable ['hangup_cause']) . "','" . urldecode ( $dataVariable ['callstart'] ) . "','" . $debit . "','" . $cost . "','" . $origination_rate [$accountid] ['RATEGROUP'] . "','" . $dataVariable ['package_id'] . "','" . ($origination_rate [$accountid] ['CODE']) . "'," . (($origination_rate [$accountid] ['DESTINATION']) ? "'" . $origination_rate [$accountid] ['DESTINATION'] . "'" : "'" . '' . "'") . "," . (($origination_rate [$accountid] ['COST']) ? "'" . $origination_rate [$accountid] ['COST'] . "'" : "'" . '0' . "'") . ",'" . $parentid . "'," . (($origination_rate [$parentid] ['CODE']) ? "'" . $origination_rate [$parentid] ['CODE'] . "'" : "'" . '0' . "'") . "," . (($origination_rate [$parentid] ['DESTINATION']) ? "'" . $origination_rate [$parentid] ['DESTINATION'] . "'" : "'" . '' . "'") . "," . (($origination_rate [$parentid] ['COST']) ? "'" . $origination_rate [$parentid] ['COST'] . "'" : '0') . "," . (($dataVariable ['call_direction']) ? "'" . ucfirst($dataVariable ['call_direction']) . "'" : "'internal'") . ",'" . ($dataVariable ['calltype']) . "','" . ($dataVariable ['call_request']) . "','" . $origination_rate [$accountid]['CI'] . "','" . date("Y-m-d H:i:s", (strtotime(date(urldecode ( $dataVariable ['callstart'] ))) + $actual_duration)) . "',". (($trunk_id) ? $trunk_id : '0');
+	return $cdr_string = "'" . ($dataVariable ['uuid']) . "','" . $accountid . "','" . (urldecode ( $callerIdNumber )) . "','" . ($dataVariable ['effective_destination_number']) . "','" . $actual_duration . "','" . ($dataVariable ['hangup_cause']) . "','" . urldecode ( $dataVariable ['callstart'] ) . "','" . $debit . "','" . $cost . "','" . $origination_rate [$accountid] ['RATEGROUP'] . "','" . $dataVariable ['package_id'] . "','" . ($origination_rate [$accountid] ['CODE']) . "'," . (($origination_rate [$accountid] ['DESTINATION']) ? "'" . $origination_rate [$accountid] ['DESTINATION'] . "'" : "'" . '' . "'") . "," . (($origination_rate [$accountid] ['COST']) ? "'" . $origination_rate [$accountid] ['COST'] . "'" : "'" . '0' . "'") . ",'" . $parentid . "'," . (($origination_rate [$parentid] ['CODE']) ? "'" . $origination_rate [$parentid] ['CODE'] . "'" : "'" . '0' . "'") . "," . (($origination_rate [$parentid] ['DESTINATION']) ? "'" . $origination_rate [$parentid] ['DESTINATION'] . "'" : "'" . '' . "'") . "," . (($origination_rate [$parentid] ['COST']) ? "'" . $origination_rate [$parentid] ['COST'] . "'" : '0') . "," . (($dataVariable ['call_direction']) ? "'" . ucfirst($dataVariable ['call_direction']) . "'" : "'internal'") . ",'" . ($dataVariable ['calltype']) . "','" . ($dataVariable ['call_request']) . "','" . $origination_rate [$accountid]['CI'] . "','" . astpp_date("Y-m-d H:i:s", (strtotime(date(urldecode ( $dataVariable ['callstart'] ))) + astpp_n($actual_duration))) . "',". (($trunk_id) ? $trunk_id : '0');
 }
 
 // Update user balance
@@ -444,7 +444,7 @@ function get_reseller_cdr_string($dataVariable, $accountid, $account_type, $actu
  * @param integer $entity_id        	
  */
 function update_balance($user_id, $amount, $entity_id, $logger, $db, $config, $dataVariable) {
-		$math_sign = ($entity_id == 0 || $entity_id == 1) ? '-' : '+';
+		$math_sign = (astpp_eq0($entity_id) || $entity_id == 1) ? '-' : '+';
 		$tmp_prefix=($dataVariable['intcall']==1)?'int_':'';
 		$query = "UPDATE accounts SET ".$tmp_prefix."balance=IF(posttoexternal=1,".$tmp_prefix."balance+" . $amount . ",".$tmp_prefix."balance-" . $amount . ") WHERE id=" . $user_id;
 		$logger->log ( "Balance update : " . $query );
@@ -515,24 +515,24 @@ function calc_cost($dataVariable, $rates, $logger, $decimal_points) {
 	$rates['COST'] = (int) empty($rates['COST'])?"0":$rates['COST'];
 
 	if (!empty($rates['INCLUDEDSECONDS'])) {
-		$duration -= $rates ['INCLUDEDSECONDS'];
+		$duration = astpp_n($duration) - astpp_n($rates ['INCLUDEDSECONDS']);
 	}
 
 	// If there is any duration left, we need to bill for that.
-	if ($duration > 0) {
+	if (astpp_gt($duration, 0)) {
 		
 		// Take off the 'Initial Increment', and bill for that.
 		$rates ['INITIALBLOCK'] = (empty($rates['INITIALBLOCK']) || $rates['INITIALBLOCK'] < 1) ? 0 : $rates ['INITIALBLOCK']; //HP: change default value 1 to 0 when 'INITIALBLOCK' emotry or lessthen 1.
-		$call_cost += ($rates['COST'] / 60) * $rates ['INITIALBLOCK'];
-		$duration -= $rates ['INITIALBLOCK'];
+		$call_cost = astpp_n($call_cost) + astpp_n((astpp_n($rates['COST']) / 60) * astpp_n($rates ['INITIALBLOCK']));
+		$duration = astpp_n($duration) - astpp_n($rates ['INITIALBLOCK']);
 		
-		if ($duration > 0) {
+		if (astpp_gt($duration, 0)) {
 
 			$rates ['INC'] = (empty($rates['INC']) || $rates['INC'] < 1) ? 1 : $rates ['INC'];
-			$call_cost += (ceil ( $duration / $rates ['INC'] ) * $rates ['INC']) * ($rates ['COST'] / 60);
+			$call_cost = astpp_n($call_cost) + astpp_n((astpp_ceil ( astpp_div($duration, $rates ['INC']) ) * astpp_n($rates ['INC'])) * (astpp_n($rates ['COST']) / 60));
 		}
 	}
-	$call_cost = number_format ( $call_cost, $decimal_points );
+	$call_cost = astpp_number_format ( $call_cost, $decimal_points );
 	$logger->log ( "Return cost " . $call_cost );
 	return $call_cost;
 }
@@ -541,7 +541,7 @@ function calc_cost($dataVariable, $rates, $logger, $decimal_points) {
 function package_calculation($destination_number, $package_id, $duration, $call_direction, $accountid,$dataVariable, $db, $logger) {
 	$package_array = array ();
 	$logger->log ( "Package call_direction is  : " . $call_direction." AND receiver_accid is :::".$dataVariable ['receiver_accid']);
-	if($call_direction == 'inbound' && isset($dataVariable ['receiver_accid']) && $dataVariable ['receiver_accid'] > 0){
+	if($call_direction == 'inbound' && isset($dataVariable ['receiver_accid']) && astpp_gt($dataVariable ['receiver_accid'], 0)){
 		$accountid = ( int ) $dataVariable ['receiver_accid'];
 		$logger->log ( "Package call_direction is  : " . $call_direction." AND Account ID is :::".$accountid );
 	}
@@ -559,7 +559,7 @@ function package_calculation($destination_number, $package_id, $duration, $call_
 	$seen_packages = array ();
 	if (!empty($package_info_arr)) {
 		foreach($package_info_arr as $package_info){
-			if ($seconds_left <= 0 || isset ( $seen_packages [$package_info ['package_id']] )) {
+			if (astpp_le($seconds_left, 0) || isset ( $seen_packages [$package_info ['package_id']] )) {
 				continue;
 			}
 			$seen_packages [$package_info ['package_id']] = true;
@@ -581,18 +581,18 @@ function package_calculation($destination_number, $package_id, $duration, $call_
 					$db->run ( $Insert_Query );
 					$counter_info = get_counters ( $accountid, $package_info ['package_id'], $db, $logger );
 				}
-				$package_info ['free_seconds'] = $package_info ['free_minutes']*60;
+				$package_info ['free_seconds'] = astpp_n($package_info ['free_minutes'])*60;
 				if ($package_info ['free_seconds'] > ($counter_info ['used_seconds'])) {
-					$available_seconds = $package_info ['free_seconds'] - $counter_info ['used_seconds'];
+					$available_seconds = astpp_n($package_info ['free_seconds']) - astpp_n($counter_info ['used_seconds']);
 					$logger->log ( "available_seconds  : " . $available_seconds."\n" );
 					$logger->log ( "free_minutes  : " . $package_info ['free_minutes']."\n" );
 					$logger->log ( "used_seconds  : " . $counter_info ['used_seconds']."\n" );
 					$logger->log ( "duration  : " . $duration." (not yet counted: " . $seconds_left . ")\n" );
 					$free_seconds = ($available_seconds >= $seconds_left) ? $seconds_left : $available_seconds;
-					$seconds_left = $seconds_left - $free_seconds;
+					$seconds_left = astpp_n($seconds_left) - astpp_n($free_seconds);
 	//				$duration = ($available_seconds >= $duration) ? $duration : $available_seconds;
-					$final_min = $counter_info ['used_seconds'] + $free_seconds;
-					$final_min =  ceil($final_min/60)*60;
+					$final_min = astpp_n($counter_info ['used_seconds']) + astpp_n($free_seconds);
+					$final_min =  astpp_ceil(astpp_n($final_min)/60)*60;
 					//$freeminutes ['free_minutes'] = ceil($freeminutes ['free_minutes']/60)*60;
 					$update_query = "UPDATE counters SET used_seconds = " . ($final_min) . " WHERE id = " . $counter_info ['id'];
 					$logger->log ( "Update Counters  : " . $update_query );
@@ -640,7 +640,7 @@ function load_configuration($logger) {
 function number_loop($destination, $field, $db) {
 	$max_len_prefix = strlen ( $destination );
 	$number_prefix = '(';
-	while ( $max_len_prefix > 0 ) {
+	while ( astpp_gt($max_len_prefix, 0) ) {
 		$number_prefix .= "$field='^" . $db->esc ( substr ( $destination, 0, $max_len_prefix ) ) . ".*' OR ";
 		$max_len_prefix --;
 	}
@@ -654,6 +654,6 @@ function number_loop($destination, $field, $db) {
  * @param string $date        	
  */
 function convert_to_gmt($date) {
-	return gmdate ( 'Y-m-d H:i:s', strtotime ( $date ) );
+	return astpp_gmdate ( 'Y-m-d H:i:s', strtotime ( $date ) );
 }
 ?>

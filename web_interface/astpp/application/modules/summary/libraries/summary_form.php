@@ -22,6 +22,7 @@
 if (! defined('BASEPATH'))
     exit('No direct script access allowed');
 
+#[\AllowDynamicProperties]
 class Summary_form extends common
 {
 
@@ -418,7 +419,7 @@ class Summary_form extends common
                 ''
             )
         );
-        $grid_field_arr = json_encode(array_merge($new_arr, $fixed_arr));
+        $grid_field_arr = json_encode(astpp_array_merge($new_arr, $fixed_arr));
         return $grid_field_arr;
     }
 
@@ -689,7 +690,7 @@ class Summary_form extends common
                 "right"
             )
         );
-        $grid_field_arr = json_encode(array_merge($new_column_arr, $column_arr));
+        $grid_field_arr = json_encode(astpp_array_merge($new_column_arr, $column_arr));
         return $grid_field_arr;
     }
 
@@ -1003,7 +1004,7 @@ class Summary_form extends common
                 "right"
             )
         );
-        $grid_field_arr = json_encode(array_merge($new_column_arr, $column_arr));
+        $grid_field_arr = json_encode(astpp_array_merge($new_column_arr, $column_arr));
         return $grid_field_arr;
     }
 
@@ -1341,7 +1342,7 @@ class Summary_form extends common
 		    ),
 	);
 	}	
-	$grid_field_arr = json_encode(array_merge($new_column_arr, $column_arr));
+	$grid_field_arr = json_encode(astpp_array_merge($new_column_arr, $column_arr));
         return $grid_field_arr;
     }
     function build_grid_buttons_products_summary()

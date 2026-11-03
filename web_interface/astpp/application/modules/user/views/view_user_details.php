@@ -40,7 +40,7 @@
                     <nav aria-label="breadcrumb">
 						<ol class="breadcrumb m-0 p-0">
 							<?php $accountinfo=$this->session->userdata('accountinfo');
-							if($accountinfo['type']==0 || $accountinfo['type']==3){ ?>
+							if(astpp_eq0($accountinfo['type']) || $accountinfo['type']==3){ ?>
 								<li class="breadcrumb-item"><a href=<?= base_url() . "user/user_myprofile/"; ?>><?php echo gettext('My Account')?></a></li>
 							<?php } ?>	
 							<li class="breadcrumb-item active" aria-current="page"><a href="<?= base_url()."user/user_myprofile/"; ?>"> <?php echo gettext('My Profile'); ?> </a></li>
@@ -57,7 +57,7 @@
 							if(isset($domain_name['domain']) && $domain_name['domain'] != ""){
 								$val=$domain_name['domain'];
 							}
-							if($accountinfo['type']==0){
+							if(astpp_eq0($accountinfo['type'])){
 					?>
 							<div class="col-3 float-right input-group m-2 pr-0">
 								<label class="border border-light col m-0 p-1 rounded-left text-center text-light text-truncate"><?php echo $val; ?></label>

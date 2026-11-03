@@ -22,6 +22,7 @@ defined ( 'BASEPATH' ) or exit ( 'No direct script access allowed' );
  * Included accounts api controller as that is having all functions belogs and accounts and we are validating account for each api request.
  */
 require APPPATH . '/controllers/common/account.php';
+#[\AllowDynamicProperties]
 class Signup extends Account {
 	protected $current_date;
     protected $postdata = "";
@@ -136,7 +137,7 @@ class Signup extends Account {
 		}
 		$this->db->where(array("username"=>$this->postdata['number']));
 		$cnt_result_sip_devices = $this->db->get('sip_devices')->num_rows();
-		if($cnt_result_sip_devices > 0) {
+		if(astpp_gt($cnt_result_sip_devices, 0)) {
 			$this->api_log->write_log ('ERROR',"Sip device username already exists.");
 			$this->response ( array (
 				'status'  => false,
@@ -161,7 +162,7 @@ class Signup extends Account {
 		$account_generate = common_model::$global_config['system_config']['telephone_as_account'];
 		$numberlength = 6;
 		if($this->postdata['number'] == ''){
-			if ($account_generate == 0) {
+			if (astpp_eq0($account_generate)) {
            		$this->postdata['number'] = $country_code . $this->postdata['telephone'];
         	}else{
         		 if (isset(common_model::$global_config['system_config']['minimum_accountlength_customer'])) {
@@ -173,7 +174,7 @@ class Signup extends Account {
         }
         $this->postdata['password'] = $this->postdata['password'] != "" ? $this->postdata['password'] : $this->common->generate_password();
         $this->postdata['password'] = $this->common->encode($this->postdata['password']);
-		$otp = rand(pow(10, $numberlength - 1), pow(10, $numberlength) - 1);
+		$otp = rand(pow(10, astpp_n($numberlength) - 1), pow(10, $numberlength) - 1);
 		$where = array('number'=>$this->postdata['number'] , 'email' => $this->postdata['email']);
 		$account_unverified   = (array) $this->db->get_where('account_unverified',$where)->first_row();
 		if(!empty($account_unverified)) {
@@ -252,22 +253,22 @@ class Signup extends Account {
         $otp_date = strtotime($account_details['creation_date']);
         $current_date  = gmdate("Y-m-d H:i:s");
         $insert_date = strtotime($current_date);
-        $remain_time = $insert_date - $otp_date;
+        $remain_time = astpp_n($insert_date) - astpp_n($otp_date);
         $message = 'false';
         $otp_expire_time = common_model::$global_config['system_config']['otp_expire'];
-        $otp_expire_min = ($otp_expire_time > 0) ? $otp_expire_time : 30;
-        $otp_expire_sec = ($otp_expire_min * 60);
+        $otp_expire_min = (astpp_gt($otp_expire_time, 0)) ? $otp_expire_time : 30;
+        $otp_expire_sec = (astpp_n($otp_expire_min) * 60);
         if ($remain_time <= $otp_expire_sec) {
             $account_details['pin'] = '';
             $pin = Common_model::$global_config['system_config']['generate_pin'];
-            if ($pin == 0) {
+            if (astpp_eq0($pin)) {
                 $numberlength = common_model::$global_config['system_config']['pinlength'];
                 $numberlength = ($numberlength < 6) ? 6 : common_model::$global_config['system_config']['pinlength'];
-                $account_details['pin'] = rand(pow(10, $numberlength - 1), pow(10, $numberlength) - 1);
+                $account_details['pin'] = rand(pow(10, astpp_n($numberlength) - 1), pow(10, $numberlength) - 1);
             }
             if (empty($account_array)) {
 				$account_details['pricelist_id'] = Common_model::$global_config['system_config']['default_signup_rategroup'];
-                if ($account_details['reseller_id'] > 0) {
+                if (astpp_gt($account_details['reseller_id'], 0)) {
                     $this->db->select("id");
                     $pricelist_id = (array) $this->db->get_where("pricelists", array(
                         "reseller_id" => $account_details['reseller_id']
@@ -376,7 +377,7 @@ class Signup extends Account {
 		$this->db->order_by("id","asc");
 		$this->db->limit(1);
 		$otp_expire_time = common_model::$global_config['system_config']['otp_expire'];
-       	$otp_expire_time = $otp_expire_time  > 0 ? $otp_expire_time : '30';
+       	$otp_expire_time = astpp_gt($otp_expire_time, 0) ? $otp_expire_time : '30';
 		$invoice_arr     = (array)$this->db->get_where("invoice_conf")->first_row();
 		$company_email   = $invoice_arr ['emailaddress'];
 		$company_website = $invoice_arr ["website"];
@@ -384,7 +385,7 @@ class Signup extends Account {
 		$TemplateData    = array ();
 		$template        = $EmailTemplate['template'];
 		$otp_expire_time = common_model::$global_config['system_config']['otp_expire'];
-        $otp_expire_min = ($otp_expire_time > 0) ? $otp_expire_time : 30;
+        $otp_expire_min = (astpp_gt($otp_expire_time, 0)) ? $otp_expire_time : 30;
 		if(!empty($EmailTemplate)) {
 			if($EmailTemplate['name'] == 'signup_confirmation') {
 				$TemplateData['subject'] = $EmailTemplate['subject'];		
@@ -432,7 +433,7 @@ class Signup extends Account {
 		$sms_api_key    = Common_model::$global_config ['system_config'] ['sms_api_key'];
 		$sms_secret_key = Common_model::$global_config ['system_config'] ['sms_secret_key'];
 		$otp_expire_time = Common_model::$global_config ['system_config'] ['otp_expire'];
-		$otp_expire_time = $otp_expire_time  > 0 ? $otp_expire_time : '30';
+		$otp_expire_time = astpp_gt($otp_expire_time, 0) ? $otp_expire_time : '30';
 		if($template_name == 'signup_confirmation') {
 			$sms_message = str_replace('#FIRST_NAME#', $user_data['first_name'], $sms_message);
 			$sms_message = str_replace('#OTP#', $user_data['otp'], $sms_message);

@@ -21,6 +21,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 // ##############################################################################
+#[\AllowDynamicProperties]
 class Email_model extends CI_Model
 {
 
@@ -37,7 +38,7 @@ class Email_model extends CI_Model
         $account_email = $account_data['email'];
         $account_type = $account_data['type'];
 
-        if ($account_type == 0) {
+        if (astpp_eq0($account_type)) {
             $this->db->where('accountid', $account_id);
         }
         if ($account_type == 1) {

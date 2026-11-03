@@ -174,7 +174,7 @@
                   ?>
 
 
-                  <?php if($accountinfo['type'] == 0 || $accountinfo['type'] == 1){ ?>
+                  <?php if(astpp_eq0($accountinfo['type']) || $accountinfo['type'] == 1){ ?>
                     <div class="col-md-6 form-group">
                       <label class="p-0 control-label"><?php echo gettext("Name"); ?><span style="color:black;">*</span></label>
                       <input type="text" id="name" maxlength="20" name="name" class="col-md-12 form-control form-control-lg" value="<?php echo isset($edit_array['name'])?$edit_array['name']:''; ?>">  
@@ -277,7 +277,7 @@
 
              <label class="col-md-12 p-0 control-label"><?php echo gettext("Status"); ?> </label>  
              <select name="status" class="col-md-12 form-control selectpicker form-control-lg" data-live-search="true">
-              <option value="0" <?php if($edit_array['status'] == 0){?> selected="select" <?php } ?>>Active</option>
+              <option value="0" <?php if(astpp_eq0($edit_array['status'])){?> selected="select" <?php } ?>>Active</option>
               <option value="1" <?php if($edit_array['status'] == 1){?> selected="select" <?php } ?>>Inactive</option>
             </select>
 

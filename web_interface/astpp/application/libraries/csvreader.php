@@ -14,6 +14,7 @@ if (! defined ( 'BASEPATH' ))
  * @link http://www.codeigniter.com/wiki/CSVReader
  *      
  */
+#[\AllowDynamicProperties]
 class CSVReader {
 	var $fields;
 	/**
@@ -48,11 +49,11 @@ class CSVReader {
 	function parse_file($p_Filepath, $config_variable, $check_header_flag = false) {
 		$lines = file ( $p_Filepath );
 		// Giving line numbers
-		for($i = 0; $i < sizeof ( $lines ); $i ++) {
+		for($i = 0; $i < astpp_sizeof ( $lines ); $i ++) {
 			
 			if (trim ( $lines [$i] ) != "") {
 				$columnname = explode ( $this->separator, $lines [$i] );
-				for($i = 0; $i < sizeof ( $columnname ); $i ++) {
+				for($i = 0; $i < astpp_sizeof ( $columnname ); $i ++) {
 					$columnname [$i] = $columnname [$i];
 				}
 				break;
@@ -76,14 +77,14 @@ class CSVReader {
 		$i = 0;
 		$flag_data = false;
 		$data_arr [0] = $config_variable;
-		$field_name_arr = array_keys ( $config_variable );
+		$field_name_arr = astpp_array_keys ( $config_variable );
 		foreach ( $p_CSVLines as $line_num => $line ) {
 			$line = trim ( $line );
 			if (! empty ( $line )) {
 				// skip empty lines
 				$elements = explode ( $this->separator, $line );
 				
-				if (array_filter ( $elements, 'trim' )) {
+				if (astpp_array_filter ( $elements, 'trim' )) {
 					$custom_array [] = $elements;
 				}
 				$i ++;

@@ -24,6 +24,7 @@
  * @author		ExpressionEngine Dev Team
  * @link		http://codeigniter.com/user_guide/database/
  */
+#[\AllowDynamicProperties]
 class CI_DB_mysqli_forge extends CI_DB_forge {
 
 	/**
@@ -80,32 +81,32 @@ class CI_DB_mysqli_forge extends CI_DB_forge {
 
 				$sql .= "\n\t".$this->db->_protect_identifiers($field);
 
-				if (array_key_exists('NAME', $attributes))
+				if (astpp_array_key_exists('NAME', $attributes))
 				{
 					$sql .= ' '.$this->db->_protect_identifiers($attributes['NAME']).' ';
 				}
 
-				if (array_key_exists('TYPE', $attributes))
+				if (astpp_array_key_exists('TYPE', $attributes))
 				{
 					$sql .= ' '.$attributes['TYPE'];
 				}
 
-				if (array_key_exists('CONSTRAINT', $attributes))
+				if (astpp_array_key_exists('CONSTRAINT', $attributes))
 				{
 					$sql .= '('.$attributes['CONSTRAINT'].')';
 				}
 
-				if (array_key_exists('UNSIGNED', $attributes) && $attributes['UNSIGNED'] === TRUE)
+				if (astpp_array_key_exists('UNSIGNED', $attributes) && $attributes['UNSIGNED'] === TRUE)
 				{
 					$sql .= ' UNSIGNED';
 				}
 
-				if (array_key_exists('DEFAULT', $attributes))
+				if (astpp_array_key_exists('DEFAULT', $attributes))
 				{
 					$sql .= ' DEFAULT \''.$attributes['DEFAULT'].'\'';
 				}
 
-				if (array_key_exists('NULL', $attributes) && $attributes['NULL'] === TRUE)
+				if (astpp_array_key_exists('NULL', $attributes) && $attributes['NULL'] === TRUE)
 				{
 					$sql .= ' NULL';
 				} else
@@ -113,14 +114,14 @@ class CI_DB_mysqli_forge extends CI_DB_forge {
 					$sql .= ' NOT NULL';
 				}
 
-				if (array_key_exists('AUTO_INCREMENT', $attributes) && $attributes['AUTO_INCREMENT'] === TRUE)
+				if (astpp_array_key_exists('AUTO_INCREMENT', $attributes) && $attributes['AUTO_INCREMENT'] === TRUE)
 				{
 					$sql .= ' AUTO_INCREMENT';
 				}
 			}
 
 			// don't add a comma on the end of the last field
-			if (++$current_field_count < count($fields))
+			if (++$current_field_count < astpp_count($fields))
 			{
 				$sql .= ',';
 			}
@@ -155,20 +156,20 @@ class CI_DB_mysqli_forge extends CI_DB_forge {
 
 		$sql .= $this->_process_fields($fields);
 
-		if (count($primary_keys) > 0)
+		if (astpp_count($primary_keys) > 0)
 		{
-			$key_name = $this->db->_protect_identifiers(implode('_', $primary_keys));
+			$key_name = $this->db->_protect_identifiers(astpp_implode('_', $primary_keys));
 			$primary_keys = $this->db->_protect_identifiers($primary_keys);
-			$sql .= ",\n\tPRIMARY KEY ".$key_name." (".implode(', ', $primary_keys).")";
+			$sql .= ",\n\tPRIMARY KEY ".$key_name." (".astpp_implode(', ', $primary_keys).")";
 		}
 
-		if (is_array($keys) && count($keys) > 0)
+		if (is_array($keys) && astpp_count($keys) > 0)
 		{
 			foreach ($keys as $key)
 			{
 				if (is_array($key))
 				{
-					$key_name = $this->db->_protect_identifiers(implode('_', $key));
+					$key_name = $this->db->_protect_identifiers(astpp_implode('_', $key));
 					$key = $this->db->_protect_identifiers($key);
 				} else
 				{
@@ -176,7 +177,7 @@ class CI_DB_mysqli_forge extends CI_DB_forge {
 					$key = array($key_name);
 				}
 
-				$sql .= ",\n\tKEY {$key_name} (".implode(', ', $key).")";
+				$sql .= ",\n\tKEY {$key_name} (".astpp_implode(', ', $key).")";
 			}
 		}
 

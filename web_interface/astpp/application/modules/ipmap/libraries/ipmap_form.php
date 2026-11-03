@@ -23,6 +23,7 @@
 if (! defined('BASEPATH'))
     exit('No direct script access allowed');
 
+#[\AllowDynamicProperties]
 class Ipmap_form extends common
 {
 
@@ -46,7 +47,7 @@ class Ipmap_form extends common
             );
         } else {
             //ASTPPCOM-1202_gautam_start
-            if($reseller_id > 0){    
+            if(astpp_gt($reseller_id, 0)){    
             $account = array(
                 gettext('Account'),
                 array(
@@ -102,7 +103,7 @@ class Ipmap_form extends common
                 );
             }
             //ASTPPCOM-1202_gautam_end
-            if ($id > 0) {
+            if (astpp_gt($id, 0)) {
                 $reseller_drp = array(
                     gettext('Reseller'),
                     'INPUT',

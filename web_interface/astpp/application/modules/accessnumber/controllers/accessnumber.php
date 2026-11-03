@@ -21,6 +21,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 // ##############################################################################
+#[\AllowDynamicProperties]
 class Accessnumber extends CI_Controller
 {
 
@@ -256,7 +257,7 @@ class Accessnumber extends CI_Controller
             header('Pragma: public'); // required
             header('Expires: 0'); // no cache
             header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
-            header('Last-Modified: ' . gmdate('D, d M Y H:i:s', filemtime($path)) . ' GMT');
+            header('Last-Modified: ' . astpp_gmdate('D, d M Y H:i:s', filemtime($path)) . ' GMT');
             header('Cache-Control: private', false);
             header('Content-Type: ' . $mime); // Add the mime type from Code igniter.
             header('Content-Disposition: attachment; filename="' . basename($name) . '"'); // Add the file name
@@ -295,9 +296,9 @@ class Accessnumber extends CI_Controller
         $invalid_flag = false;
         if (isset($_FILES['accessnumberimport']['name']) && $_FILES['accessnumberimport']['name'] != "") {
             list ($txt, $ext) = explode(".", $_FILES['accessnumberimport']['name']);
-            if ($ext == "csv" && $_FILES["accessnumberimport"]['size'] > 0) {
+            if ($ext == "csv" && astpp_gt($_FILES["accessnumberimport"]['size'], 0)) {
                 $error = $_FILES['accessnumberimport']['error'];
-                if ($error == 0) {
+                if (astpp_eq0($error)) {
                     $uploadedFile = $_FILES["accessnumberimport"]["tmp_name"];
                     $full_path = $this->config->item('rates-file-path');
                     $actual_file_name = "ASTPP-Accessnumber" . date("Y-m-d H:i:s") . "." . $ext;
@@ -337,12 +338,12 @@ class Accessnumber extends CI_Controller
         $str .= preg_match("/^([0-9])+$/i", $csvdata['access_number']) ? null : 'Access Numbers,';
         $str = rtrim($str, ',');
         if (! $str) {
-            $str .= ! empty($csvdata['access_number']) && is_numeric($csvdata['access_number']) && ($csvdata['access_number'] > 0) ? null : (empty($csvdata['access_number']) ? null : 'Access Numbers,');
+            $str .= ! empty($csvdata['access_number']) && is_numeric($csvdata['access_number']) && (astpp_gt($csvdata['access_number'], 0)) ? null : (empty($csvdata['access_number']) ? null : 'Access Numbers,');
             $str .= $csvdata['country_id'] != '' ? null : 'Country,';
             if ($str) {
                 $str = rtrim($str, ',');
                 $error_field = explode(',', $str);
-                $count = count($error_field);
+                $count = astpp_count($error_field);
                 $str .= $count > 1 ? ' are not valid' : ' is not Valid';
                 return $str;
             } else {
@@ -351,7 +352,7 @@ class Accessnumber extends CI_Controller
         } else {
             $str = rtrim($str, ',');
             $error_field = explode(',', $str);
-            $count = count($error_field);
+            $count = astpp_count($error_field);
             $str .= $count > 1 ? ' are required' : ' is Required';
             return $str;
         }
@@ -382,11 +383,11 @@ class Accessnumber extends CI_Controller
                     $invalid_array[$i]['error'] = $str;
                 } else {
 
-                    if (! in_array($csv_data['access_number'], $number_arr)) {
+                    if (! astpp_in_array($csv_data['access_number'], $number_arr)) {
                         $number_count = $this->db_model->countQuery('id', 'accessnumber', array(
                             'access_number' => $csv_data['access_number']
                         ));
-                        if ($number_count > 0) {
+                        if (astpp_gt($number_count, 0)) {
                             $invalid_array[$i] = $csv_data;
                             $invalid_array[$i]['error'] = gettext('Duplicate accessnumber found from database');
                         } else {
@@ -412,7 +413,7 @@ class Accessnumber extends CI_Controller
             $result = $this->accessnumber_model->bulk_insert_accessnumber($new_final_arr);
         }
         unlink($full_path . $accessnumber_file_name);
-        $count = count($invalid_array);
+        $count = astpp_count($invalid_array);
         if ($count > 0) {
             $session_id = "-1";
             $fp = fopen($full_path . $session_id . '.csv', 'w');
@@ -420,20 +421,20 @@ class Accessnumber extends CI_Controller
                 $custom_array[0][$key] = ucfirst($key);
             }
             $custom_array[0]['error'] = gettext("Error");
-            $invalid_array = array_merge($custom_array, $invalid_array);
+            $invalid_array = astpp_array_merge($custom_array, $invalid_array);
             foreach ($invalid_array as $err_data) {
                 fputcsv($fp, $err_data);
             }
             fclose($fp);
             $this->session->set_userdata('import_accessnumber_csv_error', $session_id . ".csv");
             $data["error"] = $invalid_array;
-            $data['import_record_count'] = count($new_final_arr);
-            $data['failure_count'] = count($invalid_array) - 1;
+            $data['import_record_count'] = astpp_count($new_final_arr);
+            $data['failure_count'] = astpp_count($invalid_array) - 1;
             $data['page_title'] = gettext('Accessnumber Import Error');
             $this->load->view('view_import_error', $data);
         } else {
 
-            $this->session->set_flashdata('astpp_errormsg', gettext('Total').' ' . count($new_final_arr) .' '.gettext('AccessNumber Imported Successfully!'));
+            $this->session->set_flashdata('astpp_errormsg', gettext('Total').' ' . astpp_count($new_final_arr) .' '.gettext('AccessNumber Imported Successfully!'));
             redirect(base_url() . "accessnumber/accessnumber_list/");
         }
     }

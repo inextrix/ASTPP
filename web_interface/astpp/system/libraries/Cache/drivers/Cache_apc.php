@@ -27,6 +27,7 @@
  * @link		
  */
 
+#[\AllowDynamicProperties]
 class CI_Cache_apc extends CI_Driver {
 
 	/**
@@ -111,7 +112,7 @@ class CI_Cache_apc extends CI_Driver {
 	{
 		$stored = apc_fetch($id);
 
-		if (count($stored) !== 3)
+		if (astpp_count($stored) !== 3)
 		{
 			return FALSE;
 		}
@@ -119,7 +120,7 @@ class CI_Cache_apc extends CI_Driver {
 		list($data, $time, $ttl) = $stored;
 
 		return array(
-			'expire'	=> $time + $ttl,
+			'expire'	=> astpp_n($time) + astpp_n($ttl),
 			'mtime'		=> $time,
 			'data'		=> $data
 		);

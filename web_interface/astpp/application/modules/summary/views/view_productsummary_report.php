@@ -129,7 +129,7 @@
                                             echo "<optgroup label='" . $key . "'>";
                                             foreach ($value as $sub_key => $sub_value) {
                                                 $selected = null;
-                                                if (isset($session_info['order_items.accountid']) && $session_info['order_items.accountid'] > 0 && $sub_key == $session_info['order_items.accountid']) {
+                                                if (isset($session_info['order_items.accountid']) && astpp_gt($session_info['order_items.accountid'], 0) && $sub_key == $session_info['order_items.accountid']) {
                                                     $selected = "selected";
                                                 }
                                                 echo "<option value = '" . $sub_key . "' $selected >" . $sub_value . "</option>";

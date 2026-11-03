@@ -28,6 +28,7 @@
  * @author		ExpressionEngine Dev Team
  * @link		http://codeigniter.com/user_guide/libraries/encryption.html
  */
+#[\AllowDynamicProperties]
 class CI_Encrypt {
 
 	var $CI;
@@ -249,7 +250,7 @@ class CI_Encrypt {
 		$enc = '';
 		for ($i = 0; $i < strlen($string); $i++)
 		{
-			$enc .= substr($rand, ($i % strlen($rand)), 1).(substr($rand, ($i % strlen($rand)), 1) ^ substr($string, $i, 1));
+			$enc .= substr($rand, (astpp_n($i) % strlen($rand)), 1).(substr($rand, (astpp_n($i) % strlen($rand)), 1) ^ substr($string, $i, 1));
 		}
 
 		return $this->_xor_merge($enc, $key);
@@ -301,7 +302,7 @@ class CI_Encrypt {
 		$str = '';
 		for ($i = 0; $i < strlen($string); $i++)
 		{
-			$str .= substr($string, $i, 1) ^ substr($hash, ($i % strlen($hash)), 1);
+			$str .= substr($string, $i, 1) ^ substr($hash, (astpp_n($i) % strlen($hash)), 1);
 		}
 
 		return $str;
@@ -382,7 +383,7 @@ class CI_Encrypt {
 				$j = 0;
 			}
 
-			$str .= chr((ord($data[$i]) + ord($keyhash[$j])) % 256);
+			$str .= astpp_chr((ord($data[$i]) + ord($keyhash[$j])) % 256);
 		}
 
 		return $str;
@@ -415,12 +416,12 @@ class CI_Encrypt {
 
 			$temp = ord($data[$i]) - ord($keyhash[$j]);
 
-			if ($temp < 0)
+			if (astpp_lt($temp, 0))
 			{
-				$temp = $temp + 256;
+				$temp = astpp_n($temp) + 256;
 			}
 
-			$str .= chr($temp);
+			$str .= astpp_chr($temp);
 		}
 
 		return $str;

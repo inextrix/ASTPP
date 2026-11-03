@@ -23,6 +23,7 @@
 if (! defined ( 'BASEPATH' ))
 	exit ( 'No direct script access allowed' );
 
+#[\AllowDynamicProperties]
 class notification {
 	protected $CI; 
 	public $email = '';
@@ -57,7 +58,7 @@ class notification {
 		$accountinfo = $query->result();
 		if(isset($accountinfo) && !empty($accountinfo)){
 			$accountinfo = (array)$accountinfo[0];
-			$reseller_id = $accountinfo['reseller_id'] > 0 ? $accountinfo['reseller_id'] : 1;
+			$reseller_id = astpp_gt($accountinfo['reseller_id'], 0) ? $accountinfo['reseller_id'] : 1;
 			$where = "accountid IN ('" . $reseller_id . "')";
 			$this->CI->db->where ( $where );
 			$this->CI->db->select ( '*' );
@@ -72,7 +73,7 @@ class notification {
 				$notification_template_data['attachment'] = $attachment;
 				$this->$notification_template($notification_template_data,$accountinfo,$email_params,$invoiceconf);
 
-				if(Common_model::$global_config ['system_config']['email']==0){
+				if(astpp_eq0(Common_model::$global_config ['system_config']['email'])){
 					$this->send_email_notification($notification_template_data,$accountinfo,$invoiceconf);
 				}
 
@@ -106,7 +107,7 @@ class notification {
 	}
 	function send_sms_notification($notification_template_data,$accountinfo,$invoiceconf){
 		$numberlength=6;
-		$uniq_rendno = random_int((int) pow(10, $numberlength - 1), (int) pow(10, $numberlength) - 1);
+		$uniq_rendno = random_int((int) pow(10, astpp_n($numberlength) - 1), (int) pow(10, $numberlength) - 1);
 		// Every notification was sent as SMS through a hard-coded third-party Nexmo account (API
 		// key and secret in the source), unencoded and without TLS verification. Now only if SMS
 		// notifications are enabled, with the operator's own SMS credentials (Configuration ->

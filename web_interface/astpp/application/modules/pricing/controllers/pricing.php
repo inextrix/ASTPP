@@ -21,6 +21,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 // ##############################################################################
+#[\AllowDynamicProperties]
 class pricing extends MX_Controller
 {
 
@@ -73,7 +74,7 @@ class pricing extends MX_Controller
                 $edit_data["trunk_id"][] = $trunkid["trunk_id"];
             }
             $data['reseller_id'] = $edit_data['reseller_id'];
-            if ($edit_data['reseller_id'] == 0) {
+            if (astpp_eq0($edit_data['reseller_id'])) {
                 $edit_data['reseller_id'] = 'Admin';
             } else {
                 $edit_data['reseller_id'] = $this->common->get_field_name('number', 'accounts', array(
@@ -113,7 +114,7 @@ class pricing extends MX_Controller
                     if (isset($add_array['routing_prefix']) && $add_array['routing_prefix'] != "") {
                         $no_of_rows = $this->pricing_model->check_unique_prefix_for_edit($add_array['routing_prefix']);
                         $result = $no_of_rows->result_array();
-                        if (count($result) > 0) {
+                        if (astpp_count($result) > 0) {
                             if ($result[0]['id'] != $add_array['id'] && $result[0]['routing_prefix'] == $add_array['routing_prefix']) {
                                 echo json_encode(array(
                                     "routing_prefix_error" => gettext("Routing Prefix already exist in system.")
@@ -161,7 +162,7 @@ class pricing extends MX_Controller
 
                     if (isset($add_array['routing_prefix']) && $add_array['routing_prefix'] != "") {
                         $prefix = $this->pricing_model->check_unique_prefix($add_array['routing_prefix']);
-                        if ($prefix > 0) {
+                        if (astpp_gt($prefix, 0)) {
                             echo json_encode(array(
                                 "routing_prefix_error" => gettext("Routing Prefix already exist in system.")
                             ));

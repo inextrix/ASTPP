@@ -14,7 +14,7 @@
 
 if ( ! function_exists('form_countries'))
 {
-	function form_countries($name, $selected = FALSE, $attributes, $form_name = "")
+	function form_countries($name, $selected, $attributes, $form_name = "")
 	{
 		$country_list = Common_model::$global_config['country_list'];
 		$form = '<select name="'.$name.'"';
@@ -55,7 +55,7 @@ if ( ! function_exists('form_countries'))
 
 if ( ! function_exists('form_devicetype'))
 {
-	function form_devicetype($name, $selected = FALSE, $attributes)
+	function form_devicetype($name, $selected, $attributes)
 	{
 		$CI = & get_instance();
 
@@ -76,7 +76,7 @@ if ( ! function_exists('form_devicetype'))
 		{
 			$form .= "\n".'<option value="'.$key.'"';
 
-			if ($key == $selected)
+			if (astpp_loose_eq($key, $selected)) // PHP8: PHP 7 comparison
 			{
 				$form .= '  selected="selected">';
 			} else
@@ -96,7 +96,7 @@ if ( ! function_exists('form_devicetype'))
 // ------------------------------------------------------------------------
 if ( ! function_exists('form_timezone'))
 {
-	function form_timezone($name, $selected = FALSE, $attributes)
+	function form_timezone($name, $selected, $attributes)
 	{
 		$CI = & get_instance();
 
@@ -136,7 +136,7 @@ if ( ! function_exists('form_timezone'))
 //=========================================
 if ( ! function_exists('form_languagelist'))
 {
-	function form_languagelist($name, $selected = FALSE, $attributes)
+	function form_languagelist($name, $selected, $attributes)
 	{
 		$language_list = Common_model::$global_config['language_list'];
 
@@ -153,7 +153,7 @@ if ( ! function_exists('form_languagelist'))
 		{
 			$form .= "\n".'<option value="'.(strtolower($key)).'"';
 
-			if ($key == $selected)
+			if (astpp_loose_eq($key, $selected)) // PHP8: PHP 7 comparison
 			{
 				$form .= ' selected>';
 			} else
@@ -173,7 +173,7 @@ if ( ! function_exists('form_languagelist'))
 //-----------------------------------------
 if ( ! function_exists('form_select_default'))
 {
-	function form_select_default($name, $data, $selected = "", $attributes, $form_name = "")
+	function form_select_default($name, $data, $selected, $attributes, $form_name = "")
 	{
 		$form = '<select name="'.$name.'"';
 
@@ -192,7 +192,7 @@ if ( ! function_exists('form_select_default'))
 		{
 			$form .= "\n".'<option value="'.$key.'"';
 			
-			if ($key == $selected)
+			if (astpp_loose_eq($key, $selected)) // PHP8: PHP 7 comparison
 			{
 				$form .= ' selected>';
 			} else
@@ -212,7 +212,7 @@ if ( ! function_exists('form_select_default'))
 //-----------------------------------------
 if ( ! function_exists('form_disposition'))
 {
-	function form_disposition($name, $selected = FALSE, $attributes)
+	function form_disposition($name, $selected, $attributes)
 	{
 		$CI = & get_instance();
 
@@ -233,7 +233,7 @@ if ( ! function_exists('form_disposition'))
 		{
 			$form .= "\n".'<option value="'.$key.'"';
 
-			if ($key == $selected)
+			if (astpp_loose_eq($key, $selected)) // PHP8: PHP 7 comparison
 			{
 				$form .= '  selected="selected">';
 			} else
@@ -309,7 +309,7 @@ if ( ! function_exists('form_table_row_3'))
 if ( ! function_exists('form_table_row_4'))
 {
 	function form_table_row_4($label, $field, $span, $wh = '10', $wd = '') {
-		if (wd == '')
+		if ($wd == '') // BUGFIX: was the undefined constant "wd" (always false)
 			echo '<th width="'.$wh.'%"><label>'.$label.'</label></th><td>';
 		else 
 			echo '<th width="'.$wh.'%"><label>'.$label.'</label></th><td width="'.$wd.'%">';

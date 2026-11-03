@@ -16,7 +16,7 @@
 <? startblock('content') ?> 
 <?php
 $accountinfo = $this->session->userdata("accountinfo");
-if ($accountinfo['type'] == 0 || $accountinfo['type'] == 3) {
+if (astpp_eq0($accountinfo['type']) || $accountinfo['type'] == 3) {
     $order_terminate_url = "/user/user_orders_terminate/";
 } else {
     $order_terminate_url = "/orders/orders_terminate/";
@@ -33,7 +33,7 @@ if ($accountinfo['type'] == 0 || $accountinfo['type'] == 3) {
 	</div>
 </section>
 
-<?php $url= ($this->session->userdata ( 'logintype' ) == 0 ||$this->session->userdata ( 'logintype' ) == 3) ? "/user/user_invoice_download/" : '/invoices/invoice_download/'; ?>
+<?php $url= (astpp_eq0($this->session->userdata ( 'logintype' )) ||$this->session->userdata ( 'logintype' ) == 3) ? "/user/user_invoice_download/" : '/invoices/invoice_download/'; ?>
 <section class="slice color-three pb-4">
 	<div class="w-section inverse row p-0">
 
@@ -45,7 +45,7 @@ if ($accountinfo['type'] == 0 || $accountinfo['type'] == 3) {
 							<div class="col-lg-10 col-9 float-left p-0">
 								<label class="text-secondary" for=""><?php echo gettext("Date"); ?></label>
 				   <?php $order_date = $this->common->convert_GMT_to($date= "",$date ="",$order_items['order_date'],$date = ""); ?>
-                                   <h2 class="h4"><?php echo $date = date("Y-m-d",strtotime($order_date)) ; ?></h2>
+                                   <h2 class="h4"><?php echo $date = astpp_date("Y-m-d",strtotime($order_date)) ; ?></h2>
 							</div>
 							<div class="col-lg-2 col-3 float-left p-0">
 								<i class="fa fa-calendar-o text-secondary float-left fa-2x"></i>
@@ -67,7 +67,7 @@ if ($accountinfo['type'] == 0 || $accountinfo['type'] == 3) {
 						<div class="card col-12 p-4 alert-secondary h-100">
 							<div class="col-lg-10 col-9 float-left p-0">
 								<label class="text-secondary" for=""><?php echo gettext("TOTAL AMOUNT");?></label>
-				<?php $total_amt = $order_items['setup_fee'] + $order_items['price']; ?>
+				<?php $total_amt = astpp_n($order_items['setup_fee']) + astpp_n($order_items['price']); ?>
                                    <h2 class="h4"><?php echo (isset($total_amt))?$this->common->convert_to_currency ( '', '', $total_amt ):'0' ?> <?php echo '('.$currency.')';?></h2>
 							</div>
 							<div class="col-lg-2 col-3 float-left p-0">
@@ -92,7 +92,7 @@ if ($accountinfo['type'] == 0 || $accountinfo['type'] == 3) {
 						<h2 class="h4"><?php echo $order_items['orderid']?></h2>
 					</div>
 					<div class="col-lg-6 col-md-6 col-sm-12 p-0">
-			<?php if($account_info['posttoexternal'] == 0 && $order_items['payment_status'] != "PENDING"){ ?>
+			<?php if(astpp_eq0($account_info['posttoexternal']) && $order_items['payment_status'] != "PENDING"){ ?>
                         <div class="card col-12 p-4">
 							<div class="col-lg-10 col-9 float-left p-0">
 								<label class="text-secondary" for=""><?php echo gettext("Invoice"); ?> #</label>
@@ -151,7 +151,7 @@ if ($accountinfo['type'] == 0 || $accountinfo['type'] == 3) {
 				</div>
 				<?php
 			$orderids = $this->db_model->getSelect("type", "accounts", array("id" => $order_items['accountid']))->row_array();
-				if (($orderids['type'] != 1 && $order_items['is_terminated'] != 0) || $order_items['product_category'] != 4) {?>
+				if (($orderids['type'] != 1 && (!astpp_eq0($order_items['is_terminated']))) || $order_items['product_category'] != 4) {?>
 				<div class="col-md-6 mt-4 mx-auto">
 			<?php if($order_items['is_terminated'] != 1 ){ ?>	
 			<a
@@ -179,11 +179,11 @@ if ($accountinfo['type'] == 0 || $accountinfo['type'] == 3) {
 							<dl class="border p-3">
 								<dt><?php echo gettext("Registration Date"); ?></dt>
 				<?php $order_items['billing_date']=  $this->common->convert_GMT_to($date= "",$date ="",$order_items['billing_date'],$date = "");?>
-                                <dd><?php echo $billing_date = date("Y-m-d",strtotime($order_items['billing_date'])) ; ?></dd>
+                                <dd><?php echo $billing_date = astpp_date("Y-m-d",strtotime($order_items['billing_date'])) ; ?></dd>
 							</dl>
 							 <dl class="border p-3">
                                 				<dt><?php echo gettext("Billing Cycle"); ?></dt>
-                              					<dd><?php  echo ($order_items['billing_type'] == 0) ? "One Time" : (( $order_items['billing_type'] == 1 ) ? "Recurring" : "Monthly Recurring"); ?></dd>
+                              					<dd><?php  echo (astpp_eq0($order_items['billing_type'])) ? "One Time" : (( $order_items['billing_type'] == 1 ) ? "Recurring" : "Monthly Recurring"); ?></dd>
 
                            				 </dl>
 							<dl class="border p-3 ">
@@ -209,12 +209,12 @@ $order_generate_by = $this->db_model->getSelect("first_name,number", "accounts",
 								<dt><?php echo gettext("Product Category"); ?></dt>
 								<dd><?php echo$this->common->get_field_name("name","category",array("id"=>$order_items['product_category'])); ?></dd>
 							</dl>
-			<?php if($order_items['is_terminated'] == 0 ){ ?>
+			<?php if(astpp_eq0($order_items['is_terminated']) ){ ?>
 							<dl class="border p-3">
 								<dt><?php echo gettext("Next Bill Date"); ?></dt>
 				<?php $order_items['next_billing_date']=  $this->common->custom_convert_GMT($order_items['next_billing_date'],'');?>
 
-                                <dd><?php echo $next_billing_date = date("Y-m-d",strtotime($order_items['next_billing_date'])) ; ?></dd>
+                                <dd><?php echo $next_billing_date = astpp_date("Y-m-d",strtotime($order_items['next_billing_date'])) ; ?></dd>
 							</dl>
 	<?php } else {?>
 
@@ -222,7 +222,7 @@ $order_generate_by = $this->db_model->getSelect("first_name,number", "accounts",
 				<dl class="border p-3 ">
 								<dt><?php echo gettext("Termination Date"); ?></dt>
 				 <?php $termination_date = $order_items['termination_date']; ?>
-                                <dd><?php echo $date = date("Y-m-d",strtotime($termination_date)) ; ?></dd>
+                                <dd><?php echo $date = astpp_date("Y-m-d",strtotime($termination_date)) ; ?></dd>
 							</dl>
 			<?php } ?>
 							<dl class="border p-3">

@@ -97,7 +97,7 @@
                                                     <?php
                                                 foreach ($value as $sub_key => $sub_value) {
                                                     $selected = null;
-                                                    if (isset($session_info['provider_id']) && $session_info['provider_id'] > 0 && $sub_key == $session_info['provider_id']) {
+                                                    if (isset($session_info['provider_id']) && astpp_gt($session_info['provider_id'], 0) && $sub_key == $session_info['provider_id']) {
                                                         $selected = "selected";
                                                     }
                                                     ?>
@@ -123,7 +123,7 @@
                                         if (! empty($trunklist)) {
                                             foreach ($trunklist as $key => $value) {
                                                 $selected = null;
-                                                if (isset($session_info['trunk_id']) && $session_info['trunk_id'] > 0 && $key == $session_info['trunk_id']) {
+                                                if (isset($session_info['trunk_id']) && astpp_gt($session_info['trunk_id'], 0) && $key == $session_info['trunk_id']) {
                                                     $selected = "selected";
                                                 }
                                                 ?>

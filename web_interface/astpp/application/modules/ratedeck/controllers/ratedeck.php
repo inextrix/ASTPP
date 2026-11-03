@@ -21,6 +21,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 // ##############################################################################
+#[\AllowDynamicProperties]
 class Ratedeck extends MX_Controller
 {
 
@@ -117,7 +118,7 @@ class Ratedeck extends MX_Controller
                         "country_id" => $add_array['country_id']
                     );
                     $query = $this->ratedeck_model->check_unique_ratedeck($where);
-                    if ($query > 0) {
+                    if (astpp_gt($query, 0)) {
                         echo json_encode(array(
                             "pattern_error" => gettext("Code is already in system"),
                             "country_id_error" => gettext("Country is already in system")
@@ -261,9 +262,9 @@ class Ratedeck extends MX_Controller
 
         if (isset($_FILES['ratedeckimport']['name']) && $_FILES['ratedeckimport']['name'] != "") {
             list ($txt, $ext) = explode(".", $_FILES['ratedeckimport']['name']);
-            if ($ext == "csv" && $_FILES["ratedeckimport"]['size'] > 0) {
+            if ($ext == "csv" && astpp_gt($_FILES["ratedeckimport"]['size'], 0)) {
                 $error = $_FILES['ratedeckimport']['error'];
-                if ($error == 0) {
+                if (astpp_eq0($error)) {
                     $uploadedFile = $_FILES["ratedeckimport"]["tmp_name"];
                     $full_path = $this->config->item('rates-file-path');
                     $actual_file_name = "ASTPP-ratedeck-" . date("Y-m-d H:i:s") . "." . $ext;
@@ -321,12 +322,12 @@ class Ratedeck extends MX_Controller
                     $invalid_array[$i]['error'] = $str;
                 } else {
 
-                    if (! in_array($csv_data['pattern'], $number_arr)) {
+                    if (! astpp_in_array($csv_data['pattern'], $number_arr)) {
 
                         $number_count = $this->db_model->countQuery('id', 'ratedeck', array(
                             'pattern' => "^" . $csv_data['pattern'] . ".*"
                         ));
-                        if ($number_count > 0) {
+                        if (astpp_gt($number_count, 0)) {
                             $invalid_array[$i] = $csv_data;
                             $invalid_array[$i]['error'] = gettext('Duplicate Ratedeck number found from database');
                         } else {
@@ -334,7 +335,7 @@ class Ratedeck extends MX_Controller
                             $csv_data['pattern'] = "^" . $csv_data['pattern'] . ".*";
                             $csv_data['creation_date'] = gmdate('Y-m-d H:i:s');
                             $csv_data['status'] = '0';
-                            if (array_key_exists('country_id', $csv_data)) {
+                            if (astpp_array_key_exists('country_id', $csv_data)) {
                                 $csv_data['country_id'] = $this->common->get_field_name('id', 'countrycode', array(
                                     "country" => strtoupper($csv_data['country_id'])
                                 ));
@@ -354,7 +355,7 @@ class Ratedeck extends MX_Controller
             $result = $this->ratedeck_model->bulk_insert_ratedeck($new_final_arr);
         }
         unlink($full_path . $ratedeck_file_name);
-        $count = count($invalid_array);
+        $count = astpp_count($invalid_array);
         if ($count > 0) {
             $session_id = "-1";
             $fp = fopen($full_path . $session_id . '.csv', 'w');
@@ -362,19 +363,19 @@ class Ratedeck extends MX_Controller
                 $custom_array[0][$key] = ucfirst($key);
             }
             $custom_array[0]['error'] = "Error";
-            $invalid_array = array_merge($custom_array, $invalid_array);
+            $invalid_array = astpp_array_merge($custom_array, $invalid_array);
             foreach ($invalid_array as $err_data) {
                 fputcsv($fp, $err_data);
             }
             fclose($fp);
             $this->session->set_userdata('import_ratedeck_csv_error', $session_id . ".csv");
             $data["error"] = $invalid_array;
-            $data['import_record_count'] = count($new_final_arr);
-            $data['failure_count'] = count($invalid_array) - 1;
+            $data['import_record_count'] = astpp_count($new_final_arr);
+            $data['failure_count'] = astpp_count($invalid_array) - 1;
             $data['page_title'] = gettext('Ratedeck Import Error');
             $this->load->view('view_import_error', $data);
         } else {
-            $this->session->set_flashdata('astpp_errormsg', 'Total ' . count($new_final_arr) . 'Ratedeck Imported Successfully!');
+            $this->session->set_flashdata('astpp_errormsg', 'Total ' . astpp_count($new_final_arr) . 'Ratedeck Imported Successfully!');
             redirect(base_url() . "ratedeck/ratedeck_list/");
         }
     }
@@ -392,7 +393,7 @@ class Ratedeck extends MX_Controller
             if ($str) {
                 $str = rtrim($str, ',');
                 $error_field = explode(',', $str);
-                $count = count($error_field);
+                $count = astpp_count($error_field);
                 $str .= $count > 1 ? ' are not valid' : ' is not Valid';
                 return $str;
             } else {
@@ -401,7 +402,7 @@ class Ratedeck extends MX_Controller
         } else {
             $str = rtrim($str, ',');
             $error_field = explode(',', $str);
-            $count = count($error_field);
+            $count = astpp_count($error_field);
             $str .= $count > 1 ? ' are required' : ' is Required';
             return $str;
         }

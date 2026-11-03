@@ -9,6 +9,7 @@
  * @version     4.03
  */
 
+#[\AllowDynamicProperties]
 class HTML2PDF_parsingHtml
 {
     protected    $_html     = ''; // HTML code to parse
@@ -204,11 +205,11 @@ class HTML2PDF_parsingHtml
             // if it is a Text
             if ($actions[$k]['name'] == 'write') {
                 // if the tag before the text is a tag to clean => ltrim on the text
-                if ($k > 0 && in_array($actions[$k - 1]['name'], $tagsToClean))
+                if ($k > 0 && in_array($actions[astpp_n($k) - 1]['name'], $tagsToClean))
                     $actions[$k]['param']['txt'] = ltrim($actions[$k]['param']['txt']);
 
                 // if the tag after the text is a tag to clean => rtrim on the text
-                if ($k < $nb - 1 && in_array($actions[$k + 1]['name'], $tagsToClean))
+                if ($k < astpp_n($nb) - 1 && in_array($actions[astpp_n($k) + 1]['name'], $tagsToClean))
                     $actions[$k]['param']['txt'] = rtrim($actions[$k]['param']['txt']);
 
                 // if the text is empty => remove the action
@@ -278,7 +279,7 @@ class HTML2PDF_parsingHtml
             }
 
             // Update offset to the end of the match
-            $offset = $parse[0][1] + strlen($parse[0][0]);
+            $offset = astpp_n($parse[0][1]) + strlen($parse[0][0]);
             unset($parse);
         }
         // if a text is present in the end, we save it
@@ -492,7 +493,7 @@ class HTML2PDF_parsingHtml
                     }
 
                     // update the level
-                    $level += ($row['close'] ? -1 : 1);
+                    $level = astpp_n($level) + astpp_n($row['close'] ? -1 : 1);
 
                     // if we are now at the root level => it is the end, and dont take it
                     if ($level == 0) {
@@ -509,7 +510,7 @@ class HTML2PDF_parsingHtml
             }
 
             // it continues as long as there has code to analise
-            if (isset($this->code[$k + 1]))
+            if (isset($this->code[astpp_n($k) + 1]))
                 $k++;
             else
                 $end = true;
@@ -529,6 +530,6 @@ class HTML2PDF_parsingHtml
      */
     public function getHtmlErrorCode($pos, $before = 30, $after = 40)
     {
-        return substr($this->_html, $pos - $before, $before + $after);
+        return substr($this->_html, astpp_n($pos) - astpp_n($before), astpp_n($before) + astpp_n($after));
     }
 }

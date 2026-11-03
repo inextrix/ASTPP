@@ -59,6 +59,7 @@
 	 * @link http://www.tcpdf.org
 	 * @license http://www.gnu.org/copyleft/lesser.html LGPL
 	 */
+#[\AllowDynamicProperties]
 class TCPDFBarcode {
 	
 	/**
@@ -299,24 +300,24 @@ class TCPDFBarcode {
 		$k = 0;
 		$clen = strlen($code);
 		for ($i = 0; $i < $clen; ++$i) {
-			$char = $code{$i};
+			$char = $code[$i];
 			if ( ! isset($chr[$char])) {
 				// invalid character
 				return false;
 			}
 			for ($j = 0; $j < 9; ++$j) {
-				if (($j % 2) == 0) {
+				if ((astpp_n($j) % 2) == 0) {
 					$t = true; // bar
 				} else {
 					$t = false; // space
 				}
-				$w = $chr[$char]{$j};
+				$w = $chr[$char][$j];
 				$bararray['bcode'][$k] = array('t' => $t, 'w' => $w, 'h' => 1, 'p' => 0);
-				$bararray['maxw'] += $w;
+				$bararray['maxw'] = astpp_n($bararray['maxw']) + astpp_n($w);
 				++$k;
 			}
 			$bararray['bcode'][$k] = array('t' => false, 'w' => 1, 'h' => 1, 'p' => 0);
-			$bararray['maxw'] += 1;
+			$bararray['maxw'] = astpp_n($bararray['maxw']) + 1;
 			++$k;
 		}
 		return $bararray;
@@ -330,45 +331,45 @@ class TCPDFBarcode {
 	 */
 	protected function encode_code39_ext($code) {
 		$encode = array(
-			chr(0) => '%U', chr(1) => '$A', chr(2) => '$B', chr(3) => '$C',
-			chr(4) => '$D', chr(5) => '$E', chr(6) => '$F', chr(7) => '$G',
-			chr(8) => '$H', chr(9) => '$I', chr(10) => '$J', chr(11) => '£K',
-			chr(12) => '$L', chr(13) => '$M', chr(14) => '$N', chr(15) => '$O',
-			chr(16) => '$P', chr(17) => '$Q', chr(18) => '$R', chr(19) => '$S',
-			chr(20) => '$T', chr(21) => '$U', chr(22) => '$V', chr(23) => '$W',
-			chr(24) => '$X', chr(25) => '$Y', chr(26) => '$Z', chr(27) => '%A',
-			chr(28) => '%B', chr(29) => '%C', chr(30) => '%D', chr(31) => '%E',
-			chr(32) => ' ', chr(33) => '/A', chr(34) => '/B', chr(35) => '/C',
-			chr(36) => '/D', chr(37) => '/E', chr(38) => '/F', chr(39) => '/G',
-			chr(40) => '/H', chr(41) => '/I', chr(42) => '/J', chr(43) => '/K',
-			chr(44) => '/L', chr(45) => '-', chr(46) => '.', chr(47) => '/O',
-			chr(48) => '0', chr(49) => '1', chr(50) => '2', chr(51) => '3',
-			chr(52) => '4', chr(53) => '5', chr(54) => '6', chr(55) => '7',
-			chr(56) => '8', chr(57) => '9', chr(58) => '/Z', chr(59) => '%F',
-			chr(60) => '%G', chr(61) => '%H', chr(62) => '%I', chr(63) => '%J',
-			chr(64) => '%V', chr(65) => 'A', chr(66) => 'B', chr(67) => 'C',
-			chr(68) => 'D', chr(69) => 'E', chr(70) => 'F', chr(71) => 'G',
-			chr(72) => 'H', chr(73) => 'I', chr(74) => 'J', chr(75) => 'K',
-			chr(76) => 'L', chr(77) => 'M', chr(78) => 'N', chr(79) => 'O',
-			chr(80) => 'P', chr(81) => 'Q', chr(82) => 'R', chr(83) => 'S',
-			chr(84) => 'T', chr(85) => 'U', chr(86) => 'V', chr(87) => 'W',
-			chr(88) => 'X', chr(89) => 'Y', chr(90) => 'Z', chr(91) => '%K',
-			chr(92) => '%L', chr(93) => '%M', chr(94) => '%N', chr(95) => '%O',
-			chr(96) => '%W', chr(97) => '+A', chr(98) => '+B', chr(99) => '+C',
-			chr(100) => '+D', chr(101) => '+E', chr(102) => '+F', chr(103) => '+G',
-			chr(104) => '+H', chr(105) => '+I', chr(106) => '+J', chr(107) => '+K',
-			chr(108) => '+L', chr(109) => '+M', chr(110) => '+N', chr(111) => '+O',
-			chr(112) => '+P', chr(113) => '+Q', chr(114) => '+R', chr(115) => '+S',
-			chr(116) => '+T', chr(117) => '+U', chr(118) => '+V', chr(119) => '+W',
-			chr(120) => '+X', chr(121) => '+Y', chr(122) => '+Z', chr(123) => '%P',
-			chr(124) => '%Q', chr(125) => '%R', chr(126) => '%S', chr(127) => '%T');
+			astpp_chr(0) => '%U', astpp_chr(1) => '$A', astpp_chr(2) => '$B', astpp_chr(3) => '$C',
+			astpp_chr(4) => '$D', astpp_chr(5) => '$E', astpp_chr(6) => '$F', astpp_chr(7) => '$G',
+			astpp_chr(8) => '$H', astpp_chr(9) => '$I', astpp_chr(10) => '$J', astpp_chr(11) => '£K',
+			astpp_chr(12) => '$L', astpp_chr(13) => '$M', astpp_chr(14) => '$N', astpp_chr(15) => '$O',
+			astpp_chr(16) => '$P', astpp_chr(17) => '$Q', astpp_chr(18) => '$R', astpp_chr(19) => '$S',
+			astpp_chr(20) => '$T', astpp_chr(21) => '$U', astpp_chr(22) => '$V', astpp_chr(23) => '$W',
+			astpp_chr(24) => '$X', astpp_chr(25) => '$Y', astpp_chr(26) => '$Z', astpp_chr(27) => '%A',
+			astpp_chr(28) => '%B', astpp_chr(29) => '%C', astpp_chr(30) => '%D', astpp_chr(31) => '%E',
+			astpp_chr(32) => ' ', astpp_chr(33) => '/A', astpp_chr(34) => '/B', astpp_chr(35) => '/C',
+			astpp_chr(36) => '/D', astpp_chr(37) => '/E', astpp_chr(38) => '/F', astpp_chr(39) => '/G',
+			astpp_chr(40) => '/H', astpp_chr(41) => '/I', astpp_chr(42) => '/J', astpp_chr(43) => '/K',
+			astpp_chr(44) => '/L', astpp_chr(45) => '-', astpp_chr(46) => '.', astpp_chr(47) => '/O',
+			astpp_chr(48) => '0', astpp_chr(49) => '1', astpp_chr(50) => '2', astpp_chr(51) => '3',
+			astpp_chr(52) => '4', astpp_chr(53) => '5', astpp_chr(54) => '6', astpp_chr(55) => '7',
+			astpp_chr(56) => '8', astpp_chr(57) => '9', astpp_chr(58) => '/Z', astpp_chr(59) => '%F',
+			astpp_chr(60) => '%G', astpp_chr(61) => '%H', astpp_chr(62) => '%I', astpp_chr(63) => '%J',
+			astpp_chr(64) => '%V', astpp_chr(65) => 'A', astpp_chr(66) => 'B', astpp_chr(67) => 'C',
+			astpp_chr(68) => 'D', astpp_chr(69) => 'E', astpp_chr(70) => 'F', astpp_chr(71) => 'G',
+			astpp_chr(72) => 'H', astpp_chr(73) => 'I', astpp_chr(74) => 'J', astpp_chr(75) => 'K',
+			astpp_chr(76) => 'L', astpp_chr(77) => 'M', astpp_chr(78) => 'N', astpp_chr(79) => 'O',
+			astpp_chr(80) => 'P', astpp_chr(81) => 'Q', astpp_chr(82) => 'R', astpp_chr(83) => 'S',
+			astpp_chr(84) => 'T', astpp_chr(85) => 'U', astpp_chr(86) => 'V', astpp_chr(87) => 'W',
+			astpp_chr(88) => 'X', astpp_chr(89) => 'Y', astpp_chr(90) => 'Z', astpp_chr(91) => '%K',
+			astpp_chr(92) => '%L', astpp_chr(93) => '%M', astpp_chr(94) => '%N', astpp_chr(95) => '%O',
+			astpp_chr(96) => '%W', astpp_chr(97) => '+A', astpp_chr(98) => '+B', astpp_chr(99) => '+C',
+			astpp_chr(100) => '+D', astpp_chr(101) => '+E', astpp_chr(102) => '+F', astpp_chr(103) => '+G',
+			astpp_chr(104) => '+H', astpp_chr(105) => '+I', astpp_chr(106) => '+J', astpp_chr(107) => '+K',
+			astpp_chr(108) => '+L', astpp_chr(109) => '+M', astpp_chr(110) => '+N', astpp_chr(111) => '+O',
+			astpp_chr(112) => '+P', astpp_chr(113) => '+Q', astpp_chr(114) => '+R', astpp_chr(115) => '+S',
+			astpp_chr(116) => '+T', astpp_chr(117) => '+U', astpp_chr(118) => '+V', astpp_chr(119) => '+W',
+			astpp_chr(120) => '+X', astpp_chr(121) => '+Y', astpp_chr(122) => '+Z', astpp_chr(123) => '%P',
+			astpp_chr(124) => '%Q', astpp_chr(125) => '%R', astpp_chr(126) => '%S', astpp_chr(127) => '%T');
 		$code_ext = '';
 		$clen = strlen($code);
 		for ($i = 0; $i < $clen; ++$i) {
-			if (ord($code{$i}) > 127) {
+			if (ord($code[$i]) > 127) {
 				return false;
 			}
-			$code_ext .= $encode[$code{$i}];
+			$code_ext .= $encode[$code[$i]];
 		}
 		return $code_ext;
 	}
@@ -388,10 +389,10 @@ class TCPDFBarcode {
 		$sum = 0;
 		$clen = strlen($code);
 		for ($i = 0; $i < $clen; ++$i) {
-			$k = array_keys($chars, $code{$i});
-			$sum += $k[0];
+			$k = array_keys($chars, $code[$i]);
+			$sum = astpp_n($sum) + astpp_n($k[0]);
 		}
-		$j = ($sum % 43);
+		$j = (astpp_n($sum) % 43);
 		return $chars[$j];
 	}
 	
@@ -453,45 +454,45 @@ class TCPDFBarcode {
 		$chr['*'] = '111141';
 		$code = strtoupper($code);
 		$encode = array(
-			chr(0) => chr(131).'U', chr(1) => chr(128).'A', chr(2) => chr(128).'B', chr(3) => chr(128).'C',
-			chr(4) => chr(128).'D', chr(5) => chr(128).'E', chr(6) => chr(128).'F', chr(7) => chr(128).'G',
-			chr(8) => chr(128).'H', chr(9) => chr(128).'I', chr(10) => chr(128).'J', chr(11) => '£K',
-			chr(12) => chr(128).'L', chr(13) => chr(128).'M', chr(14) => chr(128).'N', chr(15) => chr(128).'O',
-			chr(16) => chr(128).'P', chr(17) => chr(128).'Q', chr(18) => chr(128).'R', chr(19) => chr(128).'S',
-			chr(20) => chr(128).'T', chr(21) => chr(128).'U', chr(22) => chr(128).'V', chr(23) => chr(128).'W',
-			chr(24) => chr(128).'X', chr(25) => chr(128).'Y', chr(26) => chr(128).'Z', chr(27) => chr(131).'A',
-			chr(28) => chr(131).'B', chr(29) => chr(131).'C', chr(30) => chr(131).'D', chr(31) => chr(131).'E',
-			chr(32) => ' ', chr(33) => chr(129).'A', chr(34) => chr(129).'B', chr(35) => chr(129).'C',
-			chr(36) => chr(129).'D', chr(37) => chr(129).'E', chr(38) => chr(129).'F', chr(39) => chr(129).'G',
-			chr(40) => chr(129).'H', chr(41) => chr(129).'I', chr(42) => chr(129).'J', chr(43) => chr(129).'K',
-			chr(44) => chr(129).'L', chr(45) => '-', chr(46) => '.', chr(47) => chr(129).'O',
-			chr(48) => '0', chr(49) => '1', chr(50) => '2', chr(51) => '3',
-			chr(52) => '4', chr(53) => '5', chr(54) => '6', chr(55) => '7',
-			chr(56) => '8', chr(57) => '9', chr(58) => chr(129).'Z', chr(59) => chr(131).'F',
-			chr(60) => chr(131).'G', chr(61) => chr(131).'H', chr(62) => chr(131).'I', chr(63) => chr(131).'J',
-			chr(64) => chr(131).'V', chr(65) => 'A', chr(66) => 'B', chr(67) => 'C',
-			chr(68) => 'D', chr(69) => 'E', chr(70) => 'F', chr(71) => 'G',
-			chr(72) => 'H', chr(73) => 'I', chr(74) => 'J', chr(75) => 'K',
-			chr(76) => 'L', chr(77) => 'M', chr(78) => 'N', chr(79) => 'O',
-			chr(80) => 'P', chr(81) => 'Q', chr(82) => 'R', chr(83) => 'S',
-			chr(84) => 'T', chr(85) => 'U', chr(86) => 'V', chr(87) => 'W',
-			chr(88) => 'X', chr(89) => 'Y', chr(90) => 'Z', chr(91) => chr(131).'K',
-			chr(92) => chr(131).'L', chr(93) => chr(131).'M', chr(94) => chr(131).'N', chr(95) => chr(131).'O',
-			chr(96) => chr(131).'W', chr(97) => chr(130).'A', chr(98) => chr(130).'B', chr(99) => chr(130).'C',
-			chr(100) => chr(130).'D', chr(101) => chr(130).'E', chr(102) => chr(130).'F', chr(103) => chr(130).'G',
-			chr(104) => chr(130).'H', chr(105) => chr(130).'I', chr(106) => chr(130).'J', chr(107) => chr(130).'K',
-			chr(108) => chr(130).'L', chr(109) => chr(130).'M', chr(110) => chr(130).'N', chr(111) => chr(130).'O',
-			chr(112) => chr(130).'P', chr(113) => chr(130).'Q', chr(114) => chr(130).'R', chr(115) => chr(130).'S',
-			chr(116) => chr(130).'T', chr(117) => chr(130).'U', chr(118) => chr(130).'V', chr(119) => chr(130).'W',
-			chr(120) => chr(130).'X', chr(121) => chr(130).'Y', chr(122) => chr(130).'Z', chr(123) => chr(131).'P',
-			chr(124) => chr(131).'Q', chr(125) => chr(131).'R', chr(126) => chr(131).'S', chr(127) => chr(131).'T');
+			astpp_chr(0) => astpp_chr(131).'U', astpp_chr(1) => astpp_chr(128).'A', astpp_chr(2) => astpp_chr(128).'B', astpp_chr(3) => astpp_chr(128).'C',
+			astpp_chr(4) => astpp_chr(128).'D', astpp_chr(5) => astpp_chr(128).'E', astpp_chr(6) => astpp_chr(128).'F', astpp_chr(7) => astpp_chr(128).'G',
+			astpp_chr(8) => astpp_chr(128).'H', astpp_chr(9) => astpp_chr(128).'I', astpp_chr(10) => astpp_chr(128).'J', astpp_chr(11) => '£K',
+			astpp_chr(12) => astpp_chr(128).'L', astpp_chr(13) => astpp_chr(128).'M', astpp_chr(14) => astpp_chr(128).'N', astpp_chr(15) => astpp_chr(128).'O',
+			astpp_chr(16) => astpp_chr(128).'P', astpp_chr(17) => astpp_chr(128).'Q', astpp_chr(18) => astpp_chr(128).'R', astpp_chr(19) => astpp_chr(128).'S',
+			astpp_chr(20) => astpp_chr(128).'T', astpp_chr(21) => astpp_chr(128).'U', astpp_chr(22) => astpp_chr(128).'V', astpp_chr(23) => astpp_chr(128).'W',
+			astpp_chr(24) => astpp_chr(128).'X', astpp_chr(25) => astpp_chr(128).'Y', astpp_chr(26) => astpp_chr(128).'Z', astpp_chr(27) => astpp_chr(131).'A',
+			astpp_chr(28) => astpp_chr(131).'B', astpp_chr(29) => astpp_chr(131).'C', astpp_chr(30) => astpp_chr(131).'D', astpp_chr(31) => astpp_chr(131).'E',
+			astpp_chr(32) => ' ', astpp_chr(33) => astpp_chr(129).'A', astpp_chr(34) => astpp_chr(129).'B', astpp_chr(35) => astpp_chr(129).'C',
+			astpp_chr(36) => astpp_chr(129).'D', astpp_chr(37) => astpp_chr(129).'E', astpp_chr(38) => astpp_chr(129).'F', astpp_chr(39) => astpp_chr(129).'G',
+			astpp_chr(40) => astpp_chr(129).'H', astpp_chr(41) => astpp_chr(129).'I', astpp_chr(42) => astpp_chr(129).'J', astpp_chr(43) => astpp_chr(129).'K',
+			astpp_chr(44) => astpp_chr(129).'L', astpp_chr(45) => '-', astpp_chr(46) => '.', astpp_chr(47) => astpp_chr(129).'O',
+			astpp_chr(48) => '0', astpp_chr(49) => '1', astpp_chr(50) => '2', astpp_chr(51) => '3',
+			astpp_chr(52) => '4', astpp_chr(53) => '5', astpp_chr(54) => '6', astpp_chr(55) => '7',
+			astpp_chr(56) => '8', astpp_chr(57) => '9', astpp_chr(58) => astpp_chr(129).'Z', astpp_chr(59) => astpp_chr(131).'F',
+			astpp_chr(60) => astpp_chr(131).'G', astpp_chr(61) => astpp_chr(131).'H', astpp_chr(62) => astpp_chr(131).'I', astpp_chr(63) => astpp_chr(131).'J',
+			astpp_chr(64) => astpp_chr(131).'V', astpp_chr(65) => 'A', astpp_chr(66) => 'B', astpp_chr(67) => 'C',
+			astpp_chr(68) => 'D', astpp_chr(69) => 'E', astpp_chr(70) => 'F', astpp_chr(71) => 'G',
+			astpp_chr(72) => 'H', astpp_chr(73) => 'I', astpp_chr(74) => 'J', astpp_chr(75) => 'K',
+			astpp_chr(76) => 'L', astpp_chr(77) => 'M', astpp_chr(78) => 'N', astpp_chr(79) => 'O',
+			astpp_chr(80) => 'P', astpp_chr(81) => 'Q', astpp_chr(82) => 'R', astpp_chr(83) => 'S',
+			astpp_chr(84) => 'T', astpp_chr(85) => 'U', astpp_chr(86) => 'V', astpp_chr(87) => 'W',
+			astpp_chr(88) => 'X', astpp_chr(89) => 'Y', astpp_chr(90) => 'Z', astpp_chr(91) => astpp_chr(131).'K',
+			astpp_chr(92) => astpp_chr(131).'L', astpp_chr(93) => astpp_chr(131).'M', astpp_chr(94) => astpp_chr(131).'N', astpp_chr(95) => astpp_chr(131).'O',
+			astpp_chr(96) => astpp_chr(131).'W', astpp_chr(97) => astpp_chr(130).'A', astpp_chr(98) => astpp_chr(130).'B', astpp_chr(99) => astpp_chr(130).'C',
+			astpp_chr(100) => astpp_chr(130).'D', astpp_chr(101) => astpp_chr(130).'E', astpp_chr(102) => astpp_chr(130).'F', astpp_chr(103) => astpp_chr(130).'G',
+			astpp_chr(104) => astpp_chr(130).'H', astpp_chr(105) => astpp_chr(130).'I', astpp_chr(106) => astpp_chr(130).'J', astpp_chr(107) => astpp_chr(130).'K',
+			astpp_chr(108) => astpp_chr(130).'L', astpp_chr(109) => astpp_chr(130).'M', astpp_chr(110) => astpp_chr(130).'N', astpp_chr(111) => astpp_chr(130).'O',
+			astpp_chr(112) => astpp_chr(130).'P', astpp_chr(113) => astpp_chr(130).'Q', astpp_chr(114) => astpp_chr(130).'R', astpp_chr(115) => astpp_chr(130).'S',
+			astpp_chr(116) => astpp_chr(130).'T', astpp_chr(117) => astpp_chr(130).'U', astpp_chr(118) => astpp_chr(130).'V', astpp_chr(119) => astpp_chr(130).'W',
+			astpp_chr(120) => astpp_chr(130).'X', astpp_chr(121) => astpp_chr(130).'Y', astpp_chr(122) => astpp_chr(130).'Z', astpp_chr(123) => astpp_chr(131).'P',
+			astpp_chr(124) => astpp_chr(131).'Q', astpp_chr(125) => astpp_chr(131).'R', astpp_chr(126) => astpp_chr(131).'S', astpp_chr(127) => astpp_chr(131).'T');
 		$code_ext = '';
 		$clen = strlen($code);
 		for ($i = 0; $i < $clen; ++$i) {
-			if (ord($code{$i}) > 127) {
+			if (ord($code[$i]) > 127) {
 				return false;
 			}
-			$code_ext .= $encode[$code{$i}];
+			$code_ext .= $encode[$code[$i]];
 		}
 		// checksum
 		$code .= $this->checksum_code93($code);
@@ -501,25 +502,25 @@ class TCPDFBarcode {
 		$k = 0;
 		$clen = strlen($code);
 		for ($i = 0; $i < $clen; ++$i) {
-			$char = $code{$i};
+			$char = $code[$i];
 			if ( ! isset($chr[$char])) {
 				// invalid character
 				return false;
 			}
 			for ($j = 0; $j < 6; ++$j) {
-				if (($j % 2) == 0) {
+				if ((astpp_n($j) % 2) == 0) {
 					$t = true; // bar
 				} else {
 					$t = false; // space
 				}
-				$w = $chr[$char]{$j};
+				$w = $chr[$char][$j];
 				$bararray['bcode'][$k] = array('t' => $t, 'w' => $w, 'h' => 1, 'p' => 0);
-				$bararray['maxw'] += $w;
+				$bararray['maxw'] = astpp_n($bararray['maxw']) + astpp_n($w);
 				++$k;
 			}
 		}
 		$bararray['bcode'][$k] = array('t' => true, 'w' => 1, 'h' => 1, 'p' => 0);
-		$bararray['maxw'] += 1;
+		$bararray['maxw'] = astpp_n($bararray['maxw']) + 1;
 		++$k;		
 		return $bararray;
 	}
@@ -537,34 +538,34 @@ class TCPDFBarcode {
 			'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V',
 			'W', 'X', 'Y', 'Z', '-', '.', ' ', '$', '/', '+', '%');
 		// translate special characters
-		$code = strtr($code, chr(128).chr(129).chr(130).chr(131), '$/+%');	
+		$code = strtr($code, astpp_chr(128).astpp_chr(129).astpp_chr(130).astpp_chr(131), '$/+%');	
 		$len = strlen($code);
 		// calculate check digit C
 		$p = 1;
 		$check = 0;
-		for ($i = ($len - 1); $i >= 0; --$i) {
-			$k = array_keys($chars, $code{$i});
-			$check += ($k[0] * $p);
+		for ($i = (astpp_n($len) - 1); $i >= 0; --$i) {
+			$k = array_keys($chars, $code[$i]);
+			$check = astpp_n($check) + astpp_n(astpp_n($k[0]) * astpp_n($p));
 			++$p;
 			if ($p > 20) {
 				$p = 1;
 			}
 		}
-		$check %= 47;
+		$check = astpp_n($check) % 47;
 		$c = $chars[$check];
 		$code .= $c;
 		// calculate check digit K
 		$p = 1;
 		$check = 0;
 		for ($i = $len; $i >= 0; --$i) {
-			$k = array_keys($chars, $code{$i});
-			$check += ($k[0] * $p);
+			$k = array_keys($chars, $code[$i]);
+			$check = astpp_n($check) + astpp_n(astpp_n($k[0]) * astpp_n($p));
 			++$p;
 			if ($p > 15) {
 				$p = 1;
 			}
 		}
-		$check %= 47;
+		$check = astpp_n($check) % 47;
 		$k = $chars[$check];
 		return $c.$k;
 	}
@@ -578,16 +579,16 @@ class TCPDFBarcode {
 	protected function checksum_s25($code) {
 		$len = strlen($code);
 		$sum = 0;
-		for ($i = 0; $i < $len; $i += 2) {
-			$sum += $code{$i};
+		for ($i = 0; $i < $len; $i = astpp_n($i) + 2) {
+			$sum = astpp_n($sum) + astpp_n($code[$i]);
 		}
-		$sum *= 3;
-		for ($i = 1; $i < $len; $i += 2) {
-			$sum += ($code{$i});
+		$sum = astpp_n($sum) * 3;
+		for ($i = 1; $i < $len; $i = astpp_n($i) + 2) {
+			$sum = astpp_n($sum) + astpp_n($code[$i]);
 		}
-		$r = $sum % 10;
+		$r = astpp_n($sum) % 10;
 		if ($r > 0) {
-			$r = (10 - $r);
+			$r = (10 - astpp_n($r));
 		}
 		return $r;
 	}
@@ -623,23 +624,23 @@ class TCPDFBarcode {
 			$clen = strlen($code);
 			$p = 2;
 			$check = 0;
-			for ($i = ($clen - 1); $i >= 0; --$i) {
-				$check += (hexdec($code{$i}) * $p);
+			for ($i = (astpp_n($clen) - 1); $i >= 0; --$i) {
+				$check = astpp_n($check) + astpp_n(hexdec($code[$i]) * astpp_n($p));
 				++$p;
 				if ($p > 7) {
 					$p = 2;
 				}
 			}
-			$check %= 11;
+			$check = astpp_n($check) % 11;
 			if ($check > 0) {
-				$check = 11 - $check;
+				$check = 11 - astpp_n($check);
 			}
 			$code .= $check;
 		}
 		$seq = '110'; // left guard
 		$clen = strlen($code);
 		for ($i = 0; $i < $clen; ++$i) {
-			$digit = $code{$i};
+			$digit = $code[$i];
 			if ( ! isset($chr[$digit])) {
 				// invalid character
 				return false;
@@ -682,7 +683,7 @@ class TCPDFBarcode {
 		$seq = '11011010';
 		$clen = strlen($code);
 		for ($i = 0; $i < $clen; ++$i) {
-			$digit = $code{$i};
+			$digit = $code[$i];
 			if ( ! isset($chr[$digit])) {
 				// invalid character
 				return false;
@@ -706,15 +707,15 @@ class TCPDFBarcode {
 		$w = 0;
 		$k = 0;
 		for ($i = 0; $i < $len; ++$i) {
-			$w += 1;
-			if (($i == ($len - 1)) OR (($i < ($len - 1)) AND ($seq{$i} != $seq{($i + 1)}))) {
-				if ($seq{$i} == '1') {
+			$w = astpp_n($w) + 1;
+			if (($i == (astpp_n($len) - 1)) OR (($i < (astpp_n($len) - 1)) AND ($seq[$i] != $seq[(astpp_n($i) + 1)]))) {
+				if ($seq[$i] == '1') {
 					$t = true; // bar
 				} else {
 					$t = false; // space
 				}
 				$bararray['bcode'][$k] = array('t' => $t, 'w' => $w, 'h' => 1, 'p' => 0);
-				$bararray['maxw'] += $w;
+				$bararray['maxw'] = astpp_n($bararray['maxw']) + astpp_n($w);
 				++$k;
 				$w = 0;
 			}
@@ -758,9 +759,9 @@ class TCPDFBarcode {
 		$bararray = array('code' => $code, 'maxw' => 0, 'maxh' => 1, 'bcode' => array());
 		$k = 0;
 		$clen = strlen($code);
-		for ($i = 0; $i < $clen; $i = ($i + 2)) {
-			$char_bar = $code{$i};
-			$char_space = $code{$i + 1};
+		for ($i = 0; $i < $clen; $i = (astpp_n($i) + 2)) {
+			$char_bar = $code[$i];
+			$char_space = $code[astpp_n($i) + 1];
 			if (( ! isset($chr[$char_bar])) OR ( ! isset($chr[$char_space]))) {
 				// invalid character
 				return false;
@@ -769,18 +770,18 @@ class TCPDFBarcode {
 			$seq = '';
 			$chrlen = strlen($chr[$char_bar]);
 			for ($s = 0; $s < $chrlen; $s++) {
-				$seq .= $chr[$char_bar]{$s}.$chr[$char_space]{$s};
+				$seq .= $chr[$char_bar][$s].$chr[$char_space][$s];
 			}
 			$seqlen = strlen($seq);
 			for ($j = 0; $j < $seqlen; ++$j) {
-				if (($j % 2) == 0) {
+				if ((astpp_n($j) % 2) == 0) {
 					$t = true; // bar
 				} else {
 					$t = false; // space
 				}
-				$w = $seq{$j};
+				$w = $seq[$j];
 				$bararray['bcode'][$k] = array('t' => $t, 'w' => $w, 'h' => 1, 'p' => 0);
-				$bararray['maxw'] += $w;
+				$bararray['maxw'] = astpp_n($bararray['maxw']) + astpp_n($w);
 				++$k;
 			}
 		}
@@ -912,13 +913,13 @@ class TCPDFBarcode {
 				$startid = 103;
 				$keys = ' !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_';
 				for ($i = 0; $i < 32; ++$i) {
-					$keys .= chr($i);
+					$keys .= astpp_chr($i);
 				}
 				break;
 			}
 			case 'B': {
 				$startid = 104;
-				$keys = ' !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~'.chr(127);
+				$keys = ' !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~'.astpp_chr(127);
 				break;
 			}
 			case 'C': {
@@ -929,12 +930,12 @@ class TCPDFBarcode {
 					return false;
 				}
 				for ($i = 0; $i <= 99; ++$i) {
-					$keys .= chr($i);
+					$keys .= astpp_chr($i);
 				}
 				$new_code = '';
 				$hclen = (strlen($code) / 2);
 				for ($i = 0; $i < $hclen; ++$i) {
-					$new_code .= chr(intval($code{(2 * $i)}.$code{(2 * $i + 1)}));
+					$new_code .= astpp_chr(intval($code[(2 * astpp_n($i))].$code[(2 * astpp_n($i) + 1)]));
 				}
 				$code = $new_code;
 				break;
@@ -947,18 +948,18 @@ class TCPDFBarcode {
 		$sum = $startid;
 		$clen = strlen($code);
 		for ($i = 0; $i < $clen; ++$i) {
-			$sum += (strpos($keys, $code{$i}) * ($i + 1));
+			$sum = astpp_n($sum) + astpp_n(strpos($keys, $code[$i]) * (astpp_n($i) + 1));
 		}
-		$check = ($sum % 103);
+		$check = (astpp_n($sum) % 103);
 		// add start, check and stop codes
-		$code = chr($startid).$code.chr($check).chr(106).chr(107);
+		$code = astpp_chr($startid).$code.astpp_chr($check).astpp_chr(106).astpp_chr(107);
 		$bararray = array('code' => $code, 'maxw' => 0, 'maxh' => 1, 'bcode' => array());
 		$k = 0;
 		$len = strlen($code);
 		for ($i = 0; $i < $len; ++$i) {
-			$ck = strpos($keys, $code{$i});
-			if (($i == 0) OR ($i > ($len - 4))) {
-				$char_num = ord($code{$i});
+			$ck = strpos($keys, $code[$i]);
+			if (($i == 0) OR ($i > (astpp_n($len) - 4))) {
+				$char_num = ord($code[$i]);
 				$seq = $chr[$char_num];
 			} elseif (($ck >= 0) AND isset($chr[$ck])) {
 					$seq = $chr[$ck];
@@ -967,14 +968,14 @@ class TCPDFBarcode {
 				return false;
 			}
 			for ($j = 0; $j < 6; ++$j) {
-				if (($j % 2) == 0) {
+				if ((astpp_n($j) % 2) == 0) {
 					$t = true; // bar
 				} else {
 					$t = false; // space
 				}
-				$w = $seq{$j};
+				$w = $seq[$j];
 				$bararray['bcode'][$k] = array('t' => $t, 'w' => $w, 'h' => 1, 'p' => 0);
-				$bararray['maxw'] += $w;
+				$bararray['maxw'] = astpp_n($bararray['maxw']) + astpp_n($w);
 				++$k;
 			}
 		}
@@ -997,33 +998,33 @@ class TCPDFBarcode {
 			$len = 12; // UPC-A
 			$upce = true; // UPC-E mode
 		}
-		$data_len = $len - 1;
+		$data_len = astpp_n($len) - 1;
 		//Padding
 		$code = str_pad($code, $data_len, '0', STR_PAD_LEFT);
 		$code_len = strlen($code);
 		// calculate check digit
 		$sum_a = 0;
-		for ($i = 1; $i < $data_len; $i += 2) {
-			$sum_a += $code{$i};
+		for ($i = 1; $i < $data_len; $i = astpp_n($i) + 2) {
+			$sum_a = astpp_n($sum_a) + astpp_n($code[$i]);
 		}
 		if ($len > 12) {
-			$sum_a *= 3;
+			$sum_a = astpp_n($sum_a) * 3;
 		}
 		$sum_b = 0;
-		for ($i = 0; $i < $data_len; $i += 2) {
-			$sum_b += ($code{$i});
+		for ($i = 0; $i < $data_len; $i = astpp_n($i) + 2) {
+			$sum_b = astpp_n($sum_b) + astpp_n($code[$i]);
 		}
 		if ($len < 13) {
-			$sum_b *= 3;
+			$sum_b = astpp_n($sum_b) * 3;
 		}
-		$r = ($sum_a + $sum_b) % 10;
+		$r = (astpp_n($sum_a) + astpp_n($sum_b)) % 10;
 		if ($r > 0) {
-			$r = (10 - $r);
+			$r = (10 - astpp_n($r));
 		}
 		if ($code_len == $data_len) {
 			// add check digit
 			$code .= $r;
-		} elseif ($r !== intval($code{$data_len})) {
+		} elseif ($r !== intval($code[$data_len])) {
 			// wrong checkdigit
 			return false;
 		}
@@ -1132,42 +1133,42 @@ class TCPDFBarcode {
 		$seq = '101'; // left guard bar
 		if ($upce) {
 			$bararray = array('code' => $upce_code, 'maxw' => 0, 'maxh' => 1, 'bcode' => array());
-			$p = $upce_parities[$code{1}][$r];
+			$p = $upce_parities[$code[1]][$r];
 			for ($i = 0; $i < 6; ++$i) {
-				$seq .= $codes[$p[$i]][$upce_code{$i}];
+				$seq .= $codes[$p[$i]][$upce_code[$i]];
 			}
 			$seq .= '010101'; // right guard bar
 		} else {
 			$bararray = array('code' => $code, 'maxw' => 0, 'maxh' => 1, 'bcode' => array());
-			$half_len = ceil($len / 2);
+			$half_len = ceil(astpp_n($len) / 2);
 			if ($len == 8) {
 				for ($i = 0; $i < $half_len; ++$i) {
-					$seq .= $codes['A'][$code{$i}];
+					$seq .= $codes['A'][$code[$i]];
 				}
 			} else {
-				$p = $parities[$code{0}];
+				$p = $parities[$code[0]];
 				for ($i = 1; $i < $half_len; ++$i) {
-					$seq .= $codes[$p[$i - 1]][$code{$i}];
+					$seq .= $codes[$p[astpp_n($i) - 1]][$code[$i]];
 				}
 			}
 			$seq .= '01010'; // center guard bar
 			for ($i = $half_len; $i < $len; ++$i) {
-				$seq .= $codes['C'][$code{$i}];
+				$seq .= $codes['C'][$code[$i]];
 			}
 			$seq .= '101'; // right guard bar
 		}
 		$clen = strlen($seq);
 		$w = 0;
 		for ($i = 0; $i < $clen; ++$i) {
-			$w += 1;
-			if (($i == ($clen - 1)) OR (($i < ($clen - 1)) AND ($seq{$i} != $seq{($i + 1)}))) {
-				if ($seq{$i} == '1') {
+			$w = astpp_n($w) + 1;
+			if (($i == (astpp_n($clen) - 1)) OR (($i < (astpp_n($clen) - 1)) AND ($seq[$i] != $seq[(astpp_n($i) + 1)]))) {
+				if ($seq[$i] == '1') {
 					$t = true; // bar
 				} else {
 					$t = false; // space
 				}
 				$bararray['bcode'][$k] = array('t' => $t, 'w' => $w, 'h' => 1, 'p' => 0);
-				$bararray['maxw'] += $w;
+				$bararray['maxw'] = astpp_n($bararray['maxw']) + astpp_n($w);
 				++$k;
 				$w = 0;
 			}
@@ -1189,10 +1190,10 @@ class TCPDFBarcode {
 		$code = str_pad($code, $len, '0', STR_PAD_LEFT);
 		// calculate check digit
 		if ($len == 2) {
-			$r = $code % 4;
+			$r = astpp_n($code) % 4;
 		} elseif ($len == 5) {
-			$r = (3 * ($code{0} +$code{2} +$code{4})) + (9 * ($code{1} +$code{3}));
-			$r %= 10;
+			$r = (3 * (astpp_n($code[0]) +astpp_n($code[2]) +astpp_n($code[4]))) + (9 * (astpp_n($code[1]) +astpp_n($code[3])));
+			$r = astpp_n($r) % 10;
 		} else {
 			return false;
 		}
@@ -1242,10 +1243,10 @@ class TCPDFBarcode {
 		);	
 		$p = $parities[$len][$r];
 		$seq = '1011'; // left guard bar
-		$seq .= $codes[$p[0]][$code{0}];
+		$seq .= $codes[$p[0]][$code[0]];
 		for ($i = 1; $i < $len; ++$i) {
 			$seq .= '01'; // separator
-			$seq .= $codes[$p[$i]][$code{$i}];
+			$seq .= $codes[$p[$i]][$code[$i]];
 		}
 		$bararray = array('code' => $code, 'maxw' => 0, 'maxh' => 1, 'bcode' => array());
 		return $this->binseq_to_array($seq, $bararray);
@@ -1296,30 +1297,30 @@ class TCPDFBarcode {
 		// calculate checksum
 		$sum = 0;
 		for ($i = 0; $i < $len; ++$i) {
-			$sum += intval($code{$i});
+			$sum = astpp_n($sum) + intval($code[$i]);
 		}
-		$chkd = ($sum % 10);
+		$chkd = (astpp_n($sum) % 10);
 		if ($chkd > 0) {
-			$chkd = (10 - $chkd);
+			$chkd = (10 - astpp_n($chkd));
 		}
 		$code .= $chkd;
 		$len = strlen($code);
 		// start bar
 		$bararray['bcode'][$k++] = array('t' => 1, 'w' => 1, 'h' => 2, 'p' => 0);
 		$bararray['bcode'][$k++] = array('t' => 0, 'w' => 1, 'h' => 2, 'p' => 0);
-		$bararray['maxw'] += 2;
+		$bararray['maxw'] = astpp_n($bararray['maxw']) + 2;
 		for ($i = 0; $i < $len; ++$i) {
 			for ($j = 0; $j < 5; ++$j) {
-				$h = $barlen[$code{$i}][$j];
-				$p = floor(1 / $h);
+				$h = $barlen[$code[$i]][$j];
+				$p = floor(astpp_div(1, $h));
 				$bararray['bcode'][$k++] = array('t' => 1, 'w' => 1, 'h' => $h, 'p' => $p);
 				$bararray['bcode'][$k++] = array('t' => 0, 'w' => 1, 'h' => 2, 'p' => 0);
-				$bararray['maxw'] += 2;
+				$bararray['maxw'] = astpp_n($bararray['maxw']) + 2;
 			}
 		}
 		// end bar
 		$bararray['bcode'][$k++] = array('t' => 1, 'w' => 1, 'h' => 2, 'p' => 0);
-		$bararray['maxw'] += 1;
+		$bararray['maxw'] = astpp_n($bararray['maxw']) + 1;
 		return $bararray;
 	}
 	
@@ -1423,11 +1424,11 @@ class TCPDFBarcode {
 			$row = 0;
 			$col = 0;
 			for ($i = 0; $i < $len; ++$i) {
-				$row += $checktable[$code{$i}][0];
-				$col += $checktable[$code{$i}][1];
+				$row = astpp_n($row) + astpp_n($checktable[$code[$i]][0]);
+				$col = astpp_n($col) + astpp_n($checktable[$code[$i]][1]);
 			}
-			$row %= 6;
-			$col %= 6;
+			$row = astpp_n($row) % 6;
+			$col = astpp_n($col) % 6;
 			$chk = array_keys($checktable, array($row, $col));
 			$code .= $chk[0];
 			++$len;
@@ -1437,11 +1438,11 @@ class TCPDFBarcode {
 			// start bar
 			$bararray['bcode'][$k++] = array('t' => 1, 'w' => 1, 'h' => 2, 'p' => 0);
 			$bararray['bcode'][$k++] = array('t' => 0, 'w' => 1, 'h' => 2, 'p' => 0);
-			$bararray['maxw'] += 2;
+			$bararray['maxw'] = astpp_n($bararray['maxw']) + 2;
 		}
 		for ($i = 0; $i < $len; ++$i) {
 			for ($j = 0; $j < 4; ++$j) {
-				switch ($barmode[$code{$i}][$j]) {
+				switch ($barmode[$code[$i]][$j]) {
 					case 1: {
 						$p = 0;
 						$h = 2;
@@ -1465,13 +1466,13 @@ class TCPDFBarcode {
 				}
 				$bararray['bcode'][$k++] = array('t' => 1, 'w' => 1, 'h' => $h, 'p' => $p);
 				$bararray['bcode'][$k++] = array('t' => 0, 'w' => 1, 'h' => 2, 'p' => 0);
-				$bararray['maxw'] += 2;
+				$bararray['maxw'] = astpp_n($bararray['maxw']) + 2;
 			}
 		}
 		if ($notkix) {
 			// stop bar
 			$bararray['bcode'][$k++] = array('t' => 1, 'w' => 1, 'h' => 3, 'p' => 0);
-			$bararray['maxw'] += 1;
+			$bararray['maxw'] = astpp_n($bararray['maxw']) + 1;
 		}
 		return $bararray;
 	}
@@ -1513,19 +1514,19 @@ class TCPDFBarcode {
 		$code = 'A'.strtoupper($code).'A';
 		$len = strlen($code);
 		for ($i = 0; $i < $len; ++$i) {
-			if ( ! isset($chr[$code{$i}])) {
+			if ( ! isset($chr[$code[$i]])) {
 				return false;
 			}
-			$seq = $chr[$code{$i}];
+			$seq = $chr[$code[$i]];
 			for ($j = 0; $j < 8; ++$j) {
-				if (($j % 2) == 0) {
+				if ((astpp_n($j) % 2) == 0) {
 					$t = true; // bar
 				} else {
 					$t = false; // space
 				}
-				$w = $seq{$j};
+				$w = $seq[$j];
 				$bararray['bcode'][$k] = array('t' => $t, 'w' => $w, 'h' => 1, 'p' => 0);
-				$bararray['maxw'] += $w;
+				$bararray['maxw'] = astpp_n($bararray['maxw']) + astpp_n($w);
 				++$k;
 			}
 		}
@@ -1563,20 +1564,20 @@ class TCPDFBarcode {
 		// calculate check digit C
 		$p = 1;
 		$check = 0;
-		for ($i = ($len - 1); $i >= 0; --$i) {
-			$digit = $code{$i};
+		for ($i = (astpp_n($len) - 1); $i >= 0; --$i) {
+			$digit = $code[$i];
 			if ($digit == '-') {
 				$dval = 10;
 			} else {
 				$dval = intval($digit);
 			}
-			$check += ($dval * $p);
+			$check = astpp_n($check) + astpp_n(astpp_n($dval) * astpp_n($p));
 			++$p;
 			if ($p > 10) {
 				$p = 1;
 			}
 		}
-		$check %= 11;
+		$check = astpp_n($check) % 11;
 		if ($check == 10) {
 			$check = '-';
 		} 
@@ -1586,38 +1587,38 @@ class TCPDFBarcode {
 			$p = 1;
 			$check = 0;
 			for ($i = $len; $i >= 0; --$i) {
-				$digit = $code{$i};
+				$digit = $code[$i];
 				if ($digit == '-') {
 					$dval = 10;
 				} else {
 					$dval = intval($digit);
 				}
-				$check += ($dval * $p);
+				$check = astpp_n($check) + astpp_n(astpp_n($dval) * astpp_n($p));
 				++$p;
 				if ($p > 9) {
 					$p = 1;
 				}
 			}
-			$check %= 11;
+			$check = astpp_n($check) % 11;
 			$code .= $check;
 			++$len;
 		}
 		$code = 'S'.$code.'S';
-		$len += 3;
+		$len = astpp_n($len) + 3;
 		for ($i = 0; $i < $len; ++$i) {
-			if ( ! isset($chr[$code{$i}])) {
+			if ( ! isset($chr[$code[$i]])) {
 				return false;
 			}
-			$seq = $chr[$code{$i}];
+			$seq = $chr[$code[$i]];
 			for ($j = 0; $j < 6; ++$j) {
-				if (($j % 2) == 0) {
+				if ((astpp_n($j) % 2) == 0) {
 					$t = true; // bar
 				} else {
 					$t = false; // space
 				}
-				$w = $seq{$j};
+				$w = $seq[$j];
 				$bararray['bcode'][$k] = array('t' => $t, 'w' => $w, 'h' => 1, 'p' => 0);
-				$bararray['maxw'] += $w;
+				$bararray['maxw'] = astpp_n($bararray['maxw']) + astpp_n($w);
 				++$k;
 			}
 		}
@@ -1635,14 +1636,14 @@ class TCPDFBarcode {
 		$seq = '';
 		$code = intval($code);
 		while ($code > 0) {
-			if (($code % 2) == 0) {
+			if ((astpp_n($code) % 2) == 0) {
 				$seq .= '11100';
-				$code -= 2;
+				$code = astpp_n($code) - 2;
 			} else {
 				$seq .= '100';
-				$code -= 1;
+				$code = astpp_n($code) - 1;
 			}
-			$code /= 2;
+			$code = astpp_n($code) / 2;
 		}
 		$seq = substr($seq, 0, -2);
 		$seq = strrev($seq);
@@ -1661,20 +1662,20 @@ class TCPDFBarcode {
 		$seq = '';
 		$code = intval($code);
 		do {
-			switch ($code % 3) {
+			switch (astpp_n($code) % 3) {
 				case 0: {
 					$seq .= '3';
-					$code = ($code - 3) / 3;
+					$code = (astpp_n($code) - 3) / 3;
 					break;
 				}
 				case 1: {
 					$seq .= '1';
-					$code = ($code - 1) / 3;
+					$code = (astpp_n($code) - 1) / 3;
 					break;
 				}
 				case 2: {
 					$seq .= '2';
-					$code = ($code - 2) / 3;
+					$code = (astpp_n($code) - 2) / 3;
 					break;
 				}
 			}
@@ -1684,7 +1685,7 @@ class TCPDFBarcode {
 		$bararray = array('code' => $code, 'maxw' => 0, 'maxh' => 2, 'bcode' => array());
 		$len = strlen($seq);
 		for ($i = 0; $i < $len; ++$i) {
-			switch ($seq{$i}) {
+			switch ($seq[$i]) {
 				case '1': {
 					$p = 1;
 					$h = 1;
@@ -1703,9 +1704,9 @@ class TCPDFBarcode {
 			}
 			$bararray['bcode'][$k++] = array('t' => 1, 'w' => 1, 'h' => $h, 'p' => $p);
 			$bararray['bcode'][$k++] = array('t' => 0, 'w' => 1, 'h' => 2, 'p' => 0);
-			$bararray['maxw'] += 2;
+			$bararray['maxw'] = astpp_n($bararray['maxw']) + 2;
 		}
-		unset($bararray['bcode'][($k - 1)]);
+		unset($bararray['bcode'][(astpp_n($k) - 1)]);
 		--$bararray['maxw'];
 		return $bararray;
 	}
@@ -1756,9 +1757,9 @@ class TCPDFBarcode {
 			}
 		}
 		$binary_code = bcmul($binary_code, 10);
-		$binary_code = bcadd($binary_code, $tracking_number{0});
+		$binary_code = bcadd($binary_code, $tracking_number[0]);
 		$binary_code = bcmul($binary_code, 5);
-		$binary_code = bcadd($binary_code, $tracking_number{1});
+		$binary_code = bcadd($binary_code, $tracking_number[1]);
 		$binary_code .= substr($tracking_number, 2, 18);
 		// convert to hexadecimal
 		$binary_code = $this->dec_to_hex($binary_code);
@@ -1776,7 +1777,7 @@ class TCPDFBarcode {
 		// convert binary data to codewords
 		$codewords = array();
 		$data = $this->hex_to_dec($binary_code_102bit);
-		$codewords[0] = bcmod($data, 636) * 2;
+		$codewords[0] = astpp_n(bcmod($data, 636)) * 2;
 		$data = bcdiv($data, 636);
 		for ($i = 1; $i < 9; ++$i) {
 			$codewords[$i] = bcmod($data, 1365);
@@ -1784,7 +1785,7 @@ class TCPDFBarcode {
 		}
 		$codewords[9] = $data;
 		if (($fcs >> 10) == 1) {
-			$codewords[9] += 659;
+			$codewords[9] = astpp_n($codewords[9]) + 659;
 		}
 		// generate lookup tables
 		$table2of13 = $this->imb_tables(2, 78);
@@ -1796,14 +1797,14 @@ class TCPDFBarcode {
 			if ($val <= 1286) {
 				$chrcode = $table5of13[$val];
 			} else {
-				$chrcode = $table2of13[($val - 1287)];
+				$chrcode = $table2of13[(astpp_n($val) - 1287)];
 			}
 			if (($fcs & $bitmask) > 0) {
 				// bitwise invert
 				$chrcode = ((~$chrcode) & 8191);
 			}
 			$characters[] = $chrcode;
-			$bitmask /= 2;
+			$bitmask = astpp_n($bitmask) / 2;
 		}
 		$characters = array_reverse($characters);
 		// build bars
@@ -1831,9 +1832,9 @@ class TCPDFBarcode {
 			}
 			$bararray['bcode'][$k++] = array('t' => 1, 'w' => 1, 'h' => $h, 'p' => $p);
 			$bararray['bcode'][$k++] = array('t' => 0, 'w' => 1, 'h' => 2, 'p' => 0);
-			$bararray['maxw'] += 2;
+			$bararray['maxw'] = astpp_n($bararray['maxw']) + 2;
 		}
-		unset($bararray['bcode'][($k - 1)]);
+		unset($bararray['bcode'][(astpp_n($k) - 1)]);
 		--$bararray['maxw'];
 		return $bararray;
 	}
@@ -1872,8 +1873,8 @@ class TCPDFBarcode {
 		$dec = 0;
 		$bitval = 1;
 		$len = strlen($hex);
-		for ($pos = ($len - 1); $pos >= 0; --$pos) {
-			$dec = bcadd($dec, bcmul(hexdec($hex{$pos}), $bitval));
+		for ($pos = (astpp_n($len) - 1); $pos >= 0; --$pos) {
+			$dec = bcadd($dec, bcmul(hexdec($hex[$pos]), $bitval));
 			$bitval = bcmul($bitval, 16);
 		}
 		return $dec;
@@ -1941,11 +1942,11 @@ class TCPDFBarcode {
 	protected function imb_tables($n, $size) {
 		$table = array();
 		$lli = 0; // LUT lower index
-		$lui = $size - 1; // LUT upper index
+		$lui = astpp_n($size) - 1; // LUT upper index
 		for ($count = 0; $count < 8192; ++$count) {
 			$bit_count = 0;
 			for ($bit_index = 0; $bit_index < 13; ++$bit_index) {
-				$bit_count += intval(($count & (1 << $bit_index)) != 0);
+				$bit_count = astpp_n($bit_count) + intval(($count & (1 << $bit_index)) != 0);
 			}
 			// if we don't have the right number of bits on, go on to the next value
 			if ($bit_count == $n) {

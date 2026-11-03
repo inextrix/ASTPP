@@ -22,6 +22,7 @@
 // ##############################################################################
 
 
+#[\AllowDynamicProperties]
 class Crons extends MX_Controller {
     public $CurrentDate = "";
 	function __construct() {
@@ -48,6 +49,6 @@ exit;
 	}
 	private function calculateNextRun($obj,$CurrentDate)
 	{
-	    return gmdate("Y-m-d H:i:s", strtotime($CurrentDate.' + '.$obj->exec_interval.' '.$obj->command));
+	    return astpp_gmdate("Y-m-d H:i:s", strtotime($CurrentDate.' + '.$obj->exec_interval.' '.$obj->command));
 	}
 }

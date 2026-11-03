@@ -9,6 +9,7 @@
  * @version     4.03
  */
 
+#[\AllowDynamicProperties]
 class HTML2PDF_parsingCss
 {
     /**
@@ -339,10 +340,10 @@ class HTML2PDF_parsingCss
 
         // size : mm => pt
         $size = $this->value['font-size'];
-        $size = 72 * $size / 25.4;
+        $size = 72 * astpp_n($size) / 25.4;
 
         // apply the font
-        $this->_pdf->SetFont($family, $style, $this->value['mini-size'] * $size);
+        $this->_pdf->SetFont($family, $style, astpp_n($this->value['mini-size']) * astpp_n($size));
         $this->_pdf->setTextColorArray($this->value['color']);
         if ($this->value['background']['color']) {
                     $this->_pdf->setFillColorArray($this->value['background']['color']);
@@ -400,33 +401,33 @@ class HTML2PDF_parsingCss
 
         if ($this->value['position'] == 'relative' || $this->value['position'] == 'absolute') {
             if ($this->value['right'] !== null) {
-                $x = $this->getLastWidth(true) - $this->value['right'] - $this->value['width'];
-                if ($this->value['margin']['r']) $x -= $this->value['margin']['r'];
+                $x = astpp_n($this->getLastWidth(true)) - astpp_n($this->value['right']) - astpp_n($this->value['width']);
+                if ($this->value['margin']['r']) $x = astpp_n($x) - astpp_n($this->value['margin']['r']);
             } else {
                 $x = $this->value['left'];
-                if ($this->value['margin']['l']) $x += $this->value['margin']['l'];
+                if ($this->value['margin']['l']) $x = astpp_n($x) + astpp_n($this->value['margin']['l']);
             }
 
             if ($this->value['bottom'] !== null) {
-                $y = $this->getLastHeight(true) - $this->value['bottom'] - $this->value['height'];
-                if ($this->value['margin']['b']) $y -= $this->value['margin']['b'];
+                $y = astpp_n($this->getLastHeight(true)) - astpp_n($this->value['bottom']) - astpp_n($this->value['height']);
+                if ($this->value['margin']['b']) $y = astpp_n($y) - astpp_n($this->value['margin']['b']);
             } else {
                 $y = $this->value['top'];
-                if ($this->value['margin']['t']) $y += $this->value['margin']['t'];
+                if ($this->value['margin']['t']) $y = astpp_n($y) + astpp_n($this->value['margin']['t']);
             }
 
             if ($this->value['position'] == 'relative') {
-                $this->value['x'] = $currentX + $x;
-                $this->value['y'] = $currentY + $y;
+                $this->value['x'] = astpp_n($currentX) + astpp_n($x);
+                $this->value['y'] = astpp_n($currentY) + astpp_n($y);
             } else {
-                $this->value['x'] = $this->_getLastAbsoluteX() + $x;
-                $this->value['y'] = $this->_getLastAbsoluteY() + $y;
+                $this->value['x'] = astpp_n($this->_getLastAbsoluteX()) + astpp_n($x);
+                $this->value['y'] = astpp_n($this->_getLastAbsoluteY()) + astpp_n($y);
             }
         } else {
             $this->value['x'] = $currentX;
             $this->value['y'] = $currentY;
-            if ($this->value['margin']['l']) $this->value['x'] += $this->value['margin']['l'];
-            if ($this->value['margin']['t']) $this->value['y'] += $this->value['margin']['t'];
+            if ($this->value['margin']['l']) $this->value['x'] = astpp_n($this->value['x']) + astpp_n($this->value['margin']['l']);
+            if ($this->value['margin']['t']) $this->value['y'] = astpp_n($this->value['y']) + astpp_n($this->value['margin']['t']);
         }
 
         // save the new position
@@ -537,7 +538,7 @@ class HTML2PDF_parsingCss
         if (isset($styles['stroke']))        $this->value['svg']['stroke']       = $this->convertToColor($styles['stroke'], $res);
         if (isset($styles['stroke-width']))  $this->value['svg']['stroke-width'] = $this->convertToMM($styles['stroke-width']);
         if (isset($styles['fill']))          $this->value['svg']['fill']         = $this->convertToColor($styles['fill'], $res);
-        if (isset($styles['fill-opacity']))  $this->value['svg']['fill-opacity'] = 1. * $styles['fill-opacity'];
+        if (isset($styles['fill-opacity']))  $this->value['svg']['fill-opacity'] = 1. * astpp_n($styles['fill-opacity']);
 
         return $this->value['svg'];
     }
@@ -688,13 +689,13 @@ class HTML2PDF_parsingCss
                     break;
 
                 case 'line-height':
-                    if (preg_match('/^[0-9\.]+$/isU', $val)) $val = floor($val * 100).'%';
+                    if (preg_match('/^[0-9\.]+$/isU', $val)) $val = floor(astpp_n($val) * 100).'%';
                     $this->value['line-height'] = $val;
                     break;
 
                 case 'rotate':
                     if ( ! in_array($val, array(0, -90, 90, 180, 270, -180, -270))) $val = null;
-                    if ($val < 0) $val += 360;
+                    if ($val < 0) $val = astpp_n($val) + 360;
                     $this->value['rotate'] = $val;
                     break;
 
@@ -1073,32 +1074,32 @@ class HTML2PDF_parsingCss
         // correction on the width (quick box)
         if ($noWidth && in_array($tagName, array('div', 'blockquote', 'fieldset')) && $this->value['position'] != 'absolute') {
             $this->value['width'] = $this->getLastWidth();
-            $this->value['width'] -= $this->value['margin']['l'] + $this->value['margin']['r'];
+            $this->value['width'] = astpp_n($this->value['width']) - astpp_n(astpp_n($this->value['margin']['l']) + astpp_n($this->value['margin']['r']));
         } else {
             if ($correctWidth) {
                 if ( ! in_array($tagName, array('table', 'div', 'blockquote', 'fieldset', 'hr'))) {
-                    $this->value['width'] -= $this->value['padding']['l'] + $this->value['padding']['r'];
-                    $this->value['width'] -= $this->value['border']['l']['width'] + $this->value['border']['r']['width'];
+                    $this->value['width'] = astpp_n($this->value['width']) - astpp_n(astpp_n($this->value['padding']['l']) + astpp_n($this->value['padding']['r']));
+                    $this->value['width'] = astpp_n($this->value['width']) - astpp_n(astpp_n($this->value['border']['l']['width']) + astpp_n($this->value['border']['r']['width']));
                 }
                 if (in_array($tagName, array('th', 'td'))) {
-                    $this->value['width'] -= $this->convertToMM(isset($param['cellspacing']) ? $param['cellspacing'] : '2px');
+                    $this->value['width'] = astpp_n($this->value['width']) - astpp_n($this->convertToMM(isset($param['cellspacing']) ? $param['cellspacing'] : '2px'));
                     $return = false;
                 }
                 if ($this->value['width'] < 0) $this->value['width'] = 0;
             } else {
                 if ($this->value['width']) {
-                    if ($this->value['border']['l']['width']) $this->value['width'] += $this->value['border']['l']['width'];
-                    if ($this->value['border']['r']['width']) $this->value['width'] += $this->value['border']['r']['width'];
-                    if ($this->value['padding']['l'])         $this->value['width'] += $this->value['padding']['l'];
-                    if ($this->value['padding']['r'])         $this->value['width'] += $this->value['padding']['r'];
+                    if ($this->value['border']['l']['width']) $this->value['width'] = astpp_n($this->value['width']) + astpp_n($this->value['border']['l']['width']);
+                    if ($this->value['border']['r']['width']) $this->value['width'] = astpp_n($this->value['width']) + astpp_n($this->value['border']['r']['width']);
+                    if ($this->value['padding']['l'])         $this->value['width'] = astpp_n($this->value['width']) + astpp_n($this->value['padding']['l']);
+                    if ($this->value['padding']['r'])         $this->value['width'] = astpp_n($this->value['width']) + astpp_n($this->value['padding']['r']);
                 }
             }
         }
         if ($this->value['height']) {
-            if ($this->value['border']['b']['width']) $this->value['height'] += $this->value['border']['b']['width'];
-            if ($this->value['border']['t']['width']) $this->value['height'] += $this->value['border']['t']['width'];
-            if ($this->value['padding']['b'])         $this->value['height'] += $this->value['padding']['b'];
-            if ($this->value['padding']['t'])         $this->value['height'] += $this->value['padding']['t'];
+            if ($this->value['border']['b']['width']) $this->value['height'] = astpp_n($this->value['height']) + astpp_n($this->value['border']['b']['width']);
+            if ($this->value['border']['t']['width']) $this->value['height'] = astpp_n($this->value['height']) + astpp_n($this->value['border']['t']['width']);
+            if ($this->value['padding']['b'])         $this->value['height'] = astpp_n($this->value['height']) + astpp_n($this->value['padding']['b']);
+            if ($this->value['padding']['t'])         $this->value['height'] = astpp_n($this->value['height']) + astpp_n($this->value['padding']['t']);
         }
 
         if ($this->value['top'] != null)      $this->value['top']     = $this->convertToMM($this->value['top'], $this->getLastHeight(true));
@@ -1138,13 +1139,13 @@ class HTML2PDF_parsingCss
             if ($this->table[$k]['width']) {
                 $w = $this->table[$k]['width'];
                 if ($mode) {
-                    $w += $this->table[$k]['border']['l']['width'] + $this->table[$k]['padding']['l'] + 0.02;
-                    $w += $this->table[$k]['border']['r']['width'] + $this->table[$k]['padding']['r'] + 0.02;
+                    $w = astpp_n($w) + astpp_n(astpp_n($this->table[$k]['border']['l']['width']) + astpp_n($this->table[$k]['padding']['l']) + 0.02);
+                    $w = astpp_n($w) + astpp_n(astpp_n($this->table[$k]['border']['r']['width']) + astpp_n($this->table[$k]['padding']['r']) + 0.02);
                 }
                 return $w;
             }
         }
-        return $this->_pdf->getW() - $this->_pdf->getlMargin() - $this->_pdf->getrMargin();
+        return astpp_n($this->_pdf->getW()) - astpp_n($this->_pdf->getlMargin()) - astpp_n($this->_pdf->getrMargin());
     }
 
      /**
@@ -1160,13 +1161,13 @@ class HTML2PDF_parsingCss
             if ($this->table[$k]['height']) {
                 $h = $this->table[$k]['height'];
                 if ($mode) {
-                    $h += $this->table[$k]['border']['t']['width'] + $this->table[$k]['padding']['t'] + 0.02;
-                    $h += $this->table[$k]['border']['b']['width'] + $this->table[$k]['padding']['b'] + 0.02;
+                    $h = astpp_n($h) + astpp_n(astpp_n($this->table[$k]['border']['t']['width']) + astpp_n($this->table[$k]['padding']['t']) + 0.02);
+                    $h = astpp_n($h) + astpp_n(astpp_n($this->table[$k]['border']['b']['width']) + astpp_n($this->table[$k]['padding']['b']) + 0.02);
                 }
                 return $h;
             }
         }
-        return $this->_pdf->getH() - $this->_pdf->gettMargin() - $this->_pdf->getbMargin();
+        return astpp_n($this->_pdf->getH()) - astpp_n($this->_pdf->gettMargin()) - astpp_n($this->_pdf->getbMargin());
     }
 
     /**
@@ -1193,7 +1194,7 @@ class HTML2PDF_parsingCss
     {
         $nb = count($this->table);
         if ($nb > 0) {
-            return $this->table[$nb - 1][$key];
+            return $this->table[astpp_n($nb) - 1][$key];
         } else {
             return null;
         }
@@ -1582,11 +1583,11 @@ class HTML2PDF_parsingCss
     {
         $css = trim($css);
         if (preg_match('/^[0-9\.\-]+$/isU', $css))        $css .= 'px';
-        if (preg_match('/^[0-9\.\-]+px$/isU', $css))      $css = 25.4 / 96. * str_replace('px', '', $css);
-        else if (preg_match('/^[0-9\.\-]+pt$/isU', $css)) $css = 25.4 / 72. * str_replace('pt', '', $css);
-        else if (preg_match('/^[0-9\.\-]+in$/isU', $css)) $css = 25.4 * str_replace('in', '', $css);
-        else if (preg_match('/^[0-9\.\-]+mm$/isU', $css)) $css = 1. * str_replace('mm', '', $css);
-        else if (preg_match('/^[0-9\.\-]+%$/isU', $css))  $css = 1. * $old * str_replace('%', '', $css) / 100.;
+        if (preg_match('/^[0-9\.\-]+px$/isU', $css))      $css = 25.4 / 96. * astpp_n(str_replace('px', '', $css));
+        else if (preg_match('/^[0-9\.\-]+pt$/isU', $css)) $css = 25.4 / 72. * astpp_n(str_replace('pt', '', $css));
+        else if (preg_match('/^[0-9\.\-]+in$/isU', $css)) $css = 25.4 * astpp_n(str_replace('in', '', $css));
+        else if (preg_match('/^[0-9\.\-]+mm$/isU', $css)) $css = 1. * astpp_n(str_replace('mm', '', $css));
+        else if (preg_match('/^[0-9\.\-]+%$/isU', $css))  $css = 1. * astpp_n($old) * astpp_n(str_replace('%', '', $css)) / 100.;
         else                                              $css = null;
 
         return $css;
@@ -1668,7 +1669,7 @@ class HTML2PDF_parsingCss
             $r = $this->_convertSubColor($match[1]);
             $v = $this->_convertSubColor($match[2]);
             $b = $this->_convertSubColor($match[3]);
-            return array($r * 255., $v * 255., $b * 255.);
+            return array(astpp_n($r) * 255., astpp_n($v) * 255., astpp_n($b) * 255.);
         }
 
         // like cmyk(100, 100, 100, 100)
@@ -1677,7 +1678,7 @@ class HTML2PDF_parsingCss
             $m = $this->_convertSubColor($match[2]);
             $y = $this->_convertSubColor($match[3]);
             $k = $this->_convertSubColor($match[4]);
-            return array($c * 100., $m * 100., $y * 100., $k * 100.);
+            return array(astpp_n($c) * 100., astpp_n($m) * 100., astpp_n($y) * 100., astpp_n($k) * 100.);
         }
 
         $res = false;
@@ -1697,7 +1698,7 @@ class HTML2PDF_parsingCss
             $c = floatVal(substr($c, 0, -1)) / 100.;
         } else {
             $c = floatVal($c);
-            if ($c > 1) $c = $c / 255.;
+            if ($c > 1) $c = astpp_n($c) / 255.;
         }
 
         return $c;

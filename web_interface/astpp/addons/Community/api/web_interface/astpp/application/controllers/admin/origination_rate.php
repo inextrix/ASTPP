@@ -1,6 +1,7 @@
 <?php
 
 require APPPATH . '/controllers/common/account.php';
+#[\AllowDynamicProperties]
 class Origination_rate extends Account {
 	
 	protected $postdata = "";
@@ -48,7 +49,7 @@ class Origination_rate extends Account {
 		if ($function != '') {
 
 			$function = '_' . $function;
-			if (( int ) method_exists ( $this, $function ) > 0) {
+			if (astpp_gt(( int ) method_exists ( $this, $function ), 0)) {
 				$this->$function ();
 			} else {
 				$this->response ( array (
@@ -174,7 +175,7 @@ class Origination_rate extends Account {
 		if(!empty($where)) {
 			$this->db->where($where);
 		}
-		$start = $this->postdata['start_limit']-1;
+		$start = astpp_n($this->postdata['start_limit'])-1;
 		$limit = $this->postdata['end_limit'];
 		$no_of_records = (int)$limit - (int)$start;
 		if($this->accountinfo['type'] == '1'){

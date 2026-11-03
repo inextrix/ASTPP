@@ -31,11 +31,11 @@
                <div class="col-md-12 pt-4">
 
                   <div class="col-12">
-			<?php if($product_info['setup_price'] == 0){?>
+			<?php if(astpp_eq0($product_info['setup_price'])){?>
 				<h2 class="text-center text-primary"><?php echo gettext("Its Free"); ?></h2>
 				
 			<?php } ?>
-			<?php if($product_info['product_category'] != 3 && $product_info['setup_price'] > 0) {?>
+			<?php if($product_info['product_category'] != 3 && astpp_gt($product_info['setup_price'], 0)) {?>
                      <div class="input-group mb-4">
                        <div class="input-group-prepend">
                          <div class="input-group-text">
@@ -55,7 +55,7 @@
                        </label>
                      </div>
 		<?php }?>
-			<?php if($account_info['posttoexternal'] != 1  && $product_info['setup_price'] > 0){ ?>
+			<?php if($account_info['posttoexternal'] != 1  && astpp_gt($product_info['setup_price'], 0)){ ?>
                      <div class="input-group">
                        <div class="input-group-prepend">
                          <div class="input-group-text">

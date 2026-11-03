@@ -26,6 +26,7 @@
  * @author		ExpressionEngine Dev Team
  * @link		http://codeigniter.com/user_guide/database/
  */
+#[\AllowDynamicProperties]
 class CI_DB_oci8_result extends CI_DB_result {
 
 	var $stmt_id;
@@ -73,7 +74,7 @@ class CI_DB_oci8_result extends CI_DB_result {
 		// if we used a limit we subtract it
 		if ($this->limit_used)
 		{
-			$count = $count - 1;
+			$count = astpp_n($count) - 1;
 		}
 
 		return $count;

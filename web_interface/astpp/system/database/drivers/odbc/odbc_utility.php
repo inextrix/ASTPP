@@ -24,6 +24,7 @@
  * @author		ExpressionEngine Dev Team
  * @link		http://codeigniter.com/database/
  */
+#[\AllowDynamicProperties]
 class CI_DB_odbc_utility extends CI_DB_utility {
 
 	/**

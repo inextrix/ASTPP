@@ -170,7 +170,7 @@ table {
 											class='col-md-12 form-control form-control-lg selectpicker'
 											data-live-search='true' disabled>
 											<option value='0'
-												<?php if (isset($login_type) && $login_type == 0) { echo "selected"; } ?>><?php echo gettext("Admin"); ?></option>
+												<?php if (isset($login_type) && astpp_eq0($login_type)) { echo "selected"; } ?>><?php echo gettext("Admin"); ?></option>
 											<option value='1'
 												<?php if (isset($login_type) && $login_type == 1) { echo "selected"; } ?>><?php echo gettext("Reseller"); ?></option>
 										</select>
@@ -216,7 +216,7 @@ foreach ($permission_main_array as $module_key => $module_value) {
 												class="float-left permission_checkbox <?=$first_sub_module_key."_".$sub_module_key;?>"
 												type="checkbox" name="<?php echo $main_check_box_name; ?>"
 												value="0" style="width: 20px; height: 33px;"
-												<?php echo (isset($permission_result[$first_sub_module_key][$sub_module_key]['main']) &&$permission_result[$first_sub_module_key][$sub_module_key]['main']==0) ? 'checked' : '';?>>
+												<?php echo (isset($permission_result[$first_sub_module_key][$sub_module_key]['main']) &&astpp_eq0($permission_result[$first_sub_module_key][$sub_module_key]['main'])) ? 'checked' : '';?>>
 												<div class="float-left">
 													<a
 														onclick="open_sub_menu('<?php echo $link_id; ?>','<?php echo $sub_module_key; ?>','<?php echo $i?>');"
@@ -235,10 +235,10 @@ foreach ($permission_main_array as $module_key => $module_value) {
 														id="<?=$first_sub_module_key."_".$sub_module_key."_main_table";?>">
 														<tr>
 		<?php
-            $array_count = count($sub_module_value);
+            $array_count = astpp_count($sub_module_value);
             for ($i = 0; $i < $array_count; $i ++) {
                 if ($sub_module_value[$i] != 'main') {
-                    $loop_flag = $i / 4;
+                    $loop_flag = astpp_n($i) / 4;
                     $loop_value_explode = explode('.', $loop_flag);
                     ?>
 			<td class="text-dark"
@@ -251,7 +251,7 @@ foreach ($permission_main_array as $module_key => $module_value) {
 																id="<?=$first_sub_module_key."_".$sub_module_key."_".strtolower(str_replace(" ","_",$sub_module_value[$i]));?>"
 																type="checkbox" name="<?php echo $check_bax_name; ?>"
 																value="0" style="width: 20px;"
-																<?php echo (isset($permission_result[$first_sub_module_key][$sub_module_key][$sub_module_value[$i]]) && $permission_result[$first_sub_module_key][$sub_module_key][$sub_module_value[$i]]==0) ? 'checked' : '';?>>
+																<?php echo (isset($permission_result[$first_sub_module_key][$sub_module_key][$sub_module_value[$i]]) && astpp_eq0($permission_result[$first_sub_module_key][$sub_module_key][$sub_module_value[$i]])) ? 'checked' : '';?>>
 				<?php
                     $sub_module_value[$i] = ($sub_module_value[$i] == 'Delete')?"Delete Multiple":$sub_module_value[$i];
 				 ?>

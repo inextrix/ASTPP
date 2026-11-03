@@ -168,11 +168,11 @@
 					</tr>
 					<tr>
 						<td class="col-md-6"><b><?php echo gettext('Invoice Date')?> </b></td>
-						<td class="col-md-6 text-right"><?php echo date("d-m-Y", strtotime($invoice_date));?></td>
+						<td class="col-md-6 text-right"><?php echo astpp_date("d-m-Y", strtotime($invoice_date));?></td>
 					</tr>
 					<tr>
 						<td class="col-md-6"><b><?php echo gettext('Invoice Due Date')?> </b></td>
-						<td class="col-md-6 text-right"><?php echo date("d-m-Y", strtotime($invoice_due_date));?></td>
+						<td class="col-md-6 text-right"><?php echo astpp_date("d-m-Y", strtotime($invoice_due_date));?></td>
 
 					</tr>
 					<tr>
@@ -198,7 +198,7 @@
 				</tr>
 				<tr>
 					<td class="col-md-6"><?php echo gettext('Total Calls Amount')?> </td>
-					<td class="col-md-6 text-right"><?php echo ($total_calls_amount > 0)?$this->common_model->calculate_currency ($total_calls_amount, '', '', true, false):$this->common->currency_decimal(0);?></td>
+					<td class="col-md-6 text-right"><?php echo (astpp_gt($total_calls_amount, 0))?$this->common_model->calculate_currency ($total_calls_amount, '', '', true, false):$this->common->currency_decimal(0);?></td>
 				</tr>
 				<tr class="bg_gray">
 					<td class="col-md-6"><b><?php echo gettext('Total Amount (Inc. tax)')?></b></td>
@@ -238,18 +238,18 @@
                     ?>
                       
 		 <tr style="width: 100%;">
-			<td style="width: 15%; border-bottom: 1px solid #f5f5f5;"><?php echo date("d-m-Y", strtotime($inv_data_value ['created_date']));?></td>
+			<td style="width: 15%; border-bottom: 1px solid #f5f5f5;"><?php echo astpp_date("d-m-Y", strtotime($inv_data_value ['created_date']));?></td>
 			<td style="width: 55%; border-bottom: 1px solid #f5f5f5;"><?php echo $inv_data_value ['description'];?></td>
 			<td style="width: 30%; border-bottom: 1px solid #f5f5f5;"
 				class="text-right">
-			<?php if($posttoexternal == 0 && $inv_data_value['credit'] > 0 && $inv_data_value['credit'] != ''){ ?>
-				 <?php echo $this->common_model->calculate_currency ( $this->common->currency_decimal($inv_data_value ['credit'] - $debit_data), '', '', true, false );?>
+			<?php if(astpp_eq0($posttoexternal) && astpp_gt($inv_data_value['credit'], 0) && $inv_data_value['credit'] != ''){ ?>
+				 <?php echo $this->common_model->calculate_currency ( $this->common->currency_decimal(astpp_n($inv_data_value ['credit']) - astpp_n($debit_data)), '', '', true, false );?>
 			
 			<?php } else { ?>
                        	<?php 
                        		// ASTPPCOM-1369_kinjal_start
                        		$payment = $this->common_model->calculate_currency ( $this->common->currency_decimal($inv_data_value ['debit']), '', '', true, false );
-							if($inv_data_value['order_item_id'] == 0 &&($inv_data_value['charge_type'] == "INVPAY" || $inv_data_value['charge_type'] == "" ) && $inv_data_value['generate_type'] == 0 ){
+							if(astpp_eq0($inv_data_value['order_item_id']) &&($inv_data_value['charge_type'] == "INVPAY" || $inv_data_value['charge_type'] == "" ) && astpp_eq0($inv_data_value['generate_type']) ){
 								$payment = $this->common_model->calculate_currency ( $this->common->currency_decimal($inv_data_value ['credit']), '', '', true, false );	
 							}else{
 								$payment = $this->common_model->calculate_currency ( $this->common->currency_decimal($inv_data_value ['debit']), '', '', true, false );	
@@ -260,11 +260,11 @@
 			<?php } ?>
                     </td>
 		</tr> 
-	         <?php if($posttoexternal == 0 && $inv_data_value['credit'] > 0 && $inv_data_value['credit'] != '') {
-			 $total_amt = $total_amt+($inv_data_value['credit']-$debit_data);
+	         <?php if(astpp_eq0($posttoexternal) && astpp_gt($inv_data_value['credit'], 0) && $inv_data_value['credit'] != '') {
+			 $total_amt = astpp_n($total_amt)+(astpp_n($inv_data_value['credit'])-astpp_n($debit_data));
 		?>
 		<?php } else { ?>                 
-                <?php  $total_amt = $total_amt+$inv_data_value['debit']; } }  ?>
+                <?php  $total_amt = astpp_n($total_amt)+astpp_n($inv_data_value['debit']); } }  ?>
 		
 
 	    </table>
@@ -278,16 +278,16 @@
                   <?php foreach ($invoicetax_details_data as $key => $value) { ?>
 		
                     <tr style="width: 100%;">
-			  <?php if($value ['description'] != '' || $value ['debit'] > 0 ){ ?>
+			  <?php if($value ['description'] != '' || astpp_gt($value ['debit'], 0) ){ ?>
 			<td style="width: 60%; border-bottom: 1px solid #f5f5f5;">&nbsp;</td>
 
 			<td class="thick-line text-right" style="width: 20%; border-bottom: 1px solid #f5f5f5;"><?php echo $value ['description'];?></td>
 
 			<td class="thick-line text-right" style="width: 20%; border-bottom: 1px solid #f5f5f5;"><?php echo $this->common_model->calculate_currency ($this->common->currency_decimal($value ['debit']), '', '', true, false );?></td>
-		 <?php $total_amt = $total_amt+$value['debit']; } ?>
+		 <?php $total_amt = astpp_n($total_amt)+astpp_n($value['debit']); } ?>
                     </tr>
                 <?php }   ?>
-		 <?php if($this_month_recharges > 0){ ?>
+		 <?php if(astpp_gt($this_month_recharges, 0)){ ?>
                     <tr style="width: 100%;">
 			<td style="width: 60%; border-bottom: 1px solid #f5f5f5;">&nbsp;</td>
 			<td style="width: 20%; border-bottom: 1px solid #f5f5f5;"

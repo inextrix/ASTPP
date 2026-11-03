@@ -117,7 +117,7 @@
 						  if($accountinfo['type']==1){ ?>
                           <li class="breadcrumb-item"><a href="<?= base_url() . "user/user_myprofile/"; ?>"><?php echo gettext('My Profile'); ?></a></li>
                           <?php }
-                          else if($accountinfo['type']==0 || $accountinfo['type']==3){ ?>
+                          else if(astpp_eq0($accountinfo['type']) || $accountinfo['type']==3){ ?>
 								<li class="breadcrumb-item"><a href=<?= base_url() . "user/user_myprofile/"; ?>><?php echo gettext('My Account')?></a></li>
 						  <?php }
                           else{ ?>

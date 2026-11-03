@@ -86,13 +86,13 @@ $addon_type = substr($_SERVER['REQUEST_URI'], strrpos($_SERVER['REQUEST_URI'], '
 											if ($version_error == 'false') {
 																$request_uri = explode("/", $_SERVER['REQUEST_URI']);
 																 if(isset($request_uri) && $request_uri[3] == 'Premium') { 
-																		if($package_name == whmcs){?>
+																		if($package_name == 'whmcs') /* PHP8: was an undefined constant */{?>
 																			<a href="https://astppbilling.org/astpp-whmcs-integration/"
 																						class="btn btn-block btn-index btn-outline-primary" target="_blank">More Information</a> 
-																		<?php }else if($package_name == zoho){ ?>
+																		<?php }else if($package_name == 'zoho') /* PHP8: was an undefined constant */{ ?>
 																			<a href="https://astppbilling.org/zoho-integration/"
 																						class="btn btn-block btn-index btn-outline-primary" target="_blank">More Information</a> 
-																		<?php } else if($package_name == salesforce){?>
+																		<?php } else if($package_name == 'salesforce') /* PHP8: was an undefined constant */{?>
 																			<a href="https://astppbilling.org/salesforce-integration/"
 																						class="btn btn-block btn-index btn-outline-primary" target="_blank">More Information</a> 
 																		<?php } else {?>

@@ -21,6 +21,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 // ##############################################################################
+#[\AllowDynamicProperties]
 class Cronsettings extends MX_Controller
 {
 
@@ -121,7 +122,7 @@ class Cronsettings extends MX_Controller
     {
         $add_array = $this->input->post();
         $data['form'] = $this->form->build_form($this->cronsettings_form->get_cronsettings_form_fields($add_array['id'], ''), $add_array);
-        $accountid = isset($add_array['accountid']) && $add_array['accountid'] > 0 ? $add_array['accountid'] : '';
+        $accountid = isset($add_array['accountid']) && astpp_gt($add_array['accountid'], 0) ? $add_array['accountid'] : '';
 
         if ($add_array['id'] != '') {
 
@@ -157,7 +158,7 @@ class Cronsettings extends MX_Controller
                 exit();
             } else {
                 $check_cron_name = $this->cronsettings_model->check_unique_name($add_array['name']);
-                if ($check_cron_name > 0) {
+                if (astpp_gt($check_cron_name, 0)) {
                     echo json_encode(array(
                         "name_error" => gettext("Name already exist in system.")
                     ));

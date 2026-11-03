@@ -21,6 +21,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 // ##############################################################################
+#[\AllowDynamicProperties]
 class rates_model extends CI_Model
 {
 
@@ -336,8 +337,8 @@ class rates_model extends CI_Model
 
     function bulk_insert_termination_rate($field_values, $count)
     {
-        $keys = array_keys($field_values);
-        $arr_key = array_keys($field_values[$keys[0]]);
+        $keys = astpp_array_keys($field_values);
+        $arr_key = astpp_array_keys($field_values[$keys[0]]);
         $str = null;
         $i = 0;
         $update_fields[] = "comment=VALUES(comment),
@@ -351,17 +352,17 @@ class rates_model extends CI_Model
 		prepend=VALUES(prepend),
 		last_modified_date=VALUES(last_modified_date),
 		status=VALUES(status)";
-        $insert_string = "INSERT INTO outbound_routes (" . implode(', ', $arr_key) . ") VALUES ";
-        $update_string = " ON DUPLICATE KEY UPDATE " . implode(', ', $update_fields);
+        $insert_string = "INSERT INTO outbound_routes (" . astpp_implode(', ', $arr_key) . ") VALUES ";
+        $update_string = " ON DUPLICATE KEY UPDATE " . astpp_implode(', ', $update_fields);
         $k = 0;
-        $j = ceil($count / 500);
+        $j = astpp_ceil(astpp_n($count) / 500);
         $current_value = 0;
         for ($i = 0; $i < $j; $i ++) {
             $str = null;
             for ($k = 0; $k <= 500; $k ++) {
-                $current_value = ($i * 500) + $k;
+                $current_value = (astpp_n($i) * 500) + astpp_n($k);
                 if (isset($field_values[$current_value])) {
-                    $str .= "('" . implode("','", $field_values[$current_value]) . "'),";
+                    $str .= "('" . astpp_implode("','", $field_values[$current_value]) . "'),";
                 }
             }
             $str = rtrim($str, ",");
@@ -373,8 +374,8 @@ class rates_model extends CI_Model
     function bulk_insert_origination_rate($field_values, $count)
     {
         $temp_arr = array();
-        $keys = array_keys($field_values);
-        $arr_key = array_keys($field_values[$keys[0]]);
+        $keys = astpp_array_keys($field_values);
+        $arr_key = astpp_array_keys($field_values[$keys[0]]);
 
         $str = null;
         $i = 0;
@@ -388,17 +389,17 @@ class rates_model extends CI_Model
 		status=VALUES(status),
 		country_id=VALUES(country_id),
 		call_type=VALUES(call_type)";
-        $insert_string = "INSERT INTO routes (" . implode(', ', $arr_key) . ") VALUES ";
-        $update_string = " ON DUPLICATE KEY UPDATE " . implode(', ', $update_fields);
+        $insert_string = "INSERT INTO routes (" . astpp_implode(', ', $arr_key) . ") VALUES ";
+        $update_string = " ON DUPLICATE KEY UPDATE " . astpp_implode(', ', $update_fields);
         $k = 0;
-        $j = ceil($count / 500);
+        $j = astpp_ceil(astpp_n($count) / 500);
         $current_value = 0;
         for ($i = 0; $i < $j; $i ++) {
             $str = null;
             for ($k = 0; $k <= 500; $k ++) {
-                $current_value = ($i * 500) + $k;
+                $current_value = (astpp_n($i) * 500) + astpp_n($k);
                 if (isset($field_values[$current_value])) {
-                    $str .= "('" . implode("','", $field_values[$current_value]) . "'),";
+                    $str .= "('" . astpp_implode("','", $field_values[$current_value]) . "'),";
                 }
             }
             $str = rtrim($str, ",");

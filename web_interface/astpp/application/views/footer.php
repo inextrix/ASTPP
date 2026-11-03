@@ -220,7 +220,7 @@ jQuery(function($) {
 	}
 
   	 // start ASTPPENT-3818
-    if($this->session->userdata['logintype'] == 2 || $this->session->userdata['logintype'] == -1 || $this->session->userdata['logintype'] == 1 || $this->session->userdata['logintype'] == 0 ){
+    if($this->session->userdata['logintype'] == 2 || $this->session->userdata['logintype'] == -1 || $this->session->userdata['logintype'] == 1 || astpp_eq0($this->session->userdata['logintype']) ){
      $user_footer = $this->session->userdata('user_footer');  
      if(isset($user_footer) && $user_footer != '') {  
       if ($user_footer == 'Inextrix Technologies Pvt. Ltd All Rights Reserved.'){
@@ -248,7 +248,7 @@ jQuery(function($) {
   	   		</div>
 		 </div>
 
-	<?php	} else  if($this->session->userdata['logintype'] ==0 || $this->session->userdata['logintype'] == 1){
+	<?php	} else  if(astpp_eq0($this->session->userdata['logintype']) || $this->session->userdata['logintype'] == 1){
 		
 		$user_footer = $this->session->userdata('user_footer');	
 		if ($user_footer != '') { 

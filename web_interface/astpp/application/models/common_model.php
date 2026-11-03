@@ -20,6 +20,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 // ##############################################################################
+#[\AllowDynamicProperties]
 class Common_model extends CI_Model {
 	var $host;
 	var $user;
@@ -125,7 +126,7 @@ class Common_model extends CI_Model {
 			$to_currency = $this->common->get_field_name ( 'currency', 'currency', $to_currency1 );
 		}
 		
-		$from_cur_rate = (self::$global_config ['currency_list'] [$from_currency] > 0) ? self::$global_config ['currency_list'] [$from_currency] : 1;
+		$from_cur_rate = (astpp_gt(self::$global_config ['currency_list'] [$from_currency], 0)) ? self::$global_config ['currency_list'] [$from_currency] : 1;
 		  
 		 $to_cur_rate = (self::$global_config ['currency_list'] [$to_currency]) ? self::$global_config ['currency_list'] [$to_currency] : 1;
 
@@ -136,7 +137,7 @@ class Common_model extends CI_Model {
 			$amount = str_replace ( ',', '', $amount );
 		}
 		// ASTPPCOM-857 end
-		$cal_amount = ($amount * $to_cur_rate) / $from_cur_rate;
+		$cal_amount = astpp_div(astpp_n($amount) * astpp_n($to_cur_rate), $from_cur_rate);
 		if ($format_currency)
 			$cal_amount = $this->format_currency ( $cal_amount );
 		if ($append_currency) {
@@ -158,7 +159,7 @@ class Common_model extends CI_Model {
 			$to_currency = $this->common->get_field_name ( 'currency', 'currency', $to_currency1 );
 		}
 
-		$from_cur_rate = (self::$global_config ['currency_list'] [$from_currency] > 0) ? self::$global_config ['currency_list'] [$from_currency] : 1;
+		$from_cur_rate = (astpp_gt(self::$global_config ['currency_list'] [$from_currency], 0)) ? self::$global_config ['currency_list'] [$from_currency] : 1;
 
 		$to_cur_rate = (self::$global_config ['currency_list'] [$to_currency]) ? self::$global_config ['currency_list'] [$to_currency] : 1;
 		// ASTPPCOM-857 Ashish start
@@ -169,7 +170,7 @@ class Common_model extends CI_Model {
 			$amount = str_replace ( ',', '', $amount );
 		}
 		// ASTPPCOM-857 end
-		$cal_amount = ($amount * $to_cur_rate) / $from_cur_rate;
+		$cal_amount = astpp_div(astpp_n($amount) * astpp_n($to_cur_rate), $from_cur_rate);
 
 		if ($format_currency)
 			$cal_amount = $this->format_currency ( $cal_amount );
@@ -201,8 +202,8 @@ class Common_model extends CI_Model {
 			$from_currency = $this->common->get_field_name ( 'currency', 'currency', $from_currency1 );
 		}
 		$to_currency = ($to_currency == '') ? self::$global_config ['system_config'] ['base_currency'] : $to_currency;
-		if (self::$global_config ['currency_list'] [$from_currency] > 0) { 
-			$cal_amount = ($amount * self::$global_config ['currency_list'] [$to_currency]) / self::$global_config ['currency_list'] [$from_currency];
+		if (astpp_gt(self::$global_config ['currency_list'] [$from_currency], 0)) { 
+			$cal_amount = astpp_div(astpp_n($amount) * astpp_n(self::$global_config ['currency_list'] [$to_currency]), self::$global_config ['currency_list'] [$from_currency]);
 			// Kinjal ASTPPCOM-1319 Start
 			$cal_amount = str_replace(',','.',$cal_amount);
 			// Kinjal ASTPPCOM-1319 End
@@ -230,7 +231,7 @@ class Common_model extends CI_Model {
 		}
 		$from_currency = ($from_currency == '') ? self::$global_config ['system_config'] ['base_currency'] : $from_currency;
 		
-		$from_cur_rate = (self::$global_config ['currency_list'] [$from_currency] > 0) ? self::$global_config ['currency_list'] [$from_currency] : 1;
+		$from_cur_rate = (astpp_gt(self::$global_config ['currency_list'] [$from_currency], 0)) ? self::$global_config ['currency_list'] [$from_currency] : 1;
 		$to_cur_rate = (self::$global_config ['currency_list'] [$to_currency]) ? self::$global_config ['currency_list'] [$to_currency] : 1;
 		// ASTPPCOM-857 Ashish start
 		$current_language=$this->session->userdata ( 'user_language' );
@@ -240,7 +241,7 @@ class Common_model extends CI_Model {
 			$amount = str_replace ( ',', '', $amount );
 		}
 		// ASTPPCOM-857 end
-		$cal_amount = ($amount * $to_cur_rate) / $from_cur_rate;
+		$cal_amount = astpp_div(astpp_n($amount) * astpp_n($to_cur_rate), $from_cur_rate);
 		if ($format_currency)
 			$cal_amount = $this->format_currency ( $cal_amount );
 		if ($append_currency)
@@ -257,7 +258,7 @@ class Common_model extends CI_Model {
 
 	function format_currency($amount) {
 		// ASTPPCOM-857 Ashish start
-		$amount=number_format ( $amount, Common_model::$global_config ['system_config'] ['decimalpoints'] );
+		$amount=astpp_number_format ( $amount, Common_model::$global_config ['system_config'] ['decimalpoints'] );
 		$current_language=$this->session->userdata ( 'user_language' );
 		if(isset($current_language) && ($current_language == 'es_ES' || $current_language == 'el_GR' || $current_language == 'de_DE')){
 			$amount = str_replace ( '.', ',', $amount );
@@ -289,9 +290,9 @@ class Common_model extends CI_Model {
 			$conversion = $fmatch [5];
 			
 			$positive = true;
-			if ($value < 0) {
+			if (astpp_lt($value, 0)) {
 				$positive = false;
-				$value *= - 1;
+				$value = astpp_n($value) * astpp_n(- 1);
 			}
 			$letter = $positive ? 'p' : 'n';
 			
@@ -312,7 +313,7 @@ class Common_model extends CI_Model {
 					$csuffix = $signal;
 					break;
 				case $flags ['usesignal'] == '(' :
-				case $locale ["{$letter}_sign_posn"] == 0 :
+				case astpp_eq0($locale ["{$letter}_sign_posn"]) :
 					$prefix = '(';
 					$suffix = ')';
 					break;
@@ -324,20 +325,20 @@ class Common_model extends CI_Model {
 			}
 			$space = $locale ["{$letter}_sep_by_space"] ? ' ' : '';
 			
-			$value = number_format ( $value, $right, $locale ['mon_decimal_point'], $flags ['nogroup'] ? '' : $locale ['mon_thousands_sep'] );
+			$value = astpp_number_format ( $value, $right, $locale ['mon_decimal_point'], $flags ['nogroup'] ? '' : $locale ['mon_thousands_sep'] );
 			$value = @explode ( $locale ['mon_decimal_point'], $value );
 			
 			$n = strlen ( $prefix ) + strlen ( $currency ) + strlen ( $value [0] );
-			if ($left > 0 && $left > $n) {
-				$value [0] = str_repeat ( $flags ['fillchar'], $left - $n ) . $value [0];
+			if (astpp_gt($left, 0) && $left > $n) {
+				$value [0] = astpp_str_repeat ( $flags ['fillchar'], astpp_n($left) - astpp_n($n) ) . $value [0];
 			}
-			$value = implode ( $locale ['mon_decimal_point'], $value );
+			$value = astpp_implode ( $locale ['mon_decimal_point'], $value );
 			if ($locale ["{$letter}_cs_precedes"]) {
 				$value = $prefix . $currency . $space . $value . $suffix;
 			} else {
 				$value = $prefix . $value . $space . $currency . $suffix;
 			}
-			if ($width > 0) {
+			if (astpp_gt($width, 0)) {
 				$value = str_pad ( $value, $width, $flags ['fillchar'], $flags ['isleft'] ? STR_PAD_RIGHT : STR_PAD_LEFT );
 			}
 			
@@ -377,7 +378,7 @@ class Common_model extends CI_Model {
 		$this->db->select ( 'reseller_id,type' );
 		$account_result = $this->db->get ( 'accounts' );
 		$account_result = ( array ) $account_result->first_row ();
-		if (isset ( $account_result ['reseller_id'] ) && $account_result ['reseller_id'] > 0) {
+		if (isset ( $account_result ['reseller_id'] ) && astpp_gt($account_result ['reseller_id'], 0)) {
 			return $account_result ['reseller_id'];
 		} else {
 			return '0';
@@ -407,8 +408,8 @@ class Common_model extends CI_Model {
 						$query = $query->result_array ();
 						$sub_total = $query ["0"] ["total"];
 					}
-					$tax_total = (($sub_total * ($tax_value ['taxes_rate'] / 100)) + $tax_value ['taxes_amount']);
-					$tax_total = round ( $tax_total, self::$global_config ['system_config'] ['decimalpoints'] );
+					$tax_total = ((astpp_n($sub_total) * (astpp_n($tax_value ['taxes_rate']) / 100)) + astpp_n($tax_value ['taxes_amount']));
+					$tax_total = astpp_round ( $tax_total, self::$global_config ['system_config'] ['decimalpoints'] );
 					$tax_array = array (
 							"accountid" => $account ['id'],
 							"reseller_id" => $account ['reseller_id'],
@@ -432,11 +433,11 @@ class Common_model extends CI_Model {
 		if(!empty($taxes_info)){ 
 			$total_tax= 0;
 			foreach ( $taxes_info as $taxe_val ) {
-				$total_tax += $taxe_val;
+				$total_tax = astpp_n($total_tax) + astpp_n($taxe_val);
 			}
 			$tax_arr['tax'] = $taxes_info;
 			$tax_arr['amount_without_tax'] = $amount;
-			$tax_arr['amount_with_tax'] =$total_tax+ $amount;
+			$tax_arr['amount_with_tax'] =astpp_n($total_tax)+ astpp_n($amount);
 			$tax_arr['total_tax'] = $total_tax;
 
 			return $tax_arr;
@@ -453,7 +454,7 @@ class Common_model extends CI_Model {
 			$taxe_res = $taxes->result_array ();
 			if(!empty($taxe_res)){
 				foreach ( $taxe_res as $taxe_res_val ) {
-					$data [$taxe_res_val['taxes_description']."-".$taxe_res_val['taxes_rate']."(%)"] = (($amount*$taxe_res_val['taxes_rate'])/100)+$taxe_res_val['taxes_amount'];
+					$data [$taxe_res_val['taxes_description']."-".$taxe_res_val['taxes_rate']."(%)"] = ((astpp_n($amount)*astpp_n($taxe_res_val['taxes_rate']))/100)+astpp_n($taxe_res_val['taxes_amount']);
 				}
 			}
 		}
@@ -486,7 +487,7 @@ class Common_model extends CI_Model {
 			$to_currency = $this->common->get_field_name ( 'currency', 'currency', $to_currency1 );
 		}
 		
-		$from_cur_rate = (self::$global_config ['currency_list'] [$from_currency] > 0) ? self::$global_config ['currency_list'] [$from_currency] : 1;
+		$from_cur_rate = (astpp_gt(self::$global_config ['currency_list'] [$from_currency], 0)) ? self::$global_config ['currency_list'] [$from_currency] : 1;
 		  
 		 $to_cur_rate = (self::$global_config ['currency_list'] [$to_currency]) ? self::$global_config ['currency_list'] [$to_currency] : 1;
 
@@ -497,7 +498,7 @@ class Common_model extends CI_Model {
 		}else{
 			$amount = str_replace ( ',', '', $amount );
 		}
-		$cal_amount = ((float)$amount * (float)$to_cur_rate) / (float)$from_cur_rate;  
+		$cal_amount = astpp_div((float)$amount * (float)$to_cur_rate, (float)$from_cur_rate);  
 
 		if ($format_currency)
 			$cal_amount = $this->format_currency ( $cal_amount );

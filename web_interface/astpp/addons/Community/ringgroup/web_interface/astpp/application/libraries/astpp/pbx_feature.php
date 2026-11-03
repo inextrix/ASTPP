@@ -22,6 +22,7 @@
 // ##############################################################################
 if (! defined ( 'BASEPATH' ))
 	exit ( 'No direct script access allowed' );
+#[\AllowDynamicProperties]
 class pbx_feature {
 	function __construct($library_name = '') {
 		$this->CI = & get_instance ();
@@ -148,7 +149,7 @@ class pbx_feature {
         $data['timeout']         = $edit_data['timeout'];
         $data['invalid_retries'] = $edit_data['invalid_retries'];
         $data['ringbackid']      = $edit_data['ringbackid'];
-        $data['count']           = count($data['ivr_controls']);
+        $data['count']           = astpp_count($data['ivr_controls']);
        
         // print_r($data);die();
 
@@ -226,7 +227,7 @@ class pbx_feature {
 
 	            foreach ($account_data as  $value) {
 
-	            	if($value['accountid'] == 0){
+	            	if(astpp_eq0($value['accountid'])){
 	                        $admin_name= "Admin";
 	                }
 

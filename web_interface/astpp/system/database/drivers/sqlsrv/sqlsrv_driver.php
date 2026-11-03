@@ -30,6 +30,7 @@
  * @author		ExpressionEngine Dev Team
  * @link		http://codeigniter.com/user_guide/database/
  */
+#[\AllowDynamicProperties]
 class CI_DB_sqlsrv_driver extends CI_DB {
 
 	var $dbdriver = 'sqlsrv';
@@ -575,7 +576,7 @@ class CI_DB_sqlsrv_driver extends CI_DB {
 	 */
 	function _limit($sql, $limit, $offset)
 	{
-		$i = $limit + $offset;
+		$i = astpp_n($limit) + astpp_n($offset);
 	
 		return preg_replace('/(^\SELECT (DISTINCT)?)/i', '\\1 TOP '.$i.' ', $sql);		
 	}

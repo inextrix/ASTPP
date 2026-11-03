@@ -21,6 +21,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 // ##############################################################################
+#[\AllowDynamicProperties]
 class Animap extends MX_Controller
 {
 
@@ -66,7 +67,7 @@ class Animap extends MX_Controller
         foreach ($account->result_array() as $key => $value) {
             $edit_data = $value;
         }
-        if ($edit_data['reseller_id'] > 0) {
+        if (astpp_gt($edit_data['reseller_id'], 0)) {
             $edit_data['reseller_id'] = $this->common->get_field_name('number', 'accounts', array(
                 'id' => $edit_data['reseller_id']
             ));
@@ -177,7 +178,7 @@ class Animap extends MX_Controller
             if($account_data['type'] == -1){
                $edit_permission =  "<a href='/animap/animap_edit/" . $value['id'] . "' style='cursor:pointer;color:#3b3280' rel='facebox_medium' title='Edit'>" . $value['number'] . "</a>";
             }else{
-                if ((isset($permissioninfo['animap']['animap_detail']['edit']) && $permissioninfo['animap']['animap_detail']['edit'] == 0)) {
+                if ((isset($permissioninfo['animap']['animap_detail']['edit']) && astpp_eq0($permissioninfo['animap']['animap_detail']['edit']))) {
                     $edit_permission =  "<a href='/animap/animap_edit/" . $value['id'] . "' style='cursor:pointer;color:#3b3280' rel='facebox_medium' title='Edit'>" . $value['number'] . "</a>";
                 }
              }
@@ -186,7 +187,7 @@ class Animap extends MX_Controller
 
             $ret_url = '<a href="' . base_url() . 'animap/animap_edit/' . $value['id'] . '" class="btn btn-royelblue btn-sm"  rel="facebox" title="Edit">&nbsp;<i class="fa fa-pencil-square-o fa-fw"></i></a>&nbsp;<a href="' . base_url() . 'animap/animap_delete/' . $value['id'] . '" class="btn btn-royelblue btn-sm" title="Delete" onClick="return get_alert_msg();">&nbsp;<i class="fa fa-trash fa-fw"></i></a>';
             $account_name = $this->common->build_concat_string("first_name,last_name,number,company_name", "accounts", $value['accountid']);
-            if ($value['reseller_id'] == 0) {
+            if (astpp_eq0($value['reseller_id'])) {
                 $reseller_name = 'Admin';
             } else {
                 $reseller_name = $this->common->build_concat_string("first_name,last_name,number,company_name", "accounts", $value['reseller_id']);

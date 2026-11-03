@@ -1,6 +1,7 @@
 <?php
 defined('BASEPATH') or exit('No direct script access allowed');
 require APPPATH . '/controllers/common/account.php';
+#[\AllowDynamicProperties]
 class User_cdrs extends Account
 {
 	protected $postdata = "";
@@ -43,7 +44,7 @@ class User_cdrs extends Account
 		if ($function != '') {
 			$function = '_' . $function;
 		
-			if (( int ) method_exists ( $this, $function ) > 0) {
+			if (astpp_gt(( int ) method_exists ( $this, $function ), 0)) {
 				$this->$function ();
 			} else {
 				$this->response ( array (
@@ -82,7 +83,7 @@ class User_cdrs extends Account
 		}
 		$from_currency = Common_model::$global_config['system_config']['base_currency'];
 		$to_currency = $this->common->get_field_name('currency', 'currency', $this->accountinfo['currency_id']);
-		$start = $this->postdata['start_limit']-1;
+		$start = astpp_n($this->postdata['start_limit'])-1;
 		$limit = $this->postdata['end_limit'];
 		$no_of_records = (int)$limit - (int)$start;
 		$object_where_params = $this->postdata['object_where_params'];
@@ -115,7 +116,7 @@ class User_cdrs extends Account
 					$duration = explode(':', $object_where_params['duration']);
 					if (isset($duration[0]) && isset($duration[1])) {
 						if (is_numeric($duration[0]) && is_numeric($duration[1])) {
-							$object_where_params['duration'] = (60 * $duration[0]) + $duration[1];
+							$object_where_params['duration'] = (60 * astpp_n($duration[0])) + astpp_n($duration[1]);
 						}
 					}
 					$this->db->where('billseconds' , $object_where_params['duration']);
@@ -141,7 +142,7 @@ class User_cdrs extends Account
 		
 		foreach ($cdrs_info as $key => $cdrs_value) {  
             $show_seconds = $this->postdata['object_where_params']['display_records'] == 'minutes' || $this->postdata['object_where_params']['display_records'] == 'seconds' ? $this->postdata['object_where_params']['display_records'] : 'minutes';
-            $cdrs_value['duration'] = ($show_seconds == 'minutes') ? ($cdrs_value['billseconds'] > 0) ? sprintf('%02d', $cdrs_value['billseconds'] / 60) . ":" . sprintf('%02d', $cdrs_value['billseconds'] % 60) : "00:00" : $cdrs_value['billseconds'];
+            $cdrs_value['duration'] = ($show_seconds == 'minutes') ? (astpp_gt($cdrs_value['billseconds'], 0)) ? sprintf('%02d', astpp_n($cdrs_value['billseconds']) / 60) . ":" . sprintf('%02d', astpp_n($cdrs_value['billseconds']) % 60) : "00:00" : $cdrs_value['billseconds'];
             $cdrs_value['callstart'] = $this->common->convert_GMT_to('','',$cdrs_value['callstart'],$this->accountinfo['timezone_id']);
             $cdrs_value['debit'] = $this->common_model->calculate_currency_customer($cdrs_value['debit'],$from_currency,$to_currency,true,true)." ".$to_currency; 
             $cdrs_value['destination'] = $cdrs_value['notes'] ;

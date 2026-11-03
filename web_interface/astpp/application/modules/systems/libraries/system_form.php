@@ -23,6 +23,7 @@
 if (! defined('BASEPATH'))
     exit('No direct script access allowed');
 
+#[\AllowDynamicProperties]
 class System_form extends common
 {
 
@@ -557,8 +558,8 @@ class System_form extends common
     }
     function get_timezone_form_fields($id = '')
     {
-        $timezone = $id > 0 ? 'timezone.timezone_name.' . $id : 'timezone.timezone_name';
-        $timezone_code = $id > 0 ? 'timezone.timezone_name.' . $id : 'timezone.timezone_name';
+        $timezone = astpp_gt($id, 0) ? 'timezone.timezone_name.' . $id : 'timezone.timezone_name';
+        $timezone_code = astpp_gt($id, 0) ? 'timezone.timezone_name.' . $id : 'timezone.timezone_name';
 
         $form['forms'] = array(
             base_url() . 'systems/timezone_save/',
@@ -1307,7 +1308,7 @@ class System_form extends common
 
     function get_country_form_fields($id = '')
     {
-        $iso = $id > 0 ? 'countrycode.iso.' . $id : 'countrycode.iso';
+        $iso = astpp_gt($id, 0) ? 'countrycode.iso.' . $id : 'countrycode.iso';
         $form['forms'] = array(
             base_url() . 'systems/country_save/',
             array(
@@ -1620,8 +1621,8 @@ class System_form extends common
 
     function get_currency_form_fields($id = '')
     {
-        $currency = $id > 0 ? 'currency.currencyname.' . $id : 'currency.currencyname';
-        $currency_code = $id > 0 ? 'currency.currency.' . $id : 'currency.currency';
+        $currency = astpp_gt($id, 0) ? 'currency.currencyname.' . $id : 'currency.currencyname';
+        $currency_code = astpp_gt($id, 0) ? 'currency.currency.' . $id : 'currency.currency';
 
         $form['forms'] = array(
             base_url() . 'systems/currency_save/',
@@ -1742,7 +1743,7 @@ class System_form extends common
 
     function get_backup_database_form_fields($file_name, $id = '')
     {
-        $val = $id > 0 ? "backup_database.path.$id" : 'backup_database.path';
+        $val = astpp_gt($id, 0) ? "backup_database.path.$id" : 'backup_database.path';
         $form['forms'] = array(
             base_url() . 'systems/database_backup_save/',
             array(
@@ -2286,9 +2287,9 @@ class System_form extends common
 
     function get_languages_form_fields($id = '')
     {
-        $name = $id > 0 ? 'languages.name.' . $id : 'languages.name';
-        $language = $id > 0 ? 'languages.code.' . $id : 'languages.code';
-        $locale = $id > 0 ? 'languages.locale.' . $id : 'languages.locale';
+        $name = astpp_gt($id, 0) ? 'languages.name.' . $id : 'languages.name';
+        $language = astpp_gt($id, 0) ? 'languages.code.' . $id : 'languages.code';
+        $locale = astpp_gt($id, 0) ? 'languages.locale.' . $id : 'languages.locale';
         $form['forms'] = array(
             base_url() . 'systems/languages_save/',
             array(
@@ -2636,7 +2637,7 @@ class System_form extends common
             )
         );
 
-        $form['Translations Language'] = array_merge($data, $id);
+        $form['Translations Language'] = astpp_array_merge($data, $id);
 
         $form['button_save'] = array(
             'name' => 'action',

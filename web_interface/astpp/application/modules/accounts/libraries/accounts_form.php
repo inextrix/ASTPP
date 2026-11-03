@@ -23,6 +23,7 @@
 if (! defined('BASEPATH'))
     exit('No direct script access allowed');
 
+#[\AllowDynamicProperties]
 class Accounts_form extends common
 {
 
@@ -34,8 +35,8 @@ class Accounts_form extends common
     function get_customer_form_fields($entity_type = false, $id = false, $reseller_id = '')
     {
         $account_data = $this->CI->session->userdata("accountinfo");
-        $reseller_id = ($reseller_id > 0) ? $reseller_id : (($account_data['type'] == 1 || $account_data['type'] == 5) ? $account_data['id'] : 0);
-        $expiry_date = gmdate('Y-m-d H:i:s', strtotime('+10 years'));
+        $reseller_id = (astpp_gt($reseller_id, 0)) ? $reseller_id : (($account_data['type'] == 1 || $account_data['type'] == 5) ? $account_data['id'] : 0);
+        $expiry_date = astpp_gmdate('Y-m-d H:i:s', strtotime('+10 years'));
         $readable = FALSE;
         $type = $entity_type == 'customer' ? 0 : 3;
         if (isset(common_model::$global_config['system_config']['minimum_accountlength'])) {
@@ -72,10 +73,10 @@ class Accounts_form extends common
         $change_pin = '';
         $pin_number = '';
         $pin_generate = Common_model::$global_config['system_config']['generate_pin'];
-        if ($pin_generate == 0) {
+        if (astpp_eq0($pin_generate)) {
             $numberlength = common_model::$global_config['system_config']['pinlength'];
             $numberlength = ($numberlength < 6) ? 6 : common_model::$global_config['system_config']['pinlength'];
-            $pin_number = random_int((int) pow(10, $numberlength - 1), (int) pow(10, $numberlength) - 1);
+            $pin_number = random_int((int) pow(10, astpp_n($numberlength) - 1), (int) pow(10, $numberlength) - 1);
         }
         $account_val = 'accounts.number';
         $cps = Common_model::$global_config['system_config']['cps'];
@@ -153,7 +154,7 @@ class Accounts_form extends common
         );
         $account_number_editable = Common_model::$global_config['system_config']['account_number_editable'];
         if (isset(common_model::$global_config['system_config']['minimum_accountlength'])) {
-            if ($account_number_editable == 0) {
+            if (astpp_eq0($account_number_editable)) {
                 $account = array(
                     gettext('Account'),
                     'INPUT',
@@ -188,7 +189,7 @@ class Accounts_form extends common
                 );
             }
         } else {
-            if ($account_number_editable == 0) {
+            if (astpp_eq0($account_number_editable)) {
                 $account = array(
                     gettext('Account'),
                     'INPUT',
@@ -246,7 +247,7 @@ class Accounts_form extends common
                 $notifications = 1;
             }
         }
-        if ($id > 0) {
+        if (astpp_gt($id, 0)) {
             $readable = 'disabled';
             $val = 'accounts.email.' . $id;
             $account_val = 'accounts.number.' . $id;
@@ -1065,7 +1066,7 @@ class Accounts_form extends common
         $timezone_id = Common_model::$global_config['system_config']['default_timezone'];
         $balance = Common_model::$global_config['system_config']['balance'];
         $validfordays = Common_model::$global_config['system_config']['validfordays'];
-        $pin = Common_model::$global_config['system_config']['generate_pin'] == 0 ? $this->CI->common->find_uniq_rendno(Common_model::$global_config['system_config']['pinlength'], 'pin', 'accounts') : '';
+        $pin = astpp_eq0(Common_model::$global_config['system_config']['generate_pin']) ? $this->CI->common->find_uniq_rendno(Common_model::$global_config['system_config']['pinlength'], 'pin', 'accounts') : '';
         $form['forms'] = array(
             base_url() . 'accounts/customer_bulk_save/',
             array(
@@ -1454,7 +1455,7 @@ class Accounts_form extends common
         $notifications = Common_model::$global_config['system_config']['notifications'];
         $account_number_editable = Common_model::$global_config['system_config']['account_number_editable'];
         if (isset(common_model::$global_config['system_config']['minimum_accountlength'])) {
-            if ($account_number_editable == 0) {
+            if (astpp_eq0($account_number_editable)) {
                 $account = array(
                     gettext('Account'),
                     'INPUT',
@@ -1489,7 +1490,7 @@ class Accounts_form extends common
                 );
             }
         } else {
-            if ($account_number_editable == 0) {
+            if (astpp_eq0($account_number_editable)) {
                 $account = array(
                     gettext('Account'),
                     'INPUT',
@@ -1668,7 +1669,7 @@ class Accounts_form extends common
             'tOOL TIP',
             ''
         );
-        if ($id > 0) {
+        if (astpp_gt($id, 0)) {
             $val = 'accounts.email.' . $id;
             $account_val = 'accounts.number.' . $id;
             $readable = 'disabled';
@@ -1907,7 +1908,7 @@ class Accounts_form extends common
                     'name' => 'maxchannels',
                     'size' => '20',
                     'class' => "text field medium",
-                    "value" => $id == 0 ? $concurrent_calls : ''
+                    "value" => astpp_eq0($id) ? $concurrent_calls : ''
                 ),
                 'numeric',
                 'tOOL TIP',
@@ -1920,7 +1921,7 @@ class Accounts_form extends common
                     'name' => 'cps',
                     'size' => '20',
                     'class' => "text field medium",
-                    "value" => $id == 0 ? $cps : ''
+                    "value" => astpp_eq0($id) ? $cps : ''
                 ),
                 'numeric',
                 'tOOL TIP',
@@ -2076,7 +2077,7 @@ class Accounts_form extends common
                 array(
                     'name' => 'country_id',
                     'class' => 'country_id',
-                    "value" => $id == 0 ? $country_id : ''
+                    "value" => astpp_eq0($id) ? $country_id : ''
                 ),
                 'SELECT',
                 '',
@@ -2098,7 +2099,7 @@ class Accounts_form extends common
                 array(
                     'name' => 'timezone_id',
                     'class' => 'timezone_id',
-                    "value" => $id == 0 ? $timezone_id : ''
+                    "value" => astpp_eq0($id) ? $timezone_id : ''
                 ),
                 'SELECT',
                 '',
@@ -2120,7 +2121,7 @@ class Accounts_form extends common
                 array(
                     'name' => 'currency_id',
                     'class' => 'currency_id',
-                    "value" => $id == 0 ? $currency_id : ''
+                    "value" => astpp_eq0($id) ? $currency_id : ''
                 ),
                 'SELECT',
                 '',
@@ -2321,7 +2322,7 @@ class Accounts_form extends common
     function get_form_admin_fields($entity_type = '', $id = false)
     {
         $uname = $this->CI->common->find_uniq_rendno(common_model::$global_config['system_config']['cardlength'], 'number', 'accounts');
-        if ($id > 0) {
+        if (astpp_gt($id, 0)) {
             $params = array(
                 'name' => 'number',
                 'value' => $uname,
@@ -2332,7 +2333,7 @@ class Accounts_form extends common
             );
         } else {
             $account_number_editable = Common_model::$global_config['system_config']['account_number_editable'];
-            if ($account_number_editable == 0) {
+            if (astpp_eq0($account_number_editable)) {
                 $params = array(
                     'name' => 'number',
                     'value' => $uname,
@@ -2351,7 +2352,7 @@ class Accounts_form extends common
                 );
             }
         }
-        if ($id > 0) {
+        if (astpp_gt($id, 0)) {
             $val = 'accounts.email.' . $id;
             $account_val = 'accounts.number.' . $id;
             $password = array(
@@ -2683,7 +2684,7 @@ class Accounts_form extends common
             $permission,
             $account_status
         );
-        if ($id > 0) {
+        if (astpp_gt($id, 0)) {
             $account_status = null;
         }
         $form[gettext('Profile')] = array(

@@ -26,6 +26,7 @@
  * @author		ExpressionEngine Dev Team
  * @link		http://codeigniter.com/user_guide/libraries/pagination.html
  */
+#[\AllowDynamicProperties]
 class CI_Pagination {
 
 	var $base_url = ''; // The page we are linking to
@@ -70,7 +71,7 @@ class CI_Pagination {
 	 */
 	public function __construct($params = array())
 	{
-		if (count($params) > 0)
+		if (astpp_count($params) > 0)
 		{
 			$this->initialize($params);
 		}
@@ -94,7 +95,7 @@ class CI_Pagination {
 	 */
 	function initialize($params = array())
 	{
-		if (count($params) > 0)
+		if (astpp_count($params) > 0)
 		{
 			foreach ($params as $key => $val)
 			{
@@ -117,13 +118,13 @@ class CI_Pagination {
 	function create_links()
 	{
 		// If our item count or per-page total is zero there is no need to continue.
-		if ($this->total_rows == 0 OR $this->per_page == 0)
+		if (astpp_eq0($this->total_rows) OR astpp_eq0($this->per_page))
 		{
 			return '';
 		}
 
 		// Calculate the total number of pages
-		$num_pages = ceil($this->total_rows / $this->per_page);
+		$num_pages = astpp_ceil(astpp_div($this->total_rows, $this->per_page));
 
 		// Is there only one page? Hm... nothing more to do here then.
 		if ($num_pages == 1)
@@ -164,7 +165,7 @@ class CI_Pagination {
 		}
 		
 		// Set current page to 1 if using page numbers instead of offset
-		if ($this->use_page_numbers AND $this->cur_page == 0)
+		if ($this->use_page_numbers AND astpp_eq0($this->cur_page))
 		{
 			$this->cur_page = $base_page;
 		}
@@ -193,7 +194,7 @@ class CI_Pagination {
 		{
 			if ($this->cur_page > $this->total_rows)
 			{
-				$this->cur_page = ($num_pages - 1) * $this->per_page;
+				$this->cur_page = (astpp_n($num_pages) - 1) * astpp_n($this->per_page);
 			}
 		}
 
@@ -201,13 +202,13 @@ class CI_Pagination {
 		
 		if ( ! $this->use_page_numbers)
 		{
-			$this->cur_page = floor(($this->cur_page / $this->per_page) + 1);
+			$this->cur_page = astpp_floor((astpp_div($this->cur_page, $this->per_page)) + 1);
 		}
 
 		// Calculate the start and end numbers. These determine
 		// which number to start and end the digit links with
-		$start = (($this->cur_page - $this->num_links) > 0) ? $this->cur_page - ($this->num_links - 1) : 1;
-		$end   = (($this->cur_page + $this->num_links) < $num_pages) ? $this->cur_page + $this->num_links : $num_pages;
+		$start = ((astpp_n($this->cur_page) - astpp_n($this->num_links)) > 0) ? astpp_n($this->cur_page) - (astpp_n($this->num_links) - 1) : 1;
+		$end   = ((astpp_n($this->cur_page) + astpp_n($this->num_links)) < $num_pages) ? astpp_n($this->cur_page) + astpp_n($this->num_links) : $num_pages;
 
 		// Is pagination being used over GET or POST?  If get, add a per_page query
 		// string. If post, add a trailing slash to the base URL if needed
@@ -223,7 +224,7 @@ class CI_Pagination {
 		$output = '';
 
 		// Render the "First" link
-		if ($this->first_link !== FALSE AND $this->cur_page > ($this->num_links + 1))
+		if ($this->first_link !== FALSE AND $this->cur_page > (astpp_n($this->num_links) + 1))
 		{
 			$first_url = ($this->first_url == '') ? $this->base_url : $this->first_url;
 			$output .= $this->first_tag_open.'<a '.$this->anchor_class.'href="'.$first_url.'">'.$this->first_link.'</a>'.$this->first_tag_close;
@@ -234,10 +235,10 @@ class CI_Pagination {
 		{
 			if ($this->use_page_numbers)
 			{
-				$i = $uri_page_number - 1;
+				$i = astpp_n($uri_page_number) - 1;
 			} else
 			{
-				$i = $uri_page_number - $this->per_page;
+				$i = astpp_n($uri_page_number) - astpp_n($this->per_page);
 			}
 
 			if ($i == 0 && $this->first_url != '')
@@ -255,14 +256,14 @@ class CI_Pagination {
 		if ($this->display_pages !== FALSE)
 		{
 			// Write the digit links
-			for ($loop = $start - 1; $loop <= $end; $loop++)
+			for ($loop = astpp_n($start) - 1; $loop <= $end; $loop++)
 			{
 				if ($this->use_page_numbers)
 				{
 					$i = $loop;
 				} else
 				{
-					$i = ($loop * $this->per_page) - $this->per_page;
+					$i = (astpp_n($loop) * astpp_n($this->per_page)) - astpp_n($this->per_page);
 				}
 
 				if ($i >= $base_page)
@@ -293,24 +294,24 @@ class CI_Pagination {
 		{
 			if ($this->use_page_numbers)
 			{
-				$i = $this->cur_page + 1;
+				$i = astpp_n($this->cur_page) + 1;
 			} else
 			{
-				$i = ($this->cur_page * $this->per_page);
+				$i = (astpp_n($this->cur_page) * astpp_n($this->per_page));
 			}
 
 			$output .= $this->next_tag_open.'<a '.$this->anchor_class.'href="'.$this->base_url.$this->prefix.$i.$this->suffix.'">'.$this->next_link.'</a>'.$this->next_tag_close;
 		}
 
 		// Render the "Last" link
-		if ($this->last_link !== FALSE AND ($this->cur_page + $this->num_links) < $num_pages)
+		if ($this->last_link !== FALSE AND (astpp_n($this->cur_page) + astpp_n($this->num_links)) < $num_pages)
 		{
 			if ($this->use_page_numbers)
 			{
 				$i = $num_pages;
 			} else
 			{
-				$i = (($num_pages * $this->per_page) - $this->per_page);
+				$i = ((astpp_n($num_pages) * astpp_n($this->per_page)) - astpp_n($this->per_page));
 			}
 			$output .= $this->last_tag_open.'<a '.$this->anchor_class.'href="'.$this->base_url.$this->prefix.$i.$this->suffix.'">'.$this->last_link.'</a>'.$this->last_tag_close;
 		}

@@ -21,6 +21,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 // ##############################################################################
+#[\AllowDynamicProperties]
 class User extends MX_Controller
 {
 
@@ -59,7 +60,7 @@ class User extends MX_Controller
         $data['page_title'] = gettext('Dashboard');
         $account_info = $this->session->userdata("accountinfo");
         $data['accountinfo'] = $account_info;
-        if ($account_info['reseller_id'] > 0) {
+        if (astpp_gt($account_info['reseller_id'], 0)) {
             $where = "products.product_category IN (1,2)";
             $this->db->where($where);
             $productdata = $this->db_model->getJionQuery('products', 'products.id,products.name,products.product_category,products.buy_cost,products.commission,reseller_products.setup_fee,reseller_products.price,reseller_products.billing_type,reseller_products.billing_days,reseller_products.free_minutes,products.status,products.last_modified_date,reseller_products.product_id', array(
@@ -103,11 +104,11 @@ class User extends MX_Controller
             $json_data[0]['notes'] = 'Notes';
             foreach ($result->result_array() as $key => $data) {
                 $current_timestamp = strtotime($data['payment_date']);
-                $modified_date = $current_timestamp + $gmtoffset;
+                $modified_date = astpp_n($current_timestamp) + astpp_n($gmtoffset);
                 $data['accountid'] = ($data['accountid'] != '' && isset($account_arr[$data['accountid']])) ? $account_arr[$data['accountid']] : "Anonymous";
                 $json_data[$i]['accountid'] = $data['accountid'];
                 $json_data[$i]['credit'] = $this->common_model->calculate_currency($data['credit'], '', '', true, false);
-                $json_data[$i]['payment_date'] = date('Y-m-d H:i:s', strtotime($data['payment_date']) + $gmtoffset);
+                $json_data[$i]['payment_date'] = astpp_date('Y-m-d H:i:s', strtotime($data['payment_date']) + astpp_n($gmtoffset));
                 $json_data[$i]['notes'] = $data['notes'];
                 $i ++;
             }
@@ -181,8 +182,8 @@ class User extends MX_Controller
                 }
                 $json_data[$i]['type'] = $data['type'];
                 $json_data[$i]['id'] = $invoice_num;
-                $json_data[$i]['from_date'] = date('Y-m-d H:i:s', strtotime($data['from_date']) + $gmtoffset);
-                $json_data[$i]['invoice_date'] = date('Y-m-d H:i:s', strtotime($data['generate_date']) + $gmtoffset);
+                $json_data[$i]['from_date'] = astpp_date('Y-m-d H:i:s', strtotime($data['from_date']) + astpp_n($gmtoffset));
+                $json_data[$i]['invoice_date'] = astpp_date('Y-m-d H:i:s', strtotime($data['generate_date']) + astpp_n($gmtoffset));
                 $json_data[$i]['amount'] = $inv_debit;
                 $i ++;
             }
@@ -227,12 +228,12 @@ class User extends MX_Controller
                 $data['charge_id'] = isset($charges_arr[$data['charge_id']]['description']) ? $charges_arr[$data['charge_id']]['description'] : "Anonymous";
                 $json_data[$i]['charge_id'] = $data['charge_id'];
                 if ($data['assign_date'] != '0000-00-00 00:00:00') {
-                    $json_data[$i]['assign_date'] = date('Y-m-d H:i:s', strtotime($data['assign_date']) + $gmtoffset);
+                    $json_data[$i]['assign_date'] = astpp_date('Y-m-d H:i:s', strtotime($data['assign_date']) + astpp_n($gmtoffset));
                 } else {
                     $json_data[$i]['assign_date'] = $data['assign_date'];
                 }
                 if (isset($sweep_id)) {
-                    if ($sweep_id == 0) {
+                    if (astpp_eq0($sweep_id)) {
                         $json_data[$i]['sweep_id'] = gettext('Daily');
                     } else {
                         $json_data[$i]['sweep_id'] = gettext('Monthly');
@@ -315,7 +316,7 @@ class User extends MX_Controller
             ));
             $did_arr = (array) $did_query->first_row();
             if ($action == "add") {
-                if ($accountinfo['type'] == 0 && (!$this->check_calls_running())) {
+                if (astpp_eq0($accountinfo['type']) && (!$this->check_calls_running())) {
                     $this->session->set_flashdata('astpp_notification', gettext('You can not purchase any new DID when your calls are running!'));
                     redirect(base_url() . "user/user_didlist/");
                     exit;
@@ -325,7 +326,7 @@ class User extends MX_Controller
                 if ($did_result[0] == "SUCCESS") {
                     $order_id = '';
                     $payment_gateway = '';
-                    if ($reseller_id > 0) {
+                    if (astpp_gt($reseller_id, 0)) {
                         $product_query = $this->db_model->getJionQuery('products', 'products.id,products.name,products.product_category,products.buy_cost,products.can_purchase,products.can_resell,products.commission,reseller_products.price,reseller_products.setup_fee,products.billing_type,products.billing_days,reseller_products.free_minutes,products.status,products.last_modified_date,reseller_products.product_id,reseller_products.setup_fee,reseller_products.is_optin', array(
                             'products.status' => 0,
                             'reseller_products.product_id' => $did_arr['product_id'],
@@ -345,15 +346,15 @@ class User extends MX_Controller
                     ));
                     $did_arr['price'] = $this->common_model->calculate_currency($product_array['price'], '', '', true, false);
                     $did_arr['setup_fee'] = $this->common_model->calculate_currency($product_array['setup_fee'], '', '', true, false);
-                    $did_arr['next_billing_date'] = ($product_array['billing_days'] == 0) ? gmdate('Y-m-d 23:59:59', strtotime('+10 years')) : gmdate("Y-m-d 23:59:59", strtotime("+" . $product_array['billing_days'] . " days"));
+                    $did_arr['next_billing_date'] = (astpp_eq0($product_array['billing_days'])) ? astpp_gmdate('Y-m-d 23:59:59', strtotime('+10 years')) : astpp_gmdate("Y-m-d 23:59:59", strtotime("+" . $product_array['billing_days'] . " days"));
                     // the DID belongs to the seller, only the customer is charged
                     $last_id = $this->order->confirm_order($did_arr, $accountinfo['id'], $accountinfo, array('parent_billing' => false));
-                    $final_array = array_merge($account_arr, $did_arr);
-                    if ($last_id > 0) {
+                    $final_array = astpp_array_merge($account_arr, $did_arr);
+                    if (astpp_gt($last_id, 0)) {
                         $final_array['quantity'] = 1;
-                        $final_array['price'] = ($did_arr['setup_fee'] + $did_arr['price']);
-                        $final_array['total_price'] = ($product_array['setup_fee'] + $product_array['price']) * ($final_array['quantity']);
-                        $final_array['total_price_amount'] = ($product_array['setup_fee'] + $product_array['price']);
+                        $final_array['price'] = (astpp_n($did_arr['setup_fee']) + astpp_n($did_arr['price']));
+                        $final_array['total_price'] = (astpp_n($product_array['setup_fee']) + astpp_n($product_array['price'])) * (astpp_n($final_array['quantity']));
+                        $final_array['total_price_amount'] = (astpp_n($product_array['setup_fee']) + astpp_n($product_array['price']));
                         $final_array['payment_by'] = "Account Balance";
                     }
                 }
@@ -379,7 +380,7 @@ class User extends MX_Controller
                     $this->db->update("dids", $update_arr, array(
                         "id" => $did_id
                     ));
-                    if ($accountinfo['reseller_id'] > 0) {
+                    if (astpp_gt($accountinfo['reseller_id'], 0)) {
 
                         $this->db->update('reseller_pricing', $update_arr, array(
                             'note' => $did_arr['number']
@@ -437,7 +438,7 @@ class User extends MX_Controller
 
         $grid_fields = json_decode($this->user_form->user_rates_list());
         foreach ($query->result_array() as $key => $value) {
-            $cost = $account_data['type'] != 3 ? ($value['cost'] + (($value['cost'] * $markup) / 100)) : $value['cost'];
+            $cost = $account_data['type'] != 3 ? (astpp_n($value['cost']) + ((astpp_n($value['cost']) * astpp_n($markup)) / 100)) : $value['cost'];
             $json_data['rows'][] = array(
                 'cell' => array(
                     $this->common->get_only_numeric_val("", "", $value["pattern"]),
@@ -471,7 +472,7 @@ class User extends MX_Controller
                 $markup = $this->common->get_field_name('markup', 'pricelists', array(
                     'id' => $account_data["pricelist_id"]
                 ));
-                $markup = ($markup > 0) ? $markup : 1;
+                $markup = (astpp_gt($markup, 0)) ? $markup : 1;
                 $action['cost']['cost'] = $this->common_model->add_calculate_currency($action['cost']['cost'], "", '', true, false);
             }
             $this->session->set_userdata('user_rates_list_search', $action);
@@ -508,7 +509,7 @@ class User extends MX_Controller
         );
         if ($query->num_rows() > 0) {
             foreach ($query->result_array() as $row) {
-                $cost = $account_data['type'] != 3 ? ($row['cost'] + ($row['cost'] * $markup) / 100) : $row['cost'];
+                $cost = $account_data['type'] != 3 ? (astpp_n($row['cost']) + (astpp_n($row['cost']) * astpp_n($markup)) / 100) : $row['cost'];
                 $inbound_array[] = array(
                     $row['pattern'] = $this->common->get_only_numeric_val("", "", $row["pattern"]),
                     $row['comment'],
@@ -541,7 +542,7 @@ class User extends MX_Controller
     function user_convert_amount($amount)
     {
         $amount = $this->common_model->add_calculate_currency($amount, "", "", false, false);
-        echo number_format($amount, 5);
+        echo astpp_number_format($amount, 5);
     }
 
     function user_report_export()
@@ -578,7 +579,7 @@ class User extends MX_Controller
     function user_sipdevice_voicemail_random_password()
     {
        $digit='5';
-       echo random_int((int) pow(10, $digit - 1), (int) pow(10, $digit) - 1);exit;
+       echo random_int((int) pow(10, astpp_n($digit) - 1), (int) pow(10, $digit) - 1);exit;
    }
 
    function user_refill_coupon_list()
@@ -643,7 +644,7 @@ function user_refill_coupon_number($refill_coupon_no)
                     'deleted' => 0
                 ));
             }
-            $user_balance = ($accountinfo['posttoexternal'] == 1) ? $accountinfo['credit_limit'] - $balance : $balance;
+            $user_balance = ($accountinfo['posttoexternal'] == 1) ? astpp_n($accountinfo['credit_limit']) - astpp_n($balance) : $balance;
             $original_balance = $refill_coupon_result['amount'];
             $refill_coupon_result['amount'] = $this->common_model->to_calculate_currency($original_balance, '', '', TRUE, TRUE);
 
@@ -652,7 +653,7 @@ function user_refill_coupon_number($refill_coupon_no)
                 $user_balance = $accountinfo['balance'];
             }
 
-            $refill_coupon_result['new_balance'] = $this->common_model->to_calculate_currency($user_balance + $original_balance, '', '', TRUE, TRUE);
+            $refill_coupon_result['new_balance'] = $this->common_model->to_calculate_currency(astpp_n($user_balance) + astpp_n($original_balance), '', '', TRUE, TRUE);
             echo json_encode($refill_coupon_result);
         }
     } else {
@@ -765,7 +766,7 @@ function user_invoice_config()
         }
         if (isset($_FILES['file']['name']) && $_FILES['file']['name'] != '') {
             $files = $_FILES['file'];
-            if ($files['size'] < 0) {
+            if (astpp_lt($files['size'], 0)) {
                 $this->session->set_flashdata('astpp_notification', gettext('PLease upload maximum file'));
                 redirect(base_url() . "accounts/reseller_invoice_config/" . $add_array['accountid'] . "/");
             }
@@ -805,7 +806,7 @@ function user_invoice_config()
                 'id' => $add_array['id'],
                 'accountid' => $accountinfo['id']
             ))->num_rows();
-            if ($owned == 0) {
+            if (astpp_eq0($owned)) {
                 $this->session->set_flashdata('astpp_notification', gettext('Permission Denied!'));
                 redirect(base_url() . 'user/user_invoice_config/');
             }
@@ -1006,7 +1007,7 @@ function user_invoices_list_json()
     $total_credit = (array) $invoice_details_result->first_row();
     foreach ($invoices_result as $key => $value) {
 
-        $total_amount += $total_credit['debit'];
+        $total_amount = astpp_n($total_amount) + astpp_n($total_credit['debit']);
         $invoice_date = $this->common->convert_GMT_to_new('','',$value['generate_date']);
         $from_date = $this->common->convert_GMT_to_new('','',$value['from_date']);
         $due_date = $this->common->convert_GMT_to_new('','',$value['due_date']);
@@ -1015,7 +1016,7 @@ function user_invoices_list_json()
         $charge_type = $this->common->get_field_name("charge_type","invoice_details",array("invoiceid"=>$value['id'])); 
         
         if ($from_currency != $to_currency) {
-            $outstanding = ($value['is_paid'] == 1) ? $value['debit'] - $value['credit'] : 0.00;
+            $outstanding = ($value['is_paid'] == 1) ? astpp_n($value['debit']) - astpp_n($value['credit']) : 0.00;
             $outstanding = $this->common_model->calculate_currency($outstanding, "", "", true, false);
 
             if($charge_type == "REFILL" || $charge_type == "Voucher" || $charge_type == "COMMISSION"){
@@ -1023,16 +1024,16 @@ function user_invoices_list_json()
               $amount =  $value['credit'];
               $amount = $this->common_model->calculate_currency($amount, "", "", true, false);
           }else{
-             $amount = ($value['debit'] > 0) ? $value['debit'] : $value['credit'];
+             $amount = (astpp_gt($value['debit'], 0)) ? $value['debit'] : $value['credit'];
              $amount = $this->common_model->calculate_currency($amount, "", "", true, false);
          }
      } else {
-        $outstanding = ($value['is_paid'] == 1) ? $value['debit'] - $value['credit'] : 0.00;
+        $outstanding = ($value['is_paid'] == 1) ? astpp_n($value['debit']) - astpp_n($value['credit']) : 0.00;
 
         if($charge_type == "REFILL" || $charge_type == "Voucher" || $charge_type == "COMMISSION"){
          $amount =  $value['credit'];
      }else{
-       $amount = ($value['debit'] > 0) ? $value['debit'] : $value['credit'];
+       $amount = (astpp_gt($value['debit'], 0)) ? $value['debit'] : $value['credit'];
    }
 }
 
@@ -1040,9 +1041,9 @@ $payment_last_date = '';
 $payment_last_date = $this->common->get_field_name("created_date", "invoice_details", array(
     "invoiceid" => $value['id']
 ));
-$payment_last = ($payment_last_date) ? date("Y-m-d", strtotime($payment_last_date)) : '';
+$payment_last = ($payment_last_date) ? astpp_date("Y-m-d", strtotime($payment_last_date)) : '';
 $download = '<a href="' . base_url() . '/user/user_invoice_download/' . $value['id'] . '" class="btn btn-royelblue btn-sm"  title="Download Invoice" ><i class="fa fa-cloud-download fa-fw"></i></a>&nbsp';
-if ($value['is_paid'] == 1 && $outstanding > 0) {
+if ($value['is_paid'] == 1 && astpp_gt($outstanding, 0)) {
     $payment = ' <a style="padding: 0 8px;" href="' . base_url() . 'user/user_invoice_payment/' . $value['id'] . '" class="btn btn-warning"  title="Payment">'.gettext("Unpaid").'</a>';
 } else {
     $payment = ' <button style="padding: 0 8px;" class="btn btn-success" type="button">'.gettext("Paid").'</button>';
@@ -1065,7 +1066,7 @@ $json_data['rows'][] = array(
         $download . $payment
     )
 );
-$ountstanding_value = $ountstanding_value + $outstanding;
+$ountstanding_value = astpp_n($ountstanding_value) + astpp_n($outstanding);
 }
 echo json_encode($json_data);
 }
@@ -1123,7 +1124,7 @@ function user_invoice_payment_pay($action = "")
     if ($action == "GET_AMT") {
         $amount = $this->input->post("value", true);
         $amount = $this->common_model->add_calculate_currency($amount, "", "", true, false);
-        echo number_format($amount, 2);
+        echo astpp_number_format($amount, 2);
     } else {
         $this->topup->index();
     }
@@ -1223,7 +1224,7 @@ function user_purchase_did()
         }
     }
 
-    if ($account_data['reseller_id'] > 0) {
+    if (astpp_gt($account_data['reseller_id'], 0)) {
         $this->db->select('dids.id, dids.number, reseller_products.setup_fee, reseller_products.price');
         $this->db->where('dids.accountid', 0);
         $this->db->where('dids.parent_id', $account_data['reseller_id']);
@@ -1259,12 +1260,12 @@ function user_purchase_did()
     $drp_list = array();
     if (! empty($dids_array)) {
         foreach ($dids_array as $drp_value) {
-            if (! empty($drp_value['price']) && $drp_value['price'] != 0) {
+            if (! empty($drp_value['price']) && (!astpp_eq0($drp_value['price']))) {
                 $did_cost = $this->common_model->to_calculate_currency($drp_value['price'], '', '', true, true);
             } else {
                 $did_cost = 0;
             }
-            if (! empty($drp_value['setup_fee']) && $drp_value['setup_fee'] != 0) {
+            if (! empty($drp_value['setup_fee']) && (!astpp_eq0($drp_value['setup_fee']))) {
                 $did_setup = $this->common_model->to_calculate_currency($drp_value['setup_fee'], '', '', true, true);
             } else {
                 $did_setup = 0;
@@ -1290,7 +1291,7 @@ function user_list_release($id)
     $this->load->module('did/did');
     $this->did_model->did_number_release($did_info, $accountinfo, 'release');
     $did_info['product_name'] = $did_info['number'];
-    $final_array = array_merge($did_info, $accountinfo);
+    $final_array = astpp_array_merge($did_info, $accountinfo);
     $this->did_lib->did_release($final_array);
     $this->session->set_flashdata('astpp_errormsg', gettext('DID Released Successfully!'));
     redirect(base_url() . 'user/user_didlist/');
@@ -1326,7 +1327,7 @@ function user_did_local_change($call_type_code = '', $did_id = '', $extensions =
         'id' => (int) $did_id,
         'accountid' => (int) $accountinfo['id']
     ))->num_rows();
-    if ($own == 0) {
+    if (astpp_eq0($own)) {
         echo '<select class="col-md-12 form-control form-control-lg selectpicker extensions_set" id="extensions_id" name="extensions"><option>--</option></select>';
         return;
     }
@@ -1361,7 +1362,7 @@ function user_didlist_search()
         $this->session->set_userdata('advance_search', $this->input->post('advance_search'));
         $action = $this->input->post();
         $accountinfo = $this->session->userdata('accountinfo');
-        if ($accountinfo['reseller_id'] > 0 && $action['call_type'] > 0) {
+        if (astpp_gt($accountinfo['reseller_id'], 0) && astpp_gt($action['call_type'], 0)) {
             $action['dids.call_type'] = $action['call_type'];
             unset($action['call_type']);
         }
@@ -1492,7 +1493,7 @@ function user_ipmap_action($action = 'delete', $id = false)
             "prefix" => trim($add_array['prefix'])
         );
         $getdata = $this->db_model->countQuery("*", "ip_map", $where);
-        if ($getdata > 0) {
+        if (astpp_gt($getdata, 0)) {
             $this->session->set_flashdata('astpp_notification', gettext('IP already exist in system.'));
         } else {
             unset($add_array['action']);
@@ -1693,7 +1694,7 @@ function user_animap_action($action = "", $aniid = "")
         $this->db->select('count(id) as count');
         $cnt_result = $this->db->get('ani_map');
         $cnt_result = $cnt_result->first_row();
-        if ($cnt_result->count == 0) {
+        if (astpp_eq0($cnt_result->count)) {
             if ($_POST['number'] != "") {
 
                 $insert_arr = array(
@@ -1773,10 +1774,10 @@ function user_cdrs_report_json()
     $grid_fields = json_decode($this->user_form->build_cdrs_report($accountinfo['type']));
     $json_data['rows'] = $this->form->build_grid($query, $grid_fields);
 
-    if ($count_all['count'] > 0) {
+    if (astpp_gt($count_all['count'], 0)) {
         $search_arr = $this->session->userdata('user_cdrs_report_search');
         $show_seconds = (! empty($search_arr['search_in'])) ? $search_arr['search_in'] : 'minutes';
-        $duration = ($show_seconds == 'minutes') ? ($count_all['billseconds'] > 0) ? floor($count_all['billseconds'] / 60) . ":" . sprintf("%02d", $count_all['billseconds'] % 60) : "00:00" : $count_all['billseconds'];
+        $duration = ($show_seconds == 'minutes') ? (astpp_gt($count_all['billseconds'], 0)) ? astpp_floor(astpp_n($count_all['billseconds']) / 60) . ":" . sprintf("%02d", astpp_n($count_all['billseconds']) % 60) : "00:00" : $count_all['billseconds'];
         $json_data['rows'][] = array(
             "cell" => array(
                 "<b>Grand Total</b>",
@@ -1786,7 +1787,7 @@ function user_cdrs_report_json()
                 "",
                 "<b>" . $duration . "</b>",
                 //ASTPPCOM-1348_kanu_start
-                "<b>" . $this->common_model->calculate_currency_locale($count_all[$variable] - $count_all['free_debit'], "", "", true, false) . "</b>",
+                "<b>" . $this->common_model->calculate_currency_locale(astpp_n($count_all[$variable]) - astpp_n($count_all['free_debit']), "", "", true, false) . "</b>",
                 //ASTPPCOM-1348_kanu_end
                 "",
                 "",
@@ -1828,7 +1829,7 @@ function user_cdrs_report_search()
                 $duration = explode(':', $action['billseconds']['billseconds']);
                 if (isset($duration[0]) && isset($duration[1])) {
                     if (is_numeric($duration[0]) && is_numeric($duration[1])) {
-                        $action['billseconds']['billseconds'] = (60 * $duration[0]) + $duration[1];
+                        $action['billseconds']['billseconds'] = (60 * astpp_n($duration[0])) + astpp_n($duration[1]);
                     }
                 }
             }
@@ -1879,13 +1880,13 @@ function user_cdrreport_export()
         gettext("Disposition"),
         gettext("Direction")
     );
-    if ($count_all['count'] > 0) {
+    if (astpp_gt($count_all['count'], 0)) {
         $query = $this->user_model->getuser_cdrs_list(true, '', '', true);
         $currency_info = $this->common->get_currency_info();
         $search_arr = $this->session->userdata('user_cdrs_report_search');
         $show_seconds = (! empty($search_arr['search_in'])) ? $search_arr['search_in'] : 'minutes';
         foreach ($query->result_array() as $value) {
-            $duration = ($show_seconds == 'minutes') ? ($value['billseconds'] > 0) ? floor($value['billseconds'] / 60) . ":" . sprintf("%02d", $value['billseconds'] % 60) : "00:00" : $value['billseconds'];
+            $duration = ($show_seconds == 'minutes') ? (astpp_gt($value['billseconds'], 0)) ? astpp_floor(astpp_n($value['billseconds']) / 60) . ":" . sprintf("%02d", astpp_n($value['billseconds']) % 60) : "00:00" : $value['billseconds'];
             $customer_array[] = array(
                 $this->common->convert_GMT_to('', '', $value['callstart']),
                 $value['callerid'],
@@ -1898,7 +1899,7 @@ function user_cdrreport_export()
                 $value['call_direction']
             );
         }
-        $duration = ($show_seconds == 'minutes') ? ($count_all['billseconds'] > 0) ? floor($count_all['billseconds'] / 60) . ":" . sprintf("%02d", $count_all['billseconds'] % 60) : "00:00" : $count_all['billseconds'];
+        $duration = ($show_seconds == 'minutes') ? (astpp_gt($count_all['billseconds'], 0)) ? astpp_floor(astpp_n($count_all['billseconds']) / 60) . ":" . sprintf("%02d", astpp_n($count_all['billseconds']) % 60) : "00:00" : $count_all['billseconds'];
         $customer_array[] = array(
             gettext("Grand Total"),
             "",
@@ -1979,7 +1980,7 @@ function user_fund_transfer_save()
                         'deleted' => 0
                     ));
 
-                    $balance = ($account_info["posttoexternal"] == 1) ? ($account_info["credit_limit"] - $acc_balance) : ($acc_balance);
+                    $balance = ($account_info["posttoexternal"] == 1) ? (astpp_n($account_info["credit_limit"]) - astpp_n($acc_balance)) : ($acc_balance);
 
                     $toid = $this->common->get_field_name('id', 'accounts', array(
                         'number' => $post_array['toaccountid'],
@@ -1999,7 +2000,7 @@ function user_fund_transfer_save()
                         'deleted' => 0
                     ));
 
-                    $balance = ($account_info["posttoexternal"] == 1) ? ($account_info["credit_limit"] - $acc_balance) : ($acc_balance);
+                    $balance = ($account_info["posttoexternal"] == 1) ? (astpp_n($account_info["credit_limit"]) - astpp_n($acc_balance)) : ($acc_balance);
 
                     $toid = $this->common->get_field_name('id', 'accounts', array(
                         'number' => $post_array['toaccountid'],
@@ -2023,9 +2024,9 @@ function user_fund_transfer_save()
                             // The message was set, but the transfer went on (also to reseller and
                             // admin accounts of the same level). Amounts as numbers: number_format()
                             // added thousands separators and the checks below compared strings.
-                            $to_denied = ($toaccountinfo['type'] != 3) && ($toaccountinfo['type'] != 0);
+                            $to_denied = ($toaccountinfo['type'] != 3) && ((!astpp_eq0($toaccountinfo['type'])));
                             // Kinjal ASTPPCOM-1319 Start
-                            $post_array['credit'] = round((float) $this->common_model->add_calculate_currency($post_array['credit'], '', '', false, false,'en_En'), 4);
+                            $post_array['credit'] = astpp_round((float) $this->common_model->add_calculate_currency($post_array['credit'], '', '', false, false,'en_En'), 4);
                             $balance = (float) $balance;
                             // Kinjal ASTPPCOM-1319 END
 
@@ -2034,9 +2035,9 @@ function user_fund_transfer_save()
                             ), 1)->first_row();
 
                             // Kinjal ASTPPCOM-1319 Start
-                            $minimum_fund['value'] = round((float) $this->common_model->add_calculate_currency($minimum_fund['value'], '', '', false, false,'en_En'), 4);
+                            $minimum_fund['value'] = astpp_round((float) $this->common_model->add_calculate_currency($minimum_fund['value'], '', '', false, false,'en_En'), 4);
                             $from_currency = common_model::$global_config['system_config'] ['base_currency'];
-                            $minimum_fund_value = number_format($this->common_model->add_calculate_currency($minimum_fund['value'],$from_currency, $currency['currency'], false, false,'en_En'), 4);
+                            $minimum_fund_value = astpp_number_format($this->common_model->add_calculate_currency($minimum_fund['value'],$from_currency, $currency['currency'], false, false,'en_En'), 4);
                             // Kinjal ASTPPCOM-1319 END
                             if ($to_denied) {
                                 $this->session->set_flashdata('astpp_notification', gettext('Access Denied! unable transfer fund to this account'));
@@ -2046,13 +2047,13 @@ function user_fund_transfer_save()
                                 $this->session->set_flashdata('astpp_notification', gettext('You can only transfer fund in same level account.'));
                             } elseif ($post_array['toaccountid'] == '') {
                                 $this->session->set_flashdata('astpp_notification', gettext('Please enter To account number.'));
-                            } elseif ($post_array['credit'] <= 0) {
+                            } elseif (astpp_le($post_array['credit'], 0)) {
                                 $this->session->set_flashdata('astpp_notification', gettext('Please enter valid amount.'));
                             } elseif ($post_array['credit'] > $balance) {
                                 $this->session->set_flashdata('astpp_notification', gettext('You have insufficient balance.'));
-                            } elseif ($toid <= 0 || ! isset($post_array['toaccountid'])) {
+                            } elseif (astpp_le($toid, 0) || ! isset($post_array['toaccountid'])) {
                                 $this->session->set_flashdata('astpp_notification', gettext('Please enter valid account number.'));
-                            } elseif ($post_array['credit'] < 0) {
+                            } elseif (astpp_lt($post_array['credit'], 0)) {
                                 $this->session->set_flashdata('astpp_notification', gettext('Please enter amount greater then 0.'));
                             } elseif ($minimum_fund['value'] > $post_array['credit']) {
                                   // Kinjal ASTPPCOM-1319 Start
@@ -2060,7 +2061,7 @@ function user_fund_transfer_save()
                                   // Kinjal ASTPPCOM-1319 END
                             } elseif (! isset($toid) || ! isset($post_array['toaccountid'])) {
                                 $this->session->set_flashdata('astpp_notification', gettext('Please enter valid account number!'));
-                            } elseif ($post_array['credit'] < 0 || $post_array['credit'] > $balance) {
+                            } elseif (astpp_lt($post_array['credit'], 0) || $post_array['credit'] > $balance) {
                                 $this->session->set_flashdata('astpp_notification', gettext('Insuffiecient amount !'));
                             } elseif (!$this->check_calls_running()) {
                                 $this->session->set_flashdata('astpp_notification', gettext('You can not transfer fund when your calls are running!'));
@@ -2072,10 +2073,10 @@ function user_fund_transfer_save()
                                 $from['accountid'] = $post_array['fromaccountid'];
 
                                 if ($account['posttoexternal'] == 1) {
-                                    $from['credit'] = abs($post_array['credit']);
+                                    $from['credit'] = astpp_abs($post_array['credit']);
                                     $from['payment_type'] = '0';
                                 } else {
-                                    $from['credit'] = abs($post_array['credit']);
+                                    $from['credit'] = astpp_abs($post_array['credit']);
                                     $from['payment_type'] = 'debit';
                                 }
                                 // Kinjal ASTPPCOM-1319 Start
@@ -2088,17 +2089,17 @@ function user_fund_transfer_save()
                                 $to['id'] = $toid;
                                 $to['account_currency'] = $post_array['account_currency'];
                                 $to['accountid'] = $post_array['toaccountid'];
-                                if ($toaccountinfo['posttoexternal'] == 0) {
-                                    $to['credit'] = abs($post_array['credit']);
+                                if (astpp_eq0($toaccountinfo['posttoexternal'])) {
+                                    $to['credit'] = astpp_abs($post_array['credit']);
                                     $to['payment_type'] = '0';
                                 } else {
-                                    $to['credit'] = abs($post_array['credit']);
+                                    $to['credit'] = astpp_abs($post_array['credit']);
                                     $to['payment_type'] = 'debit';
                                 }
                                 $to['notes'] = $post_array['notes'];
                                 $to['action'] = 'save';
 
-                                if ($account['reseller_id'] == 0) {
+                                if (astpp_eq0($account['reseller_id'])) {
                                     $where = array(
                                         "accountid" => 1
                                     );
@@ -2193,17 +2194,17 @@ private function check_calls_running(){
  $data_header = array();
  $k = 0;
  $data = explode("\n", $response);
- for ($i = 0; $i < count($data) - 2; $i ++) {
+ for ($i = 0; $i < astpp_count($data) - 2; $i ++) {
      if (trim($data[$i]) != '') {
-         if (count($data_header) == 0 || substr($data[$i], 0, 4) == "uuid") {
+         if (astpp_count($data_header) == 0 || substr($data[$i], 0, 4) == "uuid") {
              $data_header = explode(",", $data[$i]);
          } else {
              $bridge_str = "";
              $string = " " . $data[$i];
              $ini = strpos($string, '[');
-             if ($ini != 0) {
-                 $ini += strlen('[');
-                 $len = strpos($string, ']', $ini) - $ini;
+             if ((!astpp_eq0($ini))) {
+                 $ini = astpp_n($ini) + strlen('[');
+                 $len = strpos($string, ']', $ini) - astpp_n($ini);
                  $bridge_str = substr($string, $ini, $len);
              }
              if ($bridge_str != '') {
@@ -2211,7 +2212,7 @@ private function check_calls_running(){
                  $data[$i] = str_replace($bridge_str, $new_bridge_str, $data[$i]);
              }
              $data_call = explode(",", $data[$i]);
-             for ($j = 0; $j < count($data_call); $j ++) {
+             for ($j = 0; $j < astpp_count($data_call); $j ++) {
                  $calls[$k][@$data_header[$j]] = @$data_call[$j];
                  $calls_final[@$calls[$k]['uuid']] = @$calls[$k];
              }
@@ -2238,7 +2239,7 @@ if(!empty($calls)){
     $livecall_data = explode("|||", $calls[$i]['presence_data']);
     $account_explode=explode('(',$livecall_data[1]);    
     if (isset($value['state']) && ($value['state'] == 'CS_EXCHANGE_MEDIA' || $value['state'] == 'CS_CONSUME_MEDIA') ) {
-       if($accountinfo['number'] == rtrim($account_explode[1],')') || array_key_exists($value['initial_dest'],$sip_device_final_array)){
+       if($accountinfo['number'] == rtrim($account_explode[1],')') || astpp_array_key_exists($value['initial_dest'],$sip_device_final_array)){
            $response_return=false;              
        }
    } 
@@ -2383,7 +2384,7 @@ function validate_device_data($data)
         $this->opensips_db->where($where);
         $auth_flag = $this->opensips_db->get("subscriber");
         $auth_flag = $auth_flag->num_rows();
-        if ($auth_flag == 0) {
+        if (astpp_eq0($auth_flag)) {
             return "TRUE";
         } else {
             return array(
@@ -2493,7 +2494,7 @@ function user_provider_cdrs_report_search()
                 $duration = explode(':', $action['billseconds']['billseconds']);
                 if (isset($duration[0]) && isset($duration[1])) {
                     if (is_numeric($duration[0]) && is_numeric($duration[1])) {
-                        $action['billseconds']['billseconds'] = (60 * $duration[0]) + $duration[1];
+                        $action['billseconds']['billseconds'] = (60 * astpp_n($duration[0])) + astpp_n($duration[1]);
                     }
                 }
             }
@@ -2532,13 +2533,13 @@ function user_provider_cdrreport_export()
         gettext("Cost") . "(" . $currency . ")",
         gettext("Disposition")
     );
-    if ($count_all['count'] > 0) {
+    if (astpp_gt($count_all['count'], 0)) {
         $query = $this->user_model->getuser_cdrs_list(true, '', '', true);
         $currency_info = $this->common->get_currency_info();
         $search_arr = $this->session->userdata('user_provider_cdrs_report_search');
         $show_seconds = (! empty($search_arr['search_in'])) ? $search_arr['search_in'] : 'minutes';
         foreach ($query->result_array() as $value) {
-            $duration = ($show_seconds == 'minutes') ? ($value['billseconds'] > 0) ? floor($value['billseconds'] / 60) . ":" . sprintf("%02d", $value['billseconds'] % 60) : "00:00" : $value['billseconds'];
+            $duration = ($show_seconds == 'minutes') ? (astpp_gt($value['billseconds'], 0)) ? astpp_floor(astpp_n($value['billseconds']) / 60) . ":" . sprintf("%02d", astpp_n($value['billseconds']) % 60) : "00:00" : $value['billseconds'];
             $customer_array[] = array(
                 $this->common->convert_GMT_to('', '', $value['callstart']),
                 $value['callerid'],
@@ -2549,7 +2550,7 @@ function user_provider_cdrreport_export()
                 $value['disposition']
             );
         }
-        $duration = ($show_seconds == 'minutes') ? ($count_all['billseconds'] > 0) ? floor($count_all['billseconds'] / 60) . ":" . sprintf("%02d", $count_all['billseconds'] % 60) : "00:00" : $count_all['billseconds'];
+        $duration = ($show_seconds == 'minutes') ? (astpp_gt($count_all['billseconds'], 0)) ? astpp_floor(astpp_n($count_all['billseconds']) / 60) . ":" . sprintf("%02d", astpp_n($count_all['billseconds']) % 60) : "00:00" : $count_all['billseconds'];
         $customer_array[] = array(
             "Grand Total",
             "",
@@ -2595,7 +2596,7 @@ function user_speeddial_save()
     $this->db->select('count(id) as count');
     $this->db->where($where);
     $speed_dial_result = (array) $this->db->get('speed_dial')->first_row();
-    if ($speed_dial_result['count'] == 0) {
+    if (astpp_eq0($speed_dial_result['count'])) {
         for ($i = 0; $i <= 9; $i ++) {
             $dest_number = $add_array['number'] == $i ? $add_array['destination'] : '';
             $data[$i] = array(
@@ -2746,7 +2747,7 @@ function user_customer_validate_ip()
         $this->db->where('prefix', $add_array['prefix']);
         $this->db->select('count(ip) as count');
         $ip_map_result = (array) $this->db->get('ip_map')->first_row();
-        if ($ip_map_result['count'] > 0) {
+        if (astpp_gt($ip_map_result['count'], 0)) {
             echo 'FALSE';
         } else {
             echo 'TRUE';
@@ -2798,10 +2799,10 @@ function user_invoice_unpaid_pay()
     if (! empty($invoice)) {
         $paid = (float) $this->db->select_sum('credit')->get_where('invoice_details', array('invoiceid' => $invoice_id))->row()->credit;
     }
-    $open = empty($invoice) ? 0 : (float) $invoice['debit'] - $paid;
+    $open = empty($invoice) ? 0 : (float) $invoice['debit'] - astpp_n($paid);
     $row = null;
-    if (! empty($invoice) && $settings !== null && $amount !== false && $amount > 0 && $amount <= $open + 0.005) {
-        $row = $this->paypal->create($account, 'invoice', $invoice_id, $amount + ($amount * $settings['fee'] / 100), $amount, $settings);
+    if (! empty($invoice) && $settings !== null && $amount !== false && astpp_gt($amount, 0) && $amount <= astpp_n($open) + 0.005) {
+        $row = $this->paypal->create($account, 'invoice', $invoice_id, astpp_n($amount) + (astpp_n($amount) * astpp_n($settings['fee']) / 100), $amount, $settings);
     }
     if ($row === null) {
         $this->session->set_flashdata('astpp_notification', gettext('PayPal is not available or the amount is invalid.'));
@@ -2834,7 +2835,7 @@ function user_get_current_info()
         'id' => $account_data['id']
     ));
     $balance = (array) $balance_array->first_row();
-    $amount = $balance['posttoexternal'] == 1 ? $balance['credit_limit'] - $balance['balance'] : $balance['balance'];
+    $amount = $balance['posttoexternal'] == 1 ? astpp_n($balance['credit_limit']) - astpp_n($balance['balance']) : $balance['balance'];
     $result_array['balance'] = $this->common_model->calculate_currency_customer($amount);
 
     $where_invoice = array(

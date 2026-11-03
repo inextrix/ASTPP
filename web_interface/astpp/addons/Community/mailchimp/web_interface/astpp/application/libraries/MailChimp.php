@@ -9,6 +9,7 @@
  * @version 2.1
  */
 defined ( 'BASEPATH' ) or exit ( 'No direct script access allowed' );
+#[\AllowDynamicProperties]
 class MailChimp
 {
     private $api_key;
@@ -224,7 +225,7 @@ class MailChimp
             $this->last_error = curl_error($ch);
         }
         
-        curl_close($ch);
+        PHP_VERSION_ID < 80000 && curl_close($ch);
 
         return $this->formatResponse($response);
     }

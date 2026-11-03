@@ -127,7 +127,7 @@
         if ($query->num_rows() > 0) {
 
             foreach ($query->result_array() as $row) {
-                if ($row['reseller_id'] == 0) {
+                if (astpp_eq0($row['reseller_id'])) {
                     $reseller_id = 'Admin';
                 } else {
                     $reseller_id = $this->common->build_concat_string('first_name,last_name,number', 'accounts', $row['reseller_id']);
@@ -143,7 +143,7 @@
                     (isset($row['first_used']) && $row['first_used'] != "")?$row['first_used']:' ',
                     (isset($row['expiry']) && $row['expiry'] != "")?$row['expiry']:' ',
                     (isset($row['maxchannels']) && $row['maxchannels'] != "")?$row['maxchannels']:' ',
-                    (isset($row['localization_id']) && $row['localization_id'] !=0)?$this->common->get_field_name('name', 'localization', $row['localization_id']):' ',
+                    (isset($row['localization_id']) && (!astpp_eq0($row['localization_id'])))?$this->common->get_field_name('name', 'localization', $row['localization_id']):' ',
                     (isset($reseller_id) && $reseller_id != "")?$reseller_id:' ',
                     (isset($row['status']) && $row['status'] != "")?$this->common->get_status('export', '', $row['status']):' ',
                     (isset($row['creation']) && $row['creation'] != "")?$row['creation']:' ',
@@ -202,13 +202,13 @@
                 "id" => $edit_id
             ))->first_row();
         }
-        if ((isset($access_edit)) && ($access_edit['deleted'] == 0)) {
+        if ((isset($access_edit)) && (astpp_eq0($access_edit['deleted']))) {
             $accountinfo = $this->session->userdata('accountinfo');
             $reseller_id = ($accountinfo['type'] == 1 || $accountinfo['type'] == 5) ? $accountinfo['id'] : 0;
             $where = array(
                 'id' => $edit_id
             );
-            if ($reseller_id > 0) {
+            if (astpp_gt($reseller_id, 0)) {
                 $where['reseller_id'] = $reseller_id;
             }
             $account = $this->db_model->getSelect("*", "accounts", $where);
@@ -231,7 +231,7 @@
                 }
                 $account_data['password'] = ''; // not readable, the form shows an empty field
                 $account_data['first_used'] = $this->common->convert_GMT_to($account_data['first_used'], $account_data['first_used'], $account_data['first_used']);
-                $reseller_id = ($account_data['reseller_id'] > 0) ? $account_data['reseller_id'] : 0;
+                $reseller_id = (astpp_gt($account_data['reseller_id'], 0)) ? $account_data['reseller_id'] : 0;
                 $data['form'] = $this->form->build_form($this->accounts_form->get_customer_form_fields($entity_name, $edit_id, $reseller_id), $account_data);
                 $data['edit_id'] = $edit_id;
                 if ($data['account_data']['type'] == 3) {
@@ -276,7 +276,7 @@
                     $posttoexternal = (array) $this->db->get_where("accounts", array(
                         "id" => $add_array['id']
                     ))->first_row();
-                    if ($posttoexternal['posttoexternal'] == 0) {
+                    if (astpp_eq0($posttoexternal['posttoexternal'])) {
                         $add_array['credit_limit'] = 0;
                     }
 
@@ -303,7 +303,7 @@
                         "id" => $add_array["id"]
                     ))->first_row();
                     if ($validfordays['validfordays'] != $add_array['validfordays']) {
-                        $add_array['expiry'] = gmdate('Y-m-d H:i:s', strtotime($current_date . '+' . $add_array['validfordays'] . ' days'));
+                        $add_array['expiry'] = astpp_gmdate('Y-m-d H:i:s', strtotime($current_date . '+' . $add_array['validfordays'] . ' days'));
                     }
                     $add_array['first_name'] = preg_replace('/[^A-Za-z0-9\-]/', '', $add_array['first_name']);
                     $this->accounts_model->edit_account($add_array, $add_array['id']);
@@ -326,7 +326,7 @@
                         $add_array['balance'] = 0;
                     }
                     // the administrator may create the customer for a reseller - only for an existing one
-                    if (isset($add_array['reseller_id']) && $add_array['reseller_id'] > 0 && $this->db->get_where('accounts', array('id' => (int) $add_array['reseller_id'], 'type' => 1, 'deleted' => 0))->num_rows() === 0) {
+                    if (isset($add_array['reseller_id']) && astpp_gt($add_array['reseller_id'], 0) && $this->db->get_where('accounts', array('id' => (int) $add_array['reseller_id'], 'type' => 1, 'deleted' => 0))->num_rows() === 0) {
                         $add_array['reseller_id'] = 0;
                     }
                     unset($add_array['deleted'], $add_array['is_distributor'], $add_array['permission_id']);
@@ -486,7 +486,7 @@
                     "prefix" => trim($add_array['prefix'])
                 );
                 $getdata = $this->db_model->countQuery("*", "ip_map", $where);
-                if ($getdata > 0) {
+                if (astpp_gt($getdata, 0)) {
                     $this->session->set_flashdata('astpp_notification', gettext('IP already exist in system.'));
                 } else {
                     if ($accounttype == "provider") {
@@ -854,7 +854,7 @@
                 ));
                 $did_result = $this->did_lib->did_billing_process($this->session->userdata, $account_arr['id'], $didid);
                 if ($did_result[0] == "SUCCESS") {
-                    if($account_arr['reseller_id'] > 0){
+                    if(astpp_gt($account_arr['reseller_id'], 0)){
                         $product_info = $this->db_model->getJionQuery('dids', 'dids.id,dids.number,dids.cost,dids.inc,dids.call_type,dids.extensions,dids.connectcost,dids.includedseconds,reseller_products.buy_cost,reseller_products.commission,reseller_products.setup_fee,reseller_products.price,reseller_products.billing_type,reseller_products.billing_days,reseller_products.status,dids.last_modified_date,dids.product_id', array('dids.product_id'=>$did_id,'dids.parent_id'=>$account_arr['reseller_id'],'reseller_products.account_id'=>$account_arr['reseller_id']),'reseller_products','dids.product_id=reseller_products.product_id', 'inner','','','','');
                     }else{
                     	$product_info = $this->db_model->getSelect("*", "products", array(
@@ -896,7 +896,7 @@
                         "charge_upto" => "0000-00-00 00:00:00"
                     );
                 }
-                if ($reseller_id > 0) {
+                if (astpp_gt($reseller_id, 0)) {
                     $subreseller_id = $this->common->get_subreseller_info($accountinfo['id']);
                     $subreseller_id = rtrim($subreseller_id, ",");
                     $where = "parent_id IN ($subreseller_id)";
@@ -1301,7 +1301,7 @@
                 $data['validation_errors'] = validation_errors();
                 echo $data['validation_errors'];
                 exit();
-            } else if ($currentlength <= 0) {
+            } else if (astpp_le($currentlength, 0)) {
                 echo json_encode(array(
                     "prefix_error" => gettext("Your Account Limit has been reached.Please Change Your Prefix.")
                 ));
@@ -1311,7 +1311,7 @@
                     "account_length_error" => gettext("Please Enter Proper Account Length.")
                 ));
                 exit();
-            } else if ($currentlength > 0 && $add_array['count'] > $currentlength) {
+            } else if (astpp_gt($currentlength, 0) && $add_array['count'] > $currentlength) {
                 echo json_encode(array(
                     "count_error" => $currentlength.' '.gettext('accounts with'.' '.$add_array['prefix'].' '.gettext('prefix'))
                 ));
@@ -1391,7 +1391,7 @@
         }
 
         $reseller_id = $accountinfo['type'] == 1 ? $accountinfo['id'] : 0;
-        if (isset($entity_info['reseller_id']) && $entity_info['reseller_id'] > 0) {
+        if (isset($entity_info['reseller_id']) && astpp_gt($entity_info['reseller_id'], 0)) {
             $parent_id = $accountinfo['type'] == 1 ? $accountinfo['id'] : $accountinfo['reseller_id'];
             if (isset($provience) && $provience != "") {
                 $this->db->where('dids.province', $provience);
@@ -1448,7 +1448,7 @@
         $where = array(
             'id' => $id
         );
-        if (($reseller_id > 0) && ($accountinfo['type'] != - 1)) {
+        if ((astpp_gt($reseller_id, 0)) && ($accountinfo['type'] != - 1)) {
             $where['reseller_id'] = $reseller_id;
         }
 
@@ -1497,7 +1497,7 @@
               // plain amount > 0 (greater_than[0] also accepted 1e308, 0x1A ...); payment type only
               // refill (0) or post charge (1)
               $credit = order::amount(trim((string) $post_array['credit']), 999999999);
-              if ($credit === false || $credit <= 0 || ! in_array((string) $post_array['payment_type'], array('0', '1'), true)) {
+              if ($credit === false || astpp_le($credit, 0) || ! astpp_in_array((string) $post_array['payment_type'], array('0', '1'), true)) {
                   echo json_encode(array(
                       'credit_error' => gettext('Please enter valid amount.')
                   ));
@@ -1507,13 +1507,13 @@
               $response = $this->accounts_model->account_process_payment($post_array);
               $customer_info['refill_amount'] = $post_array['credit'];
               if ($post_array['payment_type'] == 1) {
-                $customer_info['balance'] = $customer_info['balance'] - $customer_info['refill_amount'];
+                $customer_info['balance'] = astpp_n($customer_info['balance']) - astpp_n($customer_info['refill_amount']);
                 $this->common->mail_to_users('account_postcharge', $customer_info);
             }else{
-                $customer_info['balance'] = $customer_info['balance'] + $customer_info['refill_amount'];
+                $customer_info['balance'] = astpp_n($customer_info['balance']) + astpp_n($customer_info['refill_amount']);
                 $this->common->mail_to_users('account_refilled', $customer_info);
             }
-            $message = $post_array['payment_type'] == 0 ? gettext("Recharge successfully!") : gettext("Post charge applied successfully.");
+            $message = astpp_eq0($post_array['payment_type']) ? gettext("Recharge successfully!") : gettext("Post charge applied successfully.");
             echo json_encode(array(
                 "SUCCESS" => gettext($message)
             ));
@@ -1620,7 +1620,7 @@ function reseller_edit($edit_id = '')
             "id" => $edit_id
         ))->first_row();
     }
-    if ((isset($access_edit)) && ($access_edit['deleted'] == 0)) {
+    if ((isset($access_edit)) && (astpp_eq0($access_edit['deleted']))) {
         $data['page_title'] = gettext('Edit Reseller');
         $data['back_flag'] = true;
         $accountinfo = $this->session->userdata('accountinfo');
@@ -1641,7 +1641,7 @@ function reseller_edit($edit_id = '')
         foreach ($account->result_array() as $key => $value) {
             $edit_data = $value;
         }
-        if (count($edit_data) == 0) {
+        if (astpp_count($edit_data) == 0) {
             $this->session->set_flashdata('astpp_notification', gettext('Permission Denied!'));
             redirect(base_url() . 'accounts/reseller_list/');
             exit();
@@ -1714,7 +1714,7 @@ function reseller_save()
                 $posttoexternal = (array) $this->db->get_where("accounts", array(
                     "id" => $add_array['id']
                 ))->first_row();
-                if ($posttoexternal['posttoexternal'] == 0) {
+                if (astpp_eq0($posttoexternal['posttoexternal'])) {
                     $add_array['credit_limit'] = 0;
                 }
                 $this->db->select('reseller_id');
@@ -1753,11 +1753,11 @@ function reseller_save()
                 $data['validation_errors'] = validation_errors();
             } else {
                 // a parent chosen by the administrator must be an existing reseller
-                if (isset($add_array['reseller_id']) && $add_array['reseller_id'] > 0 && $this->db->get_where('accounts', array('id' => (int) $add_array['reseller_id'], 'type' => 1, 'deleted' => 0))->num_rows() === 0) {
+                if (isset($add_array['reseller_id']) && astpp_gt($add_array['reseller_id'], 0) && $this->db->get_where('accounts', array('id' => (int) $add_array['reseller_id'], 'type' => 1, 'deleted' => 0))->num_rows() === 0) {
                     $add_array['reseller_id'] = 0;
                 }
                 unset($add_array['deleted']);
-                if ($add_array['reseller_id'] > 0) {
+                if (astpp_gt($add_array['reseller_id'], 0)) {
                     $this->db->select("is_distributor");
                     $is_distributor = (array) $this->db->get_where("accounts", array(
                         "id" => $add_array['reseller_id']
@@ -1805,8 +1805,8 @@ function customer_sipdevice_random_password()
 
 function customer_sipdevice_voicemail_random_password($digit = '')
 {
-    $digit = max(1, min(9, (int) $digit));
-    echo random_int((int) pow(10, $digit - 1), (int) pow(10, $digit) - 1);
+    $digit = astpp_max(1, astpp_min(9, (int) $digit));
+    echo random_int((int) pow(10, astpp_n($digit) - 1), (int) pow(10, $digit) - 1);
 }
 
 function customer_generate_pin($digit = '')
@@ -1849,7 +1849,7 @@ function admin_edit($edit_id = '')
             "id" => $edit_id
         ))->first_row();
     }
-    if ((isset($access_edit)) && ($access_edit['deleted'] == 0)) {
+    if ((isset($access_edit)) && (astpp_eq0($access_edit['deleted']))) {
         $data['back_flag'] = true;
         $accountinfo = (array) $this->db->get_where('accounts', array(
             "id" => $edit_id
@@ -1981,8 +1981,8 @@ function chargelist_json($accountid)
 
     $json_data['total'] = $config['total_rows'];
     $perpage = $config['per_page'];
-    $start = ($page_no - 1) * $perpage;
-    if ($start < 0)
+    $start = (astpp_n($page_no) - 1) * astpp_n($perpage);
+    if (astpp_lt($start, 0))
         $start = 0;
 
     $account_charge_list = $this->db_model->getAllJionQuery($table, $select, $where, $jionTable, $jionCondition, $type, $perpage, $start, $order_by, $order_type, "");
@@ -2438,7 +2438,7 @@ function customer_account_taxes($action = false, $id = false)
         $account_num = $this->accounts_model->get_account_number($id);
         $data['accountnum'] = $account_num['number'];
         $data['account_id'] = $id;
-        for ($i = 0; $i < count($taxes_id); $i ++) {
+        for ($i = 0; $i < astpp_count($taxes_id); $i ++) {
             $tax_ids[] = $taxes_id[$i]['taxes_id'];
         }
         $data['tax_ids'] = $tax_ids;
@@ -2575,7 +2575,7 @@ function customer_animap_list_action($id = '')
         "number" => $add_array['number']
     );
     $pro = $this->accounts_model->animap_authentication($where, $id);
-    if ($pro > 0) {
+    if (astpp_gt($pro, 0)) {
         echo "2";
         exit();
     }
@@ -2692,7 +2692,7 @@ function customer_validate_ip()
         $this->db->where('prefix', $add_array['prefix']);
         $this->db->select('count(ip) as count');
         $ip_map_result = (array) $this->db->get('ip_map')->first_row();
-        if ($ip_map_result['count'] > 0) {
+        if (astpp_gt($ip_map_result['count'], 0)) {
             echo 'FALSE';
         } else {
             echo 'TRUE';
@@ -2716,7 +2716,7 @@ function customer_permission_list()
     $module_name = $url_explode[3];
     $sub_module_name = $url_explode[4];
     $logintype = $this->session->userdata('logintype');
-    if ((isset($permissioninfo[$module_name][$sub_module_name][$button_array['button_name']]) && $permissioninfo[$module_name][$sub_module_name][$button_array['button_name']] == 0) or $permissioninfo['login_type'] == '-1' or $permissioninfo['login_type'] == '0' or $permissioninfo['login_type'] == '3') {
+    if ((isset($permissioninfo[$module_name][$sub_module_name][$button_array['button_name']]) && astpp_eq0($permissioninfo[$module_name][$sub_module_name][$button_array['button_name']])) or $permissioninfo['login_type'] == '-1' or $permissioninfo['login_type'] == '0' or $permissioninfo['login_type'] == '3') {
         echo 0;
     } else {
         echo 1;
@@ -2855,7 +2855,7 @@ function customer_orders_save()
     if ($customer_data->num_rows > 0) {
         $customer_data = $customer_data->result_array()[0];
     }
-    if ($ProductData['accountid'] == 0) {
+    if (astpp_eq0($ProductData['accountid'])) {
         $this->form_validation->set_rules('accountant_name', 'Accounts', 'required|dropdown_required|xss_clean');
     }
     $this->form_validation->set_rules('setup_fee', 'Setup Fee', 'numeric|greater_than[-1]|min_length[1]|max_length[10]|required|xss_clean');
@@ -2876,8 +2876,8 @@ function customer_orders_save()
     );
     $unit_price = $this->order->unit_price($ProductData['product_id'], $account_id, $order_options['overrides']);
     $quantity = order::quantity(isset($ProductData['quantity']) ? $ProductData['quantity'] : '');
-    $total_amt = ($unit_price === false || $quantity === false) ? false : $unit_price * $quantity;
-    $account_balance = $customer_data['posttoexternal'] == 1 ? $customer_data['credit_limit'] - ($customer_data['balance']) : $customer_data['balance'];
+    $total_amt = ($unit_price === false || $quantity === false) ? false : astpp_n($unit_price) * astpp_n($quantity);
+    $account_balance = $customer_data['posttoexternal'] == 1 ? astpp_n($customer_data['credit_limit']) - (astpp_n($customer_data['balance'])) : $customer_data['balance'];
     $category_id = $this->common->get_field_name('product_category', 'products', array(
         'id' => $ProductData['product_id']
     ));
@@ -2921,15 +2921,15 @@ function customer_orders_save()
                 $ProductData['name'] = $this->common->get_field_name("name", "products", array(
                     "id" => $ProductData['product_id']
                 ));
-                $ProductData['next_billing_date'] = ($ProductData['billing_days'] = 0) ? gmdate('Y-m-d 23:59:59', strtotime('+10 years')) : gmdate("Y-m-d 23:59:59", strtotime("+" . ($ProductData['billing_days'] - 1) . " days"));
-                $final_array = array_merge($customer_data, $ProductData);
+                $ProductData['next_billing_date'] = ($ProductData['billing_days'] = 0) ? astpp_gmdate('Y-m-d 23:59:59', strtotime('+10 years')) : astpp_gmdate("Y-m-d 23:59:59", strtotime("+" . (astpp_n($ProductData['billing_days']) - 1) . " days"));
+                $final_array = astpp_array_merge($customer_data, $ProductData);
                 if (isset($category_id) && $category_id == 2) {
                     $final_array['quantity'] = isset($ProductData['quantity']) ? $ProductData['quantity'] : 1;
                 } else {
                     $final_array['quantity'] = 1;
                 }
-                $final_array['total_price'] = ($ProductData['setup_fee'] + $ProductData['price']) * ($final_array['quantity']);
-                $final_array['price'] = ($ProductData['setup_fee'] + $ProductData['price']);
+                $final_array['total_price'] = (astpp_n($ProductData['setup_fee']) + astpp_n($ProductData['price'])) * (astpp_n($final_array['quantity']));
+                $final_array['price'] = (astpp_n($ProductData['setup_fee']) + astpp_n($ProductData['price']));
                 $this->common->mail_to_users('product_purchase', $final_array);
             }
             $this->session->set_flashdata('astpp_errormsg', gettext('Product assigned successfully!'));
@@ -2969,7 +2969,7 @@ function reseller_distributor()
     $add_array = $this->input->post();
     $reseller_id = $add_array['reseller_id'];
     $message = 'Yes';
-    if ($reseller_id > 0) {
+    if (astpp_gt($reseller_id, 0)) {
         $this->db->select('type');
         $type = (array) $this->db->get_where('accounts', array(
             "reseller_id" => $reseller_id

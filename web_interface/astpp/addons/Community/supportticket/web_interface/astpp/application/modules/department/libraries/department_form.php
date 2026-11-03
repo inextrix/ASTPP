@@ -24,6 +24,7 @@
 if (!defined('BASEPATH'))
     exit('No direct script access allowed');
 
+#[\AllowDynamicProperties]
 class Department_form {
 //harsh_10_01
       function build_department_list_for_admin() {        

@@ -544,19 +544,19 @@ function uptime()
     if ($uptime !== false) {
       $uptime = explode(" ",$uptime);
       $uptime = $uptime[0];
-      $days = explode(".",(($uptime % 31556926) / 86400));
-      $hours = explode(".",((($uptime % 31556926) % 86400) / 3600));
-      $minutes = explode(".",(((($uptime % 31556926) % 86400) % 3600) / 60));
+      $days = explode(".",((astpp_n($uptime) % 31556926) / 86400));
+      $hours = explode(".",(((astpp_n($uptime) % 31556926) % 86400) / 3600));
+      $minutes = explode(".",((((astpp_n($uptime) % 31556926) % 86400) % 3600) / 60));
       $time = ".";
-      if ($minutes > 0)
+      if (astpp_gt($minutes, 0))
         $time=$minutes[0]." mins".$time;
-      if ($minutes > 0 && ($hours > 0 || $days > 0))
+      if (astpp_gt($minutes, 0) && (astpp_gt($hours, 0) || astpp_gt($days, 0)))
         $time = ", ".$time;
-      if ($hours > 0)
+      if (astpp_gt($hours, 0))
         $time = $hours[0]." hours".$time;
-      if ($hours > 0 && $days > 0)
+      if (astpp_gt($hours, 0) && astpp_gt($days, 0))
         $time = ", ".$time;
-      if ($days > 0)
+      if (astpp_gt($days, 0))
         $time = $days[0]." days".$time;
     } else {
       $time = false;
@@ -572,9 +572,9 @@ function get_server_memory_usage()
     $free = (string)trim($free);
     $free_arr = explode("\n", $free);
     $mem = explode(" ", $free_arr[1]);
-    $mem = array_filter($mem);
-    $mem = array_merge($mem);
-    $memory_usage = $mem[2]/$mem[1]*100;
+    $mem = astpp_array_filter($mem);
+    $mem = astpp_array_merge($mem);
+    $memory_usage = astpp_div($mem[2], $mem[1])*100;
     return $memory_usage; 
 }
 function get_server_cpu_usage()
@@ -589,21 +589,21 @@ function byteFormat($bytes, $unit = "", $decimals = 2)
  'PB' => 5, 'EB' => 6, 'ZB' => 7, 'YB' => 8);
  
  $value = 0;
- if ($bytes > 0) {
+ if (astpp_gt($bytes, 0)) {
  // Generate automatic prefix by bytes 
  // If wrong prefix given
- if (!array_key_exists($unit, $units)) {
- $pow = floor(log($bytes)/log(1024));
- $unit = array_search($pow, $units);
+ if (!astpp_array_key_exists($unit, $units)) {
+ $pow = astpp_floor(astpp_div(log($bytes), log(1024)));
+ $unit = astpp_array_search($pow, $units);
  }
  
  // Calculate byte value by prefix
- $value = ($bytes/pow(1024,floor($units[$unit])));
+ $value = (astpp_div($bytes, pow(1024,astpp_floor($units[$unit]))));
  }
  
  // If decimals is not numeric or decimals is less than 0 
  // then set default value
- if (!is_numeric($decimals) || $decimals < 0) {
+ if (!is_numeric($decimals) || astpp_lt($decimals, 0)) {
  $decimals = 2;
  }
  
@@ -640,11 +640,11 @@ foreach($array_memory as $key => $val)
    $val = trim(preg_replace('/\s\s+/', ' ', $val));
    $mem1=explode(" ",$val);
    
-   if($mem1[count($mem1)-1]=='/')
+   if($mem1[astpp_count($mem1)-1]=='/')
    {
-      $memory_used['used'] = $mem1[count($mem1)-4];
-      $memory_used['total'] = $mem1[count($mem1)-5];
-      $memory_used['avail'] = $mem1[count($mem1)-3];
+      $memory_used['used'] = $mem1[astpp_count($mem1)-4];
+      $memory_used['total'] = $mem1[astpp_count($mem1)-5];
+      $memory_used['avail'] = $mem1[astpp_count($mem1)-3];
    }
 }
 return $memory_used;
@@ -708,29 +708,29 @@ function create_formatted_date($startdate,$enddate,$timezone,$timevisibly)
     $startdate = strtotime($startdate);
     $enddate = strtotime($enddate);
 
-    $startonlydate = date('Y-m-d', $startdate); //check date
-    $endonlydate = date('Y-m-d', $enddate); //check date
+    $startonlydate = astpp_date('Y-m-d', $startdate); //check date
+    $endonlydate = astpp_date('Y-m-d', $enddate); //check date
 
     if(strtotime($startonlydate) == strtotime($endonlydate))
     {
-        if($timevisibly == 0)
+        if(astpp_eq0($timevisibly))
         {
-            $output = date('d M Y', $startdate);
+            $output = astpp_date('d M Y', $startdate);
         }
         else
         {
-            $output = date('d M-Y', $startdate).' '.date('H:i A', $startdate).' - '.date('H:i A', $startdate)." [".$timezone."]";
+            $output = astpp_date('d M-Y', $startdate).' '.astpp_date('H:i A', $startdate).' - '.astpp_date('H:i A', $startdate)." [".$timezone."]";
         }
     }
     else
     {
-        if($timevisibly == 0)
+        if(astpp_eq0($timevisibly))
         {
-            $output = date('d M Y', $startdate)." - ".date('d M Y', $enddate);
+            $output = astpp_date('d M Y', $startdate)." - ".astpp_date('d M Y', $enddate);
         }
         else
         {
-            $output = date('d M-Y H:i A', $startdate).' - '.date('d M-Y H:i A', $enddate)." [".$timezone."]";
+            $output = astpp_date('d M-Y H:i A', $startdate).' - '.astpp_date('d M-Y H:i A', $enddate)." [".$timezone."]";
         }
     }
     return $output;
@@ -766,7 +766,7 @@ function create_formatted_date($startdate,$enddate,$timezone,$timevisibly)
                                         <select id="month_year_dropdown" name='year' class="form-control selectpicker m-0" style="z-index:9;">
                                         <?php
                                             for ($i =0; $i < 6; $i++) {
-                                                                            echo '<option'.$selected.' value="'.date("m#Y", strtotime( date( 'Y-m-01' )." -$i months")).'">'.date("F Y", strtotime( date( 'Y-m-01' )." -$i months")).'</option>'."\n";
+                                                                            echo '<option'.$selected.' value="'.astpp_date("m#Y", strtotime( date( 'Y-m-01' )." -$i months")).'">'.astpp_date("F Y", strtotime( date( 'Y-m-01' )." -$i months")).'</option>'."\n";
                                                                         }   
                                                                     ?>
                                         </select>
@@ -1016,7 +1016,7 @@ function create_formatted_date($startdate,$enddate,$timezone,$timevisibly)
                                             foreach ( $account_data as $data_key => $val ) {
                                                 $atmpt =  $val['attempts'];
                                                 $cmplt = $val['completed'];
-                                                $asr = ($atmpt > 0) ? (round(($cmplt / $atmpt) * 100, 2)) : '0.00';
+                                                $asr = (astpp_gt($atmpt, 0)) ? (astpp_round((astpp_div($cmplt, $atmpt)) * 100, 2)) : '0.00';
 
                                                 echo "<tr>";
                                                 echo "<td>".$this->common->get_field_name ( 'name', 'trunks', $val ['trunk_id'] )."</td>";
@@ -1128,7 +1128,7 @@ function create_formatted_date($startdate,$enddate,$timezone,$timevisibly)
                             curl_setopt($ch, CURLOPT_URL, $feed_url);
                             // Execute
                             $output = curl_exec($ch);
-                            curl_close($ch);
+                            PHP_VERSION_ID < 80000 && curl_close($ch);
                             $xml_snippet = is_string($output) ? @simplexml_load_string( $output,null, LIBXML_NOCDATA) : false;
                             if ($xml_snippet !== false && isset($xml_snippet->channel->item)) {
                                 $json = json_decode( json_encode( $xml_snippet ) );
@@ -1138,7 +1138,7 @@ function create_formatted_date($startdate,$enddate,$timezone,$timevisibly)
                             ?>
                             <div class="rss-widget">
                                 <?php
-                                if(count($events) > 0)
+                                if(astpp_count($events) > 0)
                                 {
                                 ?>
                                 <ul class="p-0">
@@ -1188,7 +1188,7 @@ function create_formatted_date($startdate,$enddate,$timezone,$timevisibly)
                                                     <span class="font-12"><?php echo htmlspecialchars(create_formatted_date($startdate,$enddate,$timezone,$timevisibly), ENT_QUOTES, 'UTF-8'); ?></span>
                                                 </div>
                                                 <?php } ?>
-                                                <span class="badge badge-primary float-left mt-1"><?php if($row->eventtype == 0 ){ echo "Offline Event"; } else { echo "Online Event"; }  ?></span>
+                                                <span class="badge badge-primary float-left mt-1"><?php if(astpp_eq0($row->eventtype) ){ echo "Offline Event"; } else { echo "Online Event"; }  ?></span>
                                             </div>
                                         </div>
                                         

@@ -81,7 +81,7 @@
 
 				$first_name    = $accountinfo ['first_name'];
 		    		$auto_recharge_amt  = $accountinfo ['auto_recharge_amt'];
-				$balance=  = $accountinfo ['balance'];
+				$balance = $accountinfo ['balance']; // BUGFIX: syntax error "=  =" (file never compiled)
 				$to_account    = $accountinfo ['to_account'];
 				$COMPANY_NAME  = 'LUGERTEL INC';
 				$template      = str_replace("#NAME#,",$first_name,$template);

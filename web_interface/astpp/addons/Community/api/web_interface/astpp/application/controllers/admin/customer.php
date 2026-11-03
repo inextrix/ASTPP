@@ -38,6 +38,7 @@ defined ( 'BASEPATH' ) or exit ( 'No direct script access allowed' );
  */
 
 require APPPATH . '/controllers/common/account.php';
+#[\AllowDynamicProperties]
 class Customer extends Account {
 	
 	protected $postdata = "";
@@ -85,7 +86,7 @@ class Customer extends Account {
 		$accountinfo = $this->_authorize_account ( $this->accountinfo,true,true);
 		if ($function != '') {
 			$function = '_' . $function;
-			if (( int ) method_exists ( $this, $function ) > 0) {
+			if (astpp_gt(( int ) method_exists ( $this, $function ), 0)) {
 				$this->$function ();
 			} else {
 				$this->response ( array (
@@ -108,7 +109,7 @@ class Customer extends Account {
 				'error' => $this->lang->line ( 'error_param_missing' ) . " integer:end_limit,integer:start_limit"
 			), 400 );
 		}else{
-			if($this->postdata['start_limit'] <= 0 || $this->postdata['end_limit'] <= 0) {
+			if(astpp_le($this->postdata['start_limit'], 0) || astpp_le($this->postdata['end_limit'], 0)) {
 				$this->response ( array (
 					'status' => false,
 					'error' => $this->lang->line('number_greater_zero')
@@ -121,7 +122,7 @@ class Customer extends Account {
 						'error' => $this->lang->line('valid_start_limit')
 				), 400 );
 			}
-			$start = $this->postdata['start_limit']-1;
+			$start = astpp_n($this->postdata['start_limit'])-1;
 			$limit = $this->postdata['end_limit'];
 			$object_where_params = $this->postdata['object_where_params'];
 			if($object_where_params['type'] != ''){
@@ -167,7 +168,7 @@ class Customer extends Account {
 					$value['creation'] = $this->common->convert_GMT_to('','',$value['creation'],$this->accountinfo['timezone_id']);
 					$value['expiry'] = $this->common->convert_GMT_to('','',$value['expiry'],$this->accountinfo['timezone_id']);
 					$value['balance'] = $this->common_model->to_calculate_currency($value['balance'],'',$currency_id);
-					$value['posttoexternal'] = $value['posttoexternal'] == 0 ? "Prepaid" : "Postpaid";
+					$value['posttoexternal'] = astpp_eq0($value['posttoexternal']) ? "Prepaid" : "Postpaid";
 					unset($value['timezone_id']);
 					$value['permission_id'] = $this->common->get_field_name('name','permissions',array('id' => $value['permission_id']));
 					$insert_array = $this->_token($value['id'],"e",$value);
@@ -283,10 +284,10 @@ class Customer extends Account {
 			if($this->accountinfo ['type'] == 1){
 				$postdata['reseller_id'] = $this->accountinfo ['id'];
 			}else{
-				if ($postdata['reseller_id'] == '' || $postdata['reseller_id'] == 0) {
+				if ($postdata['reseller_id'] == '' || astpp_eq0($postdata['reseller_id'])) {
 					$postdata['reseller_id'] = 0;
 				}else{
-					if($postdata['reseller_id'] > 0){
+					if(astpp_gt($postdata['reseller_id'], 0)){
 						$postdata['reseller_id'] = $this->common->get_field_name('id','accounts',array('id' => $postdata['reseller_id'],'type' => 1,'deleted'=> 0));
 					}
 					if($postdata['reseller_id'] == ''){
@@ -319,7 +320,7 @@ class Customer extends Account {
 				$this->db->where('deleted',0);
 				$this->db->where(array("email"=> $postdata['email']));
 				$check_email = $this->db->get('accounts')->num_rows();
-				if($check_email > 0) {
+				if(astpp_gt($check_email, 0)) {
 					$this->response ( array (
 						'status' => false,
 						'error'  => $this->lang->line ( 'email_already_used' )
@@ -426,7 +427,7 @@ class Customer extends Account {
 			}
 
 			$pin_generate = Common_model::$global_config['system_config']['generate_pin'];
-	        if ($pin_generate == 0 ) {
+	        if (astpp_eq0($pin_generate) ) {
 				$pin = (common_model::$global_config['system_config']['pin_length'] < 6) ? 6 : common_model::$global_config['system_config']['pin_length'];
 		        $pin_number = $this->common->find_uniq_rendno_customer($pin, 'number', 'accounts');
 		    }
@@ -467,7 +468,7 @@ class Customer extends Account {
 					}
 				}
 			}
-		if(!($postdata['posttoexternal'] == 0 || $postdata['posttoexternal'] == 1) ) {
+		if(!(astpp_eq0($postdata['posttoexternal']) || $postdata['posttoexternal'] == 1) ) {
 			$postdata['posttoexternal'] = '0';
 		}
 		if(!is_numeric($postdata['credit_limit']) && $postdata['credit_limit'] != ''){
@@ -600,11 +601,11 @@ class Customer extends Account {
 				$this->db->where("id IN (".$postdata['accountid'].") ");
 				$delete_user_info = $this->db->update("accounts", array("deleted" => "1" ) );
 				$last_edit_id = $this->db->affected_rows();
-				if($last_edit_id > 0){
+				if(astpp_gt($last_edit_id, 0)){
 					$this->db->where("accountid IN (".$postdata['accountid'].") ");
 					$delete_sip_info = $this->db->delete("sip_devices" , '');
 				}
-				if($last_edit_id == 0){
+				if(astpp_eq0($last_edit_id)){
 					$this->response ( array (
 					'status'  => false,
 					'error'   => $this->lang->line ( 'account_not_found' )

@@ -20,6 +20,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 // ##############################################################################
+#[\AllowDynamicProperties]
 class Getbalance extends MX_Controller {
 	function __construct() { // was Getbalance(): PHP 8 does not call it as constructor
 		parent::__construct ();
@@ -79,7 +80,7 @@ class Getbalance extends MX_Controller {
 				$accountid = $accountid_arr [0] ['id'];
 			}
 			$to_currency = common_model::$global_config ['system_config'] ['base_currency'];
-			if ($accountid > 0) {
+			if (astpp_gt($accountid, 0)) {
 				$where = array (
 						'id' => $accountid 
 				);
@@ -111,7 +112,7 @@ class Getbalance extends MX_Controller {
 						$user_currency = $base_currency_rate;
 						$user_currency_name = $base_currency_name;
 					}
-					$convert_balance = round ( ($balance * $user_currency) / $base_currency_rate, 2 );
+					$convert_balance = astpp_round ( astpp_div(astpp_n($balance) * astpp_n($user_currency), $base_currency_rate), 2 );
 					$convert_balance = sprintf ( "%.2f", $convert_balance ) . ' ' . $user_currency_name;
 					echo "Balance : " . $convert_balance;
 				}

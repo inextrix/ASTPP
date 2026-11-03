@@ -21,6 +21,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 // ##############################################################################
+#[\AllowDynamicProperties]
 class dashboard extends MX_Controller {
 	function __construct() {
 		parent::__construct ();
@@ -41,7 +42,7 @@ class dashboard extends MX_Controller {
 		if ($this->session->userdata ( 'user_login' ) == FALSE)
 			redirect ( base_url () . 'login/login' );
 		$data ['page_title'] = gettext ( 'Dashboard' );
-		if ($this->session->userdata ( 'logintype' ) == 0) {
+		if (astpp_eq0($this->session->userdata ( 'logintype' ))) {
 			$this->load->view ( 'view_user_dashboard', $data );
 		} else {
 			$accountinfo = $this->session->userdata ( 'accountinfo' );
@@ -74,11 +75,11 @@ class dashboard extends MX_Controller {
 			$json_data [0] ['payment_date'] = 'Date';
 			foreach ( $result->result_array () as $key => $data ) {
 				$current_timestamp = strtotime ( $data ['payment_date'] );
-				$modified_date = $current_timestamp + $gmtoffset;
+				$modified_date = astpp_n($current_timestamp) + astpp_n($gmtoffset);
 				$data ['accountid'] = ($data ['accountid'] != '' && isset ( $account_arr [$data ['accountid']] )) ? $account_arr [$data ['accountid']] : "Anonymous";
 				$json_data [$i] ['accountid'] = $data ['accountid'];
 				$json_data [$i] ['credit'] = $this->common_model->calculate_currency ( $data ['credit'], '', '', true, false );
-				$json_data [$i] ['payment_date'] = date ( 'Y-m-d H:i:s', strtotime ( $data ['payment_date'] ) + $gmtoffset );
+				$json_data [$i] ['payment_date'] = astpp_date ( 'Y-m-d H:i:s', strtotime ( $data ['payment_date'] ) + astpp_n($gmtoffset) );
 				$i ++;
 			}
 		}
@@ -89,18 +90,18 @@ class dashboard extends MX_Controller {
 	}
 	function customerReport_call_statistics_with_profit() {
 		$post=$this->input->post();
-		$year=isset($post['year']) && $post['year'] >0 ? $post['year']:date("Y");
-		$month=isset($post['month'])&& $post['month'] >0 ? $post['month']:date("m");
+		$year=isset($post['year']) && astpp_gt($post['year'], 0) ? $post['year']:date("Y");
+		$month=isset($post['month'])&& astpp_gt($post['month'], 0) ? $post['month']:date("m");
 		$json_data = array();
 		if($post['drop_val'] == "t_week"){
-			$start_date = (date('D')!='Mon') ? date('Y-m-d ',strtotime('last Monday')) : date('Y-m-d');
+			$start_date = (date('D')!='Mon') ? astpp_date('Y-m-d ',strtotime('last Monday')) : date('Y-m-d');
 			$end_date = date('Y-m-d');
 		}else{
 			$start_date=date($year.'-'.$month.'-01');
 			$end_day= $year==date("Y") && $month ==date("m") ? date("d") :cal_days_in_month(CAL_GREGORIAN, $month, $year);
 			$gmtoffset=$this->common->get_timezone_offset();
 			$end_date=date($year."-".$month."-".$end_day.' H:i:s');
-			$end_date=date('Y-m-d',strtotime($end_date)+$gmtoffset);
+			$end_date=astpp_date('Y-m-d',strtotime($end_date)+astpp_n($gmtoffset));
 		}
 		$current_date=(int)date("d");
 		$count=0;
@@ -127,22 +128,22 @@ class dashboard extends MX_Controller {
 		$customer_total_result['billable'] = '0';
 		$mcd = 0;
 		$res_mcd = 0;
-		if($customerresult -> num_rows > 0){
+		if(astpp_gt($customerresult -> num_rows, 0)){
 			foreach ($customerresult->result_array() as $data) {
 				$acc_arr[$data['day']] = $data;
-				$customer_total_result['sum'] += $data['sum'];
-				$customer_total_result['answered'] += $data['answered'];
+				$customer_total_result['sum'] = astpp_n($customer_total_result['sum']) + astpp_n($data['sum']);
+				$customer_total_result['answered'] = astpp_n($customer_total_result['answered']) + astpp_n($data['answered']);
 				if($data['mcd'] > $mcd){
 					$mcd = $data['mcd'];
 				}
 				$customer_total_result['mcd'] = $mcd;
-				$customer_total_result['duration'] += $data['duration'];
-				$customer_total_result['billable'] += $data['billable'];
-				$customer_total_result['failed'] += $data['failed'];
-				$customer_total_result['profit'] += $data['profit'];
-				$customer_total_result['debit'] += $data['debit'];
-				$customer_total_result['cost'] += $data['cost'];
-				$customer_total_result['completed'] += $data['completed'];
+				$customer_total_result['duration'] = astpp_n($customer_total_result['duration']) + astpp_n($data['duration']);
+				$customer_total_result['billable'] = astpp_n($customer_total_result['billable']) + astpp_n($data['billable']);
+				$customer_total_result['failed'] = astpp_n($customer_total_result['failed']) + astpp_n($data['failed']);
+				$customer_total_result['profit'] = astpp_n($customer_total_result['profit']) + astpp_n($data['profit']);
+				$customer_total_result['debit'] = astpp_n($customer_total_result['debit']) + astpp_n($data['debit']);
+				$customer_total_result['cost'] = astpp_n($customer_total_result['cost']) + astpp_n($data['cost']);
+				$customer_total_result['completed'] = astpp_n($customer_total_result['completed']) + astpp_n($data['completed']);
 			}
 		}
 
@@ -151,8 +152,8 @@ class dashboard extends MX_Controller {
 				$json_data['date'][]=$date->format("d");
 				$day = (int) $date->format("d");
 				if(isset($acc_arr[$day])){
-				  $asr= ($acc_arr[$day]['sum'] > 0 ) ? (round(($acc_arr[$day]['completed'] / $acc_arr[$day]['sum']) * 100,2)) : 0;
-				  $acd= ($acc_arr[$day]['completed'] > 0 ) ? round($acc_arr[$day]['billable'] / $acc_arr[$day]['completed'],2) : 0; 
+				  $asr= (astpp_gt($acc_arr[$day]['sum'], 0) ) ? (astpp_round((astpp_div($acc_arr[$day]['completed'], $acc_arr[$day]['sum'])) * 100,2)) : 0;
+				  $acd= (astpp_gt($acc_arr[$day]['completed'], 0) ) ? astpp_round(astpp_div($acc_arr[$day]['billable'], $acc_arr[$day]['completed']),2) : 0; 
 				  $json_data['total'][]=  array((string)$acc_arr[$day]['day'],(int) $acc_arr[$day]['sum']);
 				  $json_data['answered'][]=  array((string)$acc_arr[$day]['day'],(int) $acc_arr[$day]['answered']);
 				  $json_data['failed'][]=  array((string)$acc_arr[$day]['day'],(int) $acc_arr[$day]['failed']);
@@ -193,10 +194,10 @@ class dashboard extends MX_Controller {
 		if(isset($json_data['total_count']['completed']) && $json_data['total_count']['completed'] == "0"){
 			$json_data['total_count']['acd']= "0";
 		}else{
-			$json_data['total_count']['acd']=$json_data['total_count']['completed'] > 0 ? round($json_data['total_count']['billable']/$json_data['total_count']['completed'],2):0;
+			$json_data['total_count']['acd']=astpp_gt($json_data['total_count']['completed'], 0) ? astpp_round(astpp_div($json_data['total_count']['billable'], $json_data['total_count']['completed']),2):0;
 		}
-		$json_data['total_count']['mcd']=($customer_total_result['mcd'] > 0 ) ? $customer_total_result['mcd'] : 0;
-		$json_data['total_count']['asr']=($json_data['total_count']['sum'] > 0 ) ? (round(($json_data['total_count']['completed'] / $json_data['total_count']['sum']) * 100,2)) : 0;
+		$json_data['total_count']['mcd']=(astpp_gt($customer_total_result['mcd'], 0) ) ? $customer_total_result['mcd'] : 0;
+		$json_data['total_count']['asr']=(astpp_gt($json_data['total_count']['sum'], 0) ) ? (astpp_round((astpp_div($json_data['total_count']['completed'], $json_data['total_count']['sum'])) * 100,2)) : 0;
 		$json_data['total_count']['asr']=$this->common_model->format_currency($json_data['total_count']['asr']);
 		echo json_encode($json_data);
 	}
@@ -206,18 +207,18 @@ class dashboard extends MX_Controller {
 	function customerReport_maximum_callminutes() {
 		
 		$post = $this->input->post ();
-		$year = isset ( $post ['year'] ) && $post ['year'] > 0 ? $post ['year'] : date ( "Y" );
-		$month = isset ( $post ['month'] ) && $post ['month'] > 0 ? $post ['month'] : date ( "m" );
+		$year = isset ( $post ['year'] ) && astpp_gt($post ['year'], 0) ? $post ['year'] : date ( "Y" );
+		$month = isset ( $post ['month'] ) && astpp_gt($post ['month'], 0) ? $post ['month'] : date ( "m" );
 		
 		if($post['drop_val'] == "t_week"){
-			$start_date = $staticstart = (date('D')!='Mon') ? date('Y-m-d',strtotime('last Monday')) : date('Y-m-d');
+			$start_date = $staticstart = (date('D')!='Mon') ? astpp_date('Y-m-d',strtotime('last Monday')) : date('Y-m-d');
 			$end_date = date('Y-m-d');
 		}else{
 			$start_date = date ( $year . '-' . $month . '-01' );
 			$end_day = $year == date ( "Y" ) && $month == date ( "m" ) ? date ( "d" ) : cal_days_in_month ( CAL_GREGORIAN, $month, $year );
 			$gmtoffset = $this->common->get_timezone_offset ();
 			$end_date = date ( $year . "-" . $month . "-" . $end_day . ' H:i:s' );
-			$end_date = date ( 'Y-m-d', strtotime ( $end_date ) + $gmtoffset );
+			$end_date = astpp_date ( 'Y-m-d', strtotime ( $end_date ) + astpp_n($gmtoffset) );
 		}
 		
 		
@@ -226,7 +227,7 @@ class dashboard extends MX_Controller {
 		$i = 0;
 		$accountinfo = $this->session->userdata ( 'accountinfo' );
 		$reseller_id = ($accountinfo ['type'] == - 1 or $accountinfo ['type'] == 2) ? 0 : $accountinfo ['id'];
-		if ($this->session->userdata ( 'userlevel_logintype' ) != 0 && $this->session->userdata ( 'userlevel_logintype' ) != 3) {
+		if ((!astpp_eq0($this->session->userdata ( 'userlevel_logintype' ))) && $this->session->userdata ( 'userlevel_logintype' ) != 3) {
 			$account_arr = $this->common->get_array ( 'id,number,first_name,last_name', 'accounts', array (
 					'reseller_id' => $reseller_id 
 			) );
@@ -239,7 +240,7 @@ class dashboard extends MX_Controller {
 			foreach ( $result->result_array () as $data ) {
 				$data ['accountid'] = ($data ['account_id'] != '' && isset ( $account_arr [$data ['account_id']] )) ? $account_arr [$data ['account_id']] : "Anonymous";
 				$json_data [$i] [] = $data ['accountid'];
-				$json_data [$i] [] = round ( $data ['billseconds'] / 60, 0 );
+				$json_data [$i] [] = astpp_round ( astpp_n($data ['billseconds']) / 60, 0 );
 				$i ++;
 			} 
 		} else {
@@ -252,24 +253,24 @@ class dashboard extends MX_Controller {
 	}
 	function customerReport_maximum_callcount() {
 		$post = $this->input->post ();
-		$year = isset ( $post ['year'] ) && $post ['year'] > 0 ? $post ['year'] : date ( "Y" );
-		$month = isset ( $post ['month'] ) && $post ['month'] > 0 ? $post ['month'] : date ( "m" );
+		$year = isset ( $post ['year'] ) && astpp_gt($post ['year'], 0) ? $post ['year'] : date ( "Y" );
+		$month = isset ( $post ['month'] ) && astpp_gt($post ['month'], 0) ? $post ['month'] : date ( "m" );
 		
 		if($post['drop_val'] == "t_week"){
-			$start_date = $staticstart = (date('D')!='Mon') ? date('Y-m-d',strtotime('last Monday')) : date('Y-m-d');
+			$start_date = $staticstart = (date('D')!='Mon') ? astpp_date('Y-m-d',strtotime('last Monday')) : date('Y-m-d');
 			$end_date = date('Y-m-d');
 		}else{
 			$start_date = date ( $year . '-' . $month . '-01' );
 			$end_day = $year == date ( "Y" ) && $month == date ( "m" ) ? date ( "d" ) : cal_days_in_month ( CAL_GREGORIAN, $month, $year );
 			$gmtoffset = $this->common->get_timezone_offset ();
 			$end_date = date ( $year . "-" . $month . "-" . $end_day . ' H:i:s' );
-			$end_date = date ( 'Y-m-d', strtotime ( $end_date ) + $gmtoffset );
+			$end_date = astpp_date ( 'Y-m-d', strtotime ( $end_date ) + astpp_n($gmtoffset) );
 		}
 		$json_data = array ();
 		$result = $this->dashboard_model->get_customer_maximum_callcount ( $start_date, $end_date );
 		$accountinfo = $this->session->userdata ( 'accountinfo' );
 		$reseller_id = ($accountinfo ['type'] == - 1 or $accountinfo ['type'] == 2) ? 0 : $accountinfo ['id'];
-		if ($this->session->userdata ( 'userlevel_logintype' ) != 0 && $this->session->userdata ( 'userlevel_logintype' ) != 3) {
+		if ((!astpp_eq0($this->session->userdata ( 'userlevel_logintype' ))) && $this->session->userdata ( 'userlevel_logintype' ) != 3) {
 			$account_arr = $this->common->get_array ( 'id,number,first_name,last_name', 'accounts', array (
 					'reseller_id' => $reseller_id 
 			) );
@@ -294,18 +295,18 @@ class dashboard extends MX_Controller {
 	
 	function customerReport_maximum_countrycount() {
 		$post = $this->input->post ();
-		$year = isset ( $post ['year'] ) && $post ['year'] > 0 ? $post ['year'] : date ( "Y" );
-		$month = isset ( $post ['month'] ) && $post ['month'] > 0 ? $post ['month'] : date ( "m" );
+		$year = isset ( $post ['year'] ) && astpp_gt($post ['year'], 0) ? $post ['year'] : date ( "Y" );
+		$month = isset ( $post ['month'] ) && astpp_gt($post ['month'], 0) ? $post ['month'] : date ( "m" );
 		
 		if($post['drop_val'] == "t_week"){
-			$start_date = $staticstart = (date('D')!='Mon') ? date('Y-m-d',strtotime('last Monday')) : date('Y-m-d');
+			$start_date = $staticstart = (date('D')!='Mon') ? astpp_date('Y-m-d',strtotime('last Monday')) : date('Y-m-d');
 			$end_date = date('Y-m-d');
 		}else{
 			$start_date = date ( $year . '-' . $month . '-01' );
 			$end_day = $year == date ( "Y" ) && $month == date ( "m" ) ? date ( "d" ) : cal_days_in_month ( CAL_GREGORIAN, $month, $year );
 			$gmtoffset = $this->common->get_timezone_offset ();
 			$end_date = date ( $year . "-" . $month . "-" . $end_day . ' H:i:s' );
-			$end_date = date ( 'Y-m-d', strtotime ( $end_date ) + $gmtoffset );
+			$end_date = astpp_date ( 'Y-m-d', strtotime ( $end_date ) + astpp_n($gmtoffset) );
 		}
 		$json_data = array ();
 		$result = $this->dashboard_model->get_customer_maximum_countrycount ( $start_date, $end_date );
@@ -328,18 +329,18 @@ class dashboard extends MX_Controller {
 	function customerReport_maximum_countryminutes() {
 		
 		$post = $this->input->post ();
-		$year = isset ( $post ['year'] ) && $post ['year'] > 0 ? $post ['year'] : date ( "Y" );
-		$month = isset ( $post ['month'] ) && $post ['month'] > 0 ? $post ['month'] : date ( "m" );
+		$year = isset ( $post ['year'] ) && astpp_gt($post ['year'], 0) ? $post ['year'] : date ( "Y" );
+		$month = isset ( $post ['month'] ) && astpp_gt($post ['month'], 0) ? $post ['month'] : date ( "m" );
 		
 		if($post['drop_val'] == "t_week"){
-			$start_date = $staticstart = (date('D')!='Mon') ? date('Y-m-d',strtotime('last Monday')) : date('Y-m-d');
+			$start_date = $staticstart = (date('D')!='Mon') ? astpp_date('Y-m-d',strtotime('last Monday')) : date('Y-m-d');
 			$end_date = date('Y-m-d');
 		}else{
 			$start_date = date ( $year . '-' . $month . '-01' );
 			$end_day = $year == date ( "Y" ) && $month == date ( "m" ) ? date ( "d" ) : cal_days_in_month ( CAL_GREGORIAN, $month, $year );
 			$gmtoffset = $this->common->get_timezone_offset ();
 			$end_date = date ( $year . "-" . $month . "-" . $end_day . ' H:i:s' );
-			$end_date = date ( 'Y-m-d', strtotime ( $end_date ) + $gmtoffset );
+			$end_date = astpp_date ( 'Y-m-d', strtotime ( $end_date ) + astpp_n($gmtoffset) );
 		}
 		
 		$json_data = array ();
@@ -350,7 +351,7 @@ class dashboard extends MX_Controller {
 			foreach ( $result->result_array () as $data ) {		
 				$data ['country_id'] = ($data ['country_id'] != '' && isset ( $country_arr [$data ['country_id']] )) ? $country_arr [$data ['country_id']] : "Anonymous";
 				$json_data [$i] [] = $data ['country_id'];
-				$json_data [$i] [] = round ( $data ['billseconds'] / 60, 0 );
+				$json_data [$i] [] = astpp_round ( astpp_n($data ['billseconds']) / 60, 0 );
 				$i ++;
 			} 
 		} else {
@@ -378,7 +379,7 @@ class dashboard extends MX_Controller {
 		
 		if($today_result['mcd'] == ""){$today_result['mcd'] = "0";}
 		if($today_result['total_calls'] == ""){$today_result['total_calls'] = "0";}
-		if($today_result['ACD'] == ""){$today_result['ACD'] = "0";}else{$today_result['ACD'] =round($today_result['ACD']);}
+		if($today_result['ACD'] == ""){$today_result['ACD'] = "0";}else{$today_result['ACD'] =astpp_round($today_result['ACD']);}
 		if($today_result['total_debit'] != ""){
 			$today_result['total_debit'] = $this->common_model->calculate_currency($today_result['total_debit']);
 		}else{
@@ -398,11 +399,11 @@ class dashboard extends MX_Controller {
 		$this_month_query = 'select SUM(total_calls) as total_calls_month, SUM(debit) as total_debit_month, SUM(cost) as total_cost_month, (SUM(debit-cost))as profit_month, MAX(mcd)as mcd_month, IFNULL(ROUND(100.0 * SUM(total_answered_call)/SUM(total_calls),2),0) AS ASR_month,(SUM(billseconds) / SUM(total_answered_call)) as ACD_month from cdrs_day_by_summary where reseller_id="'.$reseller_id.'" and calldate <= "'.$end_date.'" and calldate >= "'.$start_date.'"';
 		$month_result = $this->db->query($this_month_query);
 		$this_month_result = (array) $month_result->first_row();
-		$result_array = array_merge($today_result,$this_month_result);
+		$result_array = astpp_array_merge($today_result,$this_month_result);
 		
 		if($result_array['mcd_month'] == ""){$result_array['mcd_month'] = "0";}
 		if($result_array['total_calls_month'] == ""){$result_array['total_calls_month'] = "0";}
-		if($result_array['ACD_month'] == ""){$result_array['ACD_month'] = "0";}else{$result_array['ACD_month'] =round($result_array['ACD_month']);}
+		if($result_array['ACD_month'] == ""){$result_array['ACD_month'] = "0";}else{$result_array['ACD_month'] =astpp_round($result_array['ACD_month']);}
 		
 		if($result_array['total_debit_month'] != ""){
 			$result_array['total_debit_month'] = $this->common_model->calculate_currency($result_array['total_debit_month']);
@@ -428,18 +429,18 @@ class dashboard extends MX_Controller {
 	
 	function account_count(){
 		$post = $this->input->post ();
-		$year = isset ( $post ['year'] ) && $post ['year'] > 0 ? $post ['year'] : date ( "Y" );
-		$month = isset ( $post ['month'] ) && $post ['month'] > 0 ? $post ['month'] : date ( "m" );
+		$year = isset ( $post ['year'] ) && astpp_gt($post ['year'], 0) ? $post ['year'] : date ( "Y" );
+		$month = isset ( $post ['month'] ) && astpp_gt($post ['month'], 0) ? $post ['month'] : date ( "m" );
 		
 		if($post['drop_val'] == "t_week"){
-			$start_date = $staticstart = (date('D')!='Mon') ? date('Y-m-d 00:00:00',strtotime('last Monday')) : date('Y-m-d 00:00:00');
+			$start_date = $staticstart = (date('D')!='Mon') ? astpp_date('Y-m-d 00:00:00',strtotime('last Monday')) : date('Y-m-d 00:00:00');
 			$end_date = date('Y-m-d 23:59:59');
 		}else{
 			$start_date = date ( $year . '-' . $month . '-01 00:00:00' );
 			$end_day = $year == date ( "Y" ) && $month == date ( "m" ) ? date ( "d" ) : cal_days_in_month ( CAL_GREGORIAN, $month, $year );
 			$gmtoffset = $this->common->get_timezone_offset ();
 			$end_date = date ( $year . "-" . $month . "-" . $end_day . ' H:i:s' );
-			$end_date = date ( 'Y-m-d H:i:s', strtotime ( $end_date ) + $gmtoffset );
+			$end_date = astpp_date ( 'Y-m-d H:i:s', strtotime ( $end_date ) + astpp_n($gmtoffset) );
 		}
 		$accountinfo = $this->session->userdata ( 'accountinfo' );
 		if($accountinfo['type'] == '1'){
@@ -458,18 +459,18 @@ class dashboard extends MX_Controller {
 	
 	function call_count(){
 		$post = $this->input->post ();
-		$year = isset ( $post ['year'] ) && $post ['year'] > 0 ? $post ['year'] : date ( "Y" );
-		$month = isset ( $post ['month'] ) && $post ['month'] > 0 ? $post ['month'] : date ( "m" );
+		$year = isset ( $post ['year'] ) && astpp_gt($post ['year'], 0) ? $post ['year'] : date ( "Y" );
+		$month = isset ( $post ['month'] ) && astpp_gt($post ['month'], 0) ? $post ['month'] : date ( "m" );
 		
 		if($post['drop_val'] == "t_week"){
-			$start_date = $staticstart = (date('D')!='Mon') ? date('Y-m-d 00:00:00',strtotime('last Monday')) : date('Y-m-d 00:00:00');
+			$start_date = $staticstart = (date('D')!='Mon') ? astpp_date('Y-m-d 00:00:00',strtotime('last Monday')) : date('Y-m-d 00:00:00');
 			$end_date = date('Y-m-d 23:59:59');
 		}else{
 			$start_date = date ( $year . '-' . $month . '-01 00:00:00' );
 			$end_day = $year == date ( "Y" ) && $month == date ( "m" ) ? date ( "d" ) : cal_days_in_month ( CAL_GREGORIAN, $month, $year );
 			$gmtoffset = $this->common->get_timezone_offset ();
 			$end_date = date ( $year . "-" . $month . "-" . $end_day . ' H:i:s' );
-			$end_date = date ( 'Y-m-d H:i:s', strtotime ( $end_date ) + $gmtoffset );
+			$end_date = astpp_date ( 'Y-m-d H:i:s', strtotime ( $end_date ) + astpp_n($gmtoffset) );
 		}
 		$accountinfo = $this->session->userdata ( 'accountinfo' );
 		if($accountinfo['type'] == '1'){
@@ -488,18 +489,18 @@ class dashboard extends MX_Controller {
 	
 	function orders_count(){
 		$post = $this->input->post ();
-		$year = isset ( $post ['year'] ) && $post ['year'] > 0 ? $post ['year'] : date ( "Y" );
-		$month = isset ( $post ['month'] ) && $post ['month'] > 0 ? $post ['month'] : date ( "m" );
+		$year = isset ( $post ['year'] ) && astpp_gt($post ['year'], 0) ? $post ['year'] : date ( "Y" );
+		$month = isset ( $post ['month'] ) && astpp_gt($post ['month'], 0) ? $post ['month'] : date ( "m" );
 		
 		if($post['drop_val'] == "t_week"){
-			$start_date = $staticstart = (date('D')!='Mon') ? date('Y-m-d 00:00:00',strtotime('last Monday')) : date('Y-m-d 00:00:00');
+			$start_date = $staticstart = (date('D')!='Mon') ? astpp_date('Y-m-d 00:00:00',strtotime('last Monday')) : date('Y-m-d 00:00:00');
 			$end_date = date('Y-m-d 23:59:59');
 		}else{
 			$start_date = date ( $year . '-' . $month . '-01 00:00:00' );
 			$end_day = $year == date ( "Y" ) && $month == date ( "m" ) ? date ( "d" ) : cal_days_in_month ( CAL_GREGORIAN, $month, $year );
 			$gmtoffset = $this->common->get_timezone_offset ();
 			$end_date = date ( $year . "-" . $month . "-" . $end_day . ' H:i:s' );
-			$end_date = date ( 'Y-m-d H:i:s', strtotime ( $end_date ) + $gmtoffset );
+			$end_date = astpp_date ( 'Y-m-d H:i:s', strtotime ( $end_date ) + astpp_n($gmtoffset) );
 		}
 		$accountinfo = $this->session->userdata ( 'accountinfo' );
 		if($accountinfo['type'] == '1'){
@@ -517,18 +518,18 @@ class dashboard extends MX_Controller {
 	}
 	function getrefill_value(){
 		$post = $this->input->post ();
-		$year = isset ( $post ['year'] ) && $post ['year'] > 0 ? $post ['year'] : date ( "Y" );
-		$month = isset ( $post ['month'] ) && $post ['month'] > 0 ? $post ['month'] : date ( "m" );
+		$year = isset ( $post ['year'] ) && astpp_gt($post ['year'], 0) ? $post ['year'] : date ( "Y" );
+		$month = isset ( $post ['month'] ) && astpp_gt($post ['month'], 0) ? $post ['month'] : date ( "m" );
 		
 		if($post['drop_val'] == "t_week"){
-			$start_date = $staticstart = (date('D')!='Mon') ? date('Y-m-d 00:00:00',strtotime('last Monday')) : date('Y-m-d 00:00:00');
+			$start_date = $staticstart = (date('D')!='Mon') ? astpp_date('Y-m-d 00:00:00',strtotime('last Monday')) : date('Y-m-d 00:00:00');
 			$end_date = date('Y-m-d 23:59:59');
 		}else{
 			$start_date = date ( $year . '-' . $month . '-01 00:00:00' );
 			$end_day = $year == date ( "Y" ) && $month == date ( "m" ) ? date ( "d" ) : cal_days_in_month ( CAL_GREGORIAN, $month, $year );
 			$gmtoffset = $this->common->get_timezone_offset ();
 			$end_date = date ( $year . "-" . $month . "-" . $end_day . ' H:i:s' );
-			$end_date = date ( 'Y-m-d H:i:s', strtotime ( $end_date ) + $gmtoffset );
+			$end_date = astpp_date ( 'Y-m-d H:i:s', strtotime ( $end_date ) + astpp_n($gmtoffset) );
 		}
 		$accountinfo = $this->session->userdata ( 'accountinfo' );
 		if($accountinfo['type'] == '1'){

@@ -24,6 +24,7 @@
  * @author		EllisLab Dev Team
  * @link		http://codeigniter.com/database/
  */
+#[\AllowDynamicProperties]
 class CI_DB_pdo_forge extends CI_DB_forge {
 
 	/**

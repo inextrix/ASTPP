@@ -57,7 +57,7 @@
 
 $calltype = $this->common->set_call_type();
                     foreach ($calltype as $key => $value) {
-                        $selected = $reseller_didinfo['call_type'] == $key ? "selected='selected'" : '';
+                        $selected = astpp_loose_eq($reseller_didinfo['call_type'], $key) ? /* PHP8 */ "selected='selected'" : '';
                         echo "<option value='$key'$selected>$value</option>";
                     }
                     ?>

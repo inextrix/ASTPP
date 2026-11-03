@@ -24,6 +24,7 @@
 if (! defined('BASEPATH'))
     exit('No direct script access allowed');
 
+#[\AllowDynamicProperties]
 class did_form extends common
 {
 
@@ -744,7 +745,7 @@ class did_form extends common
         $account_info = $this->CI->session->userdata('accountinfo');
         $currency_id = $account_info['currency_id'];
         $currency = $this->CI->common->get_field_name('currency', 'currency', $currency_id);
-        if ($account_info['reseller_id'] > 0) {
+        if (astpp_gt($account_info['reseller_id'], 0)) {
             $account = array(
                 gettext("Account"),
                 "105",
@@ -1255,7 +1256,7 @@ class did_form extends common
         $account_info = $accountinfo = $this->CI->session->userdata('accountinfo');
         $currency_id = $account_info['currency_id'];
         $currency = $this->CI->common->get_field_name('currency', 'currency', $currency_id);
-        if ($account_info['reseller_id'] > 0) {
+        if (astpp_gt($account_info['reseller_id'], 0)) {
             $setup_fee = array(
                 gettext("Setup Fee")." ($currency)",
                 "80",

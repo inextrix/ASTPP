@@ -26,6 +26,7 @@
  * @author		ExpressionEngine Dev Team
  * @link		http://codeigniter.com/user_guide/database/
  */
+#[\AllowDynamicProperties]
 class CI_DB_odbc_result extends CI_DB_result {
 
 	/**
@@ -192,7 +193,7 @@ class CI_DB_odbc_result extends CI_DB_result {
 		$rs_obj = FALSE;
 		if (odbc_fetch_into($odbc_result, $rs)) {
 			foreach ($rs as $k=>$v) {
-				$field_name = odbc_field_name($odbc_result, $k + 1);
+				$field_name = odbc_field_name($odbc_result, astpp_n($k) + 1);
 				$rs_obj->{$field_name} = $v;
 			}
 		}
@@ -216,7 +217,7 @@ class CI_DB_odbc_result extends CI_DB_result {
 		if (odbc_fetch_into($odbc_result, $rs)) {
 			$rs_assoc = array();
 			foreach ($rs as $k=>$v) {
-				$field_name = odbc_field_name($odbc_result, $k + 1);
+				$field_name = odbc_field_name($odbc_result, astpp_n($k) + 1);
 				$rs_assoc[$field_name] = $v;
 			}
 		}

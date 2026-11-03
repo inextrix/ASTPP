@@ -57,7 +57,7 @@
  */
 function MakeFont($fontfile, $fmfile, $embedded = true, $enc = 'cp1252', $patch = array()) {
 	//Generate a font definition file
-	set_magic_quotes_runtime(0);
+	if (function_exists('set_magic_quotes_runtime')) { set_magic_quotes_runtime(0); } // PHP8: removed function
 	ini_set('auto_detect_line_endings', '1');
 	if ( ! file_exists($fontfile)) {
 		die('Error: file not found: '.$fontfile);
@@ -144,7 +144,7 @@ function MakeFont($fontfile, $fmfile, $embedded = true, $enc = 'cp1252', $patch 
 		fclose($f);
 		if ($type == 'Type1') {
 			//Find first two sections and discard third one
-			$header = (ord($file{0}) == 128);
+			$header = (ord($file[0]) == 128);
 			if ($header) {
 				//Strip first binary header
 				$file = substr($file, 6);
@@ -153,17 +153,17 @@ function MakeFont($fontfile, $fmfile, $embedded = true, $enc = 'cp1252', $patch 
 			if ( ! $pos) {
 				die('Error: font file does not seem to be valid Type1');
 			}
-			$size1 = $pos + 6;
-			if ($header AND (ord($file{$size1}) == 128)) {
+			$size1 = astpp_n($pos) + 6;
+			if ($header AND (ord($file[$size1]) == 128)) {
 				//Strip second binary header
-				$file = substr($file, 0, $size1).substr($file, $size1 + 6);
+				$file = substr($file, 0, $size1).substr($file, astpp_n($size1) + 6);
 			}
 			$pos = strpos($file, '00000000');
 			if ( ! $pos) {
 				die('Error: font file does not seem to be valid Type1');
 			}
-			$size2 = $pos - $size1;
-			$file = substr($file, 0, ($size1 + $size2));
+			$size2 = astpp_n($pos) - astpp_n($size1);
+			$file = substr($file, 0, (astpp_n($size1) + astpp_n($size2)));
 		}
 		$basename = strtolower($basename);
 		if (function_exists('gzcompress')) {
@@ -217,7 +217,7 @@ function ReadMap($enc) {
 	}
 	$cc2gn = array();
 	foreach ($a as $l) {
-		if ($l{0} == '!') {
+		if ($l[0] == '!') {
 			$e = preg_split('/[ \\t]+/', rtrim($l));
 			$cc = hexdec(substr($e[0], 1));
 			$gn = $e[2];
@@ -268,8 +268,8 @@ function ReadUFM($file, &$cidtogidmap) {
 			}
 			// Set GID
 			if (($cc >= 0) AND ($cc < 0xFFFF) AND $glyph) {
-				$cidtogidmap{($cc * 2)} = chr($glyph >> 8);
-				$cidtogidmap{(($cc * 2) + 1)} = chr($glyph & 0xFF);
+				$cidtogidmap[(astpp_n($cc) * 2)] = astpp_chr($glyph >> 8);
+				$cidtogidmap[((astpp_n($cc) * 2) + 1)] = astpp_chr($glyph & 0xFF);
 			}
 		}
 		if ((isset($gn) AND ($gn == '.notdef')) AND ( ! isset($fm['MissingWidth']))) {
@@ -280,7 +280,7 @@ function ReadUFM($file, &$cidtogidmap) {
 		} elseif ($code == 'Weight') {
 			$fm['Weight'] = $param;
 		} elseif ($code == 'ItalicAngle') {
-			$fm['ItalicAngle'] = (double)$param;
+			$fm['ItalicAngle'] = (float)$param;
 		} elseif ($code == 'Ascender') {
 			$fm['Ascender'] = (int)$param;
 		} elseif ($code == 'Descender') {
@@ -396,7 +396,7 @@ function ReadAFM($file, &$map) {
 		} elseif ($code == 'Weight') {
 			$fm['Weight'] = $param;
 		} elseif ($code == 'ItalicAngle') {
-			$fm['ItalicAngle'] = (double)$param;
+			$fm['ItalicAngle'] = (float)$param;
 		} elseif ($code == 'Ascender') {
 			$fm['Ascender'] = (int)$param;
 		} elseif ($code == 'Descender') {
@@ -458,22 +458,22 @@ function MakeFontDescriptor($fm, $symbolic = false) {
 	//Flags
 	$flags = 0;
 	if (isset($fm['IsFixedPitch']) AND $fm['IsFixedPitch']) {
-		$flags += 1 << 0;
+		$flags = astpp_n($flags) + astpp_n(1 << 0);
 	}
 	if ($symbolic) {
-		$flags += 1 << 2;
+		$flags = astpp_n($flags) + astpp_n(1 << 2);
 	} else {
-		$flags += 1 << 5;
+		$flags = astpp_n($flags) + astpp_n(1 << 5);
 	}
 	if (isset($fm['ItalicAngle']) AND ($fm['ItalicAngle'] != 0)) {
-		$flags += 1 << 6;
+		$flags = astpp_n($flags) + astpp_n(1 << 6);
 	}
 	$fd .= ",'Flags'=>".$flags;
 	//FontBBox
 	if (isset($fm['FontBBox'])) {
 		$fbb = $fm['FontBBox'];
 	} else {
-		$fbb = array(0, ($desc - 100), 1000, ($asc + 100));
+		$fbb = array(0, (astpp_n($desc) - 100), 1000, (astpp_n($asc) + 100));
 	}
 	$fd .= ",'FontBBox'=>'[".$fbb[0].' '.$fbb[1].' '.$fbb[2].' '.$fbb[3]."]'";
 	//ItalicAngle
@@ -504,7 +504,7 @@ function MakeWidthArray($fm) {
 	$c = 0;
 	foreach ($cw as $i => $w) {
 		if (is_numeric($i)) {
-			$els[] = (((($c++) % 10) == 0) ? "\n" : '').$i.'=>'.$w;
+			$els[] = ((((astpp_n($c++)) % 10) == 0) ? "\n" : '').$i.'=>'.$w;
 		}
 	}
 	$s .= implode(',', $els);
@@ -519,7 +519,7 @@ function MakeFontEncoding($map) {
 	$last = 0;
 	for ($i = 32; $i <= 255; $i++) {
 		if ($map[$i] != $ref[$i]) {
-			if ($i != $last + 1) {
+			if ($i != astpp_n($last) + 1) {
 				$s .= $i.' ';
 			}
 			$last = $i;

@@ -21,6 +21,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 // ##############################################################################
+#[\AllowDynamicProperties]
 class GenerateInvoice extends MX_Controller {
 	public static $global_config;
 	function __construct() {
@@ -63,7 +64,7 @@ class GenerateInvoice extends MX_Controller {
 						if (strtotime ( $start_date ) >= strtotime ( gmdate ( "Y-m-d H:i:s" ) )) {
 							$start_date = gmdate ( "Y-m-d H:i:s" );
 						}
-						$end_date = gmdate ( "Y-m-d 23:59:59", strtotime ( $start_date . " + 1 days" ) );
+						$end_date = astpp_gmdate ( "Y-m-d 23:59:59", strtotime ( $start_date . " + 1 days" ) );
 						$this->Generate_Daily_invoice ( $account_value, $start_date, $end_date );
 						break;
 					case 2 :
@@ -72,7 +73,7 @@ class GenerateInvoice extends MX_Controller {
 							if (strtotime ( $start_date ) >= strtotime ( gmdate ( "Y-m-d H:i:s" ) )) {
 								$start_date = gmdate ( "Y-m-d H:i:s" );
 							}
-							$end_date = gmdate ( "Y-m-d 23:59:59", strtotime ( $start_date . " + 1 month" ) );
+							$end_date = astpp_gmdate ( "Y-m-d 23:59:59", strtotime ( $start_date . " + 1 month" ) );
 							$this->Generate_Monthly_invoice ( $account_value, $start_date, $end_date );
 						}
 						break;
@@ -84,7 +85,7 @@ class GenerateInvoice extends MX_Controller {
 	function validate_invoice_date($account_value) {
 		$last_invoice_date = $this->common->get_invoice_date ( "to_date", $account_value ["id"], $account_value ['reseller_id'], "to_date" );
 		$last_invoice_date = ($last_invoice_date) ? $last_invoice_date : $account_value ['creation'];
-		$last_invoice_date = gmdate ( "Y-m-d H:i:s", strtotime ( "+1 Second", strtotime ( $last_invoice_date ) ) );
+		$last_invoice_date = astpp_gmdate ( "Y-m-d H:i:s", strtotime ( "+1 Second", strtotime ( $last_invoice_date ) ) );
 		return $last_invoice_date;
 	}
 	function Generate_Daily_invoice($account_value, $start_date, $end_date) {
@@ -103,7 +104,7 @@ class GenerateInvoice extends MX_Controller {
 	}
 	function process_invoice($accountdata, $start_date, $end_date) {
 		$invoice_conf = array ();
-		$reseller_id = ($accountdata ['reseller_id'] == 0) ? 1 : $accountdata ['reseller_id'];
+		$reseller_id = (astpp_eq0($accountdata ['reseller_id'])) ? 1 : $accountdata ['reseller_id'];
 		$where = "accountid IN ('" . $reseller_id . "','1')";
 		$this->db->select ( '*' );
 		$this->db->where ( $where );
@@ -112,14 +113,14 @@ class GenerateInvoice extends MX_Controller {
 		$invoice_conf = $this->db->get ( 'invoice_conf' );
 		$invoice_conf = ( array ) $invoice_conf->first_row ();
 		$last_invoice_ID = $this->common->get_invoice_date ( "invoiceid", "", $accountdata ['reseller_id'] );
-		if ($last_invoice_ID && $last_invoice_ID > 0) {
-			$last_invoice_ID = ($last_invoice_ID + 1);
+		if ($last_invoice_ID && astpp_gt($last_invoice_ID, 0)) {
+			$last_invoice_ID = (astpp_n($last_invoice_ID) + 1);
 		} else {
 			$last_invoice_ID = $invoice_conf ['invoice_start_from'];
 		}
 		$last_invoice_ID = str_pad ( $last_invoice_ID, (strlen ( $last_invoice_ID ) + 4), '0', STR_PAD_LEFT );
 		$invoice_sub_total = $this->count_invoice_data ( $accountdata, $start_date, $end_date );
-		if ($invoice_sub_total > 0) {
+		if (astpp_gt($invoice_sub_total, 0)) {
 			$invoiceid = $this->create_invoice ( $accountdata, $start_date, $end_date, $last_invoice_ID, $invoice_conf ['invoice_prefix'], $invoice_conf );
 			$this->update_cdrs_data ( $accountdata ['id'], $invoiceid, $start_date, $end_date );
 			$sort_order = $this->common_model->apply_invoice_taxes ( $invoiceid, $accountdata, $start_date );
@@ -140,7 +141,7 @@ class GenerateInvoice extends MX_Controller {
 		if ($cdr_data->num_rows () > 0) {
 			$cdr_data = $cdr_data->result_array ();
 			foreach ( $cdr_data as $cdrvalue ) {
-				$cdrvalue ['debit'] = round ( $cdrvalue ['debit'], self::$global_config ['system_config'] ['decimalpoints'] );
+				$cdrvalue ['debit'] = astpp_round ( $cdrvalue ['debit'], self::$global_config ['system_config'] ['decimalpoints'] );
 				$tempArr = array (
 						"accountid" => $account ['id'],
 						"reseller_id" => $account ['reseller_id'],
@@ -158,9 +159,9 @@ class GenerateInvoice extends MX_Controller {
 		if ($invoice_data->num_rows () > 0) {
 			$invoice_data = $invoice_data->result_array ();
 			foreach ( $invoice_data as $data_value ) {
-				if ($data_value ['count'] > 0) {
-					$sub_total = ($data_value ['debit'] - $data_value ['credit']);
-					$sub_total = round ( $sub_total, self::$global_config ['system_config'] ['decimalpoints'] );
+				if (astpp_gt($data_value ['count'], 0)) {
+					$sub_total = (astpp_n($data_value ['debit']) - astpp_n($data_value ['credit']));
+					$sub_total = astpp_round ( $sub_total, self::$global_config ['system_config'] ['decimalpoints'] );
 					return $sub_total;
 				}
 			}
@@ -174,12 +175,12 @@ class GenerateInvoice extends MX_Controller {
 		return true;
 	}
 	function create_invoice($account, $from_date, $to_date, $last_invoice_ID, $INVprefix, $invoiceconf) {
-		if ($invoiceconf ['interval'] > 0) {
-			$due_date = gmdate ( "Y-m-d H:i:s", strtotime ( gmdate ( "Y-m-d H:i:s" ) . " +" . $invoiceconf ['interval'] . " days" ) );
+		if (astpp_gt($invoiceconf ['interval'], 0)) {
+			$due_date = astpp_gmdate ( "Y-m-d H:i:s", strtotime ( gmdate ( "Y-m-d H:i:s" ) . " +" . $invoiceconf ['interval'] . " days" ) );
 		} else {
-			$due_date = gmdate ( "Y-m-d H:i:s", strtotime ( gmdate ( "Y-m-d H:i:s" ) . " +7 days" ) );
+			$due_date = astpp_gmdate ( "Y-m-d H:i:s", strtotime ( gmdate ( "Y-m-d H:i:s" ) . " +7 days" ) );
 		}
-		$balance = ($account ['credit_limit'] - $account ['balance']);
+		$balance = (astpp_n($account ['credit_limit']) - astpp_n($account ['balance']));
 		$automatic_flag = self::$global_config ['system_config'] ['automatic_invoice'];
 		if ($automatic_flag == 1) {
 			$invoice_data = array (
@@ -213,7 +214,7 @@ class GenerateInvoice extends MX_Controller {
 		}
 		$this->db->insert ( "invoices", $invoice_data );
 		$invoiceid = $this->db->insert_id ();
-		if ($automatic_flag == 0) {
+		if (astpp_eq0($automatic_flag)) {
 			$this->download_invoice ( $invoiceid, $account, $invoiceconf );
 		}
 		return $invoiceid;

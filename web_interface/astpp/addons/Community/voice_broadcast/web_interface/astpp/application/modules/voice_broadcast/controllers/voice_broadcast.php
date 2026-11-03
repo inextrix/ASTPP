@@ -20,6 +20,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 // ##############################################################################
+#[\AllowDynamicProperties]
 class Voice_broadcast extends MX_Controller {
 	function __construct() {
 		parent::__construct ();		
@@ -82,11 +83,11 @@ class Voice_broadcast extends MX_Controller {
 		$str .= $csvdata ['destination_number'] != '' ? null : 'Destination Number,';
 		$str = rtrim ( $str, ',' );
 		if (! $str) {
-			$str .= ! empty ( $csvdata ['destination_number'] ) && is_numeric ( $csvdata ['destination_number'] ) && ( $csvdata ['destination_number'] > 0) ? null : (empty ( $csvdata ['destination_number'] ) ? null : 'Destination Number,');
+			$str .= ! empty ( $csvdata ['destination_number'] ) && is_numeric ( $csvdata ['destination_number'] ) && ( astpp_gt($csvdata ['destination_number'], 0)) ? null : (empty ( $csvdata ['destination_number'] ) ? null : 'Destination Number,');
 			if ($str) {
 				$str = rtrim ( $str, ',' );
 				$error_field = explode ( ',', $str );
-				$count = count ( $error_field );
+				$count = astpp_count ( $error_field );
 				$str .= $count > 1 ? ' are not valid' : ' is not Valid';
 				return $str;
 			} else {
@@ -95,7 +96,7 @@ class Voice_broadcast extends MX_Controller {
 		} else {
 			$str = rtrim ( $str, ',' );
 			$error_field = explode ( ',', $str );
-			$count = count ( $error_field );
+			$count = astpp_count ( $error_field );
 			$str .= $count > 1 ? ' are required' : ' is Required';
 			return $str;
 		}
@@ -213,7 +214,7 @@ class Voice_broadcast extends MX_Controller {
 				if ((isset($extension[1])) && (! isset($extension[2]))) {
 					if (isset ( $_FILES ['destination_number'] ['name'] ) && $_FILES ['destination_number'] ['name'] != "") {
 						list ( $txt, $ext ) = explode ( ".", $_FILES ['destination_number'] ['name'] );
-						if ($ext == "csv" && $_FILES ["destination_number"] ['size'] > 0) {
+						if ($ext == "csv" && astpp_gt($_FILES ["destination_number"] ['size'], 0)) {
 							$error = $_FILES ['destination_number'] ['error'];
 							$finfo = finfo_open(FILEINFO_MIME_TYPE);
 							$mime_type = finfo_file($finfo, $_FILES["destination_number"]["tmp_name"]);
@@ -226,10 +227,10 @@ class Voice_broadcast extends MX_Controller {
 								'text/tab-separated-values',
 								'text/plain'
 							);
-							if (! in_array($mime_type, $acceptable_mime_types)) {
+							if (! astpp_in_array($mime_type, $acceptable_mime_types)) {
 								$data['error'] = gettext("Invalid file format : Only CSV file allows to import records(Can't import empty file)");
 							} else {
-								if ($error == 0) {
+								if (astpp_eq0($error)) {
 									$uploadedFile = $_FILES ["destination_number"] ["tmp_name"];
 									$full_path = $this->config->item ( 'rates-file-path' );
 									$actual_file_name = "ASTPP-voice-broadcast-Number-" . date ( "Y-m-d H:i:s" ) . "." . $ext;

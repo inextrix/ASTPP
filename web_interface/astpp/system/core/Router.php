@@ -28,6 +28,7 @@
  * @category	Libraries
  * @link		http://codeigniter.com/user_guide/general/routing.html
  */
+#[\AllowDynamicProperties]
 class CI_Router {
 
 	/**
@@ -147,7 +148,7 @@ class CI_Router {
 		$this->default_controller = ( ! isset($this->routes['default_controller']) OR $this->routes['default_controller'] == '') ? FALSE : strtolower($this->routes['default_controller']);
 
 		// Were there any query string segments?  If so, we'll validate them and bail out since we're done.
-		if (count($segments) > 0)
+		if (astpp_count($segments) > 0)
 		{
 			return $this->_validate_request($segments);
 		}
@@ -226,7 +227,7 @@ class CI_Router {
 	{
 		$segments = $this->_validate_request($segments);
 
-		if (count($segments) == 0)
+		if (astpp_count($segments) == 0)
 		{
 			return $this->_set_default_controller();
 		}
@@ -262,7 +263,7 @@ class CI_Router {
 	 */
 	function _validate_request($segments)
 	{
-		if (count($segments) == 0)
+		if (astpp_count($segments) == 0)
 		{
 			return $segments;
 		}
@@ -278,9 +279,9 @@ class CI_Router {
 		{
 			// Set the directory and remove it from the segment array
 			$this->set_directory($segments[0]);
-			$segments = array_slice($segments, 1);
+			$segments = astpp_array_slice($segments, 1);
 
-			if (count($segments) > 0)
+			if (astpp_count($segments) > 0)
 			{
 				// Does the requested controller exist in the sub-folder?
 				if ( ! file_exists(APPPATH.'controllers/'.$this->fetch_directory().$segments[0].'.php'))
@@ -359,7 +360,7 @@ class CI_Router {
 	function _parse_routes()
 	{
 		// Turn the segment array into a URI string
-		$uri = implode('/', $this->uri->segments);
+		$uri = astpp_implode('/', $this->uri->segments);
 
 		// Is there a literal match?  If so we're done
 		if (isset($this->routes[$uri]))

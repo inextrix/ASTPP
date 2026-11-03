@@ -24,6 +24,7 @@
 if (!defined('BASEPATH'))
 	exit('No direct script access allowed');
 
+#[\AllowDynamicProperties]
 class supportticket_form {
 	function __construct($library_name = '') {
 		$this->CI = & get_instance();
@@ -31,7 +32,7 @@ class supportticket_form {
 	function build_supportticket_list() {
 		
 
-if ($this->CI->session->userdata('logintype') == 0 || $this->CI->session->userdata('logintype') == 3) {
+if (astpp_eq0($this->CI->session->userdata('logintype')) || $this->CI->session->userdata('logintype') == 3) {
 		$grid_field_arr = json_encode(array(array("<input type='checkbox' name='chkAll' class='ace checkall'/><label class='lbl'></label>", "30", "", "", "", "","","false","center"),
 
 		array(gettext("Ticket Number"), "120", "support_ticket_number", "support_ticket_number", "support_ticket_number", "set_support_ticket_id","EDITABLE","true","center"),

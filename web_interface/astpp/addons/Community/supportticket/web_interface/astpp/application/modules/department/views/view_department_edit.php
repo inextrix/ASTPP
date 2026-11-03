@@ -41,7 +41,7 @@
 											<div class="form-group col-md-12">
 												<label class="p-0 control-label"><?php echo gettext("Status"); ?></label>
 												<select  id="select2_1"  name="status" class='col-md-12 form-control form-control-lg selectpicker' >
-													<option value="0" <?php  echo ($department_array_result['status'] == 0)? "selected='selected'":""; ?>>Active</option>
+													<option value="0" <?php  echo (astpp_eq0($department_array_result['status']))? "selected='selected'":""; ?>>Active</option>
 													<option value="1" <?php  echo ($department_array_result['status'] == 1)? "selected='selected'":""; ?>>Inactive</option>
 												</select>
 												<div class="tooltips error_div pull-left no-padding display_none" id="status_error_div" >

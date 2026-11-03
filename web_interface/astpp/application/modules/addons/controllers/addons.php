@@ -24,6 +24,7 @@
 
 // sudo apt-get install php5.6-zip
 // sudo service apache2 restart
+#[\AllowDynamicProperties]
 class Addons extends MX_Controller
 {
 
@@ -138,7 +139,7 @@ class Addons extends MX_Controller
         $result = $this->db->query($query);
         $installed_addon_list = $result->result_array();
         $installed_addons = array();
-        for ($i = 0; $i < count($installed_addon_list); $i ++) {
+        for ($i = 0; $i < astpp_count($installed_addon_list); $i ++) {
             $installed_addons[$installed_addon_list[$i]['package_name']] = $installed_addon_list[$i];
         }
         $data['installed_addons'] = $installed_addons;
@@ -183,7 +184,7 @@ class Addons extends MX_Controller
                     $scans = scandir($path);
                     $result_array = $this->recursiveFiles($path, $astpp_path, $remove_path);
                     $files_array = $this->flatten_array($result_array, $remove_path, $add_path);
-                    $merge_array = array_unique(array_merge($file_list['web_interface'], $files_array));
+                    $merge_array = astpp_array_unique(astpp_array_merge($file_list['web_interface'], $files_array));
                     $decoded = $merge_array;
                     $paths_of_decoded_files['web_interface'] = $merge_array;
                     $paths_of_file['web_interface'] = $merge_array;
@@ -221,7 +222,7 @@ class Addons extends MX_Controller
                     $scans = scandir($path);
                     $result_array = $this->recursiveFiles($path);
                     $files_array = $this->flatten_array($result_array, $remove_path, $add_path);
-                    $merge_array = array_unique(array_merge($file_list['freeswitch'], $files_array));
+                    $merge_array = astpp_array_unique(astpp_array_merge($file_list['freeswitch'], $files_array));
                     $decoded = $merge_array;
                     $paths_of_decoded_files['freeswitch'] = $merge_array;
                     $paths_of_file['freeswitch'] = $merge_array;
@@ -262,7 +263,7 @@ class Addons extends MX_Controller
                     // print_r($scans);die();
                     // 9211
                     $files_array = $this->flatten_array($result_array, $remove_path, $add_path);
-                    $merge_array = array_unique(array_merge($file_list['freeswitch_usr'], $files_array));
+                    $merge_array = astpp_array_unique(astpp_array_merge($file_list['freeswitch_usr'], $files_array));
                     $decoded = $merge_array;
                     $paths_of_decoded_files['freeswitch_usr'] = $merge_array;
                     $paths_of_file['freeswitch_usr'] = $merge_array;
@@ -297,8 +298,8 @@ class Addons extends MX_Controller
                     $current_version = str_replace('.', '', $current_version);
                     $new_version = str_replace('.', '', $version);
 
-                    for ($i = ($current_version + 1); $i <= $new_version; $i ++) {
-                        $version = implode('.', str_split($i));
+                    for ($i = (astpp_n($current_version) + 1); $i <= $new_version; $i ++) {
+                        $version = astpp_implode('.', str_split($i));
                         if (file_exists($addons_path . $type . "/" . $module . "/database/" . $module . "_" . $version . ".sql")) {
                             $sql = file_get_contents($addons_path . $type . "/" . $module . "/database/" . $module . "_" . $version . ".sql");
 

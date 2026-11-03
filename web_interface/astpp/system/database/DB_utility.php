@@ -24,6 +24,7 @@
  * @author		ExpressionEngine Dev Team
  * @link		http://codeigniter.com/user_guide/database/
  */
+#[\AllowDynamicProperties]
 class CI_DB_utility extends CI_DB_forge {
 
 	var $db;
@@ -66,7 +67,7 @@ class CI_DB_utility extends CI_DB_forge {
 		{
 			foreach ($query->result_array() as $row)
 			{
-				$dbs[] = current($row);
+				$dbs[] = astpp_current($row);
 			}
 		}
 
@@ -93,7 +94,7 @@ class CI_DB_utility extends CI_DB_forge {
 			return $this->_database_exists($database_name);
 		} else
 		{
-			return ( ! in_array($database_name, $this->list_databases())) ? FALSE : TRUE;
+			return ( ! astpp_in_array($database_name, $this->list_databases())) ? FALSE : TRUE;
 		}
 	}
 
@@ -121,7 +122,7 @@ class CI_DB_utility extends CI_DB_forge {
 
 		// Note: Due to a bug in current() that affects some versions
 		// of PHP we can not pass function call directly into it
-		return current($res);
+		return astpp_current($res);
 	}
 
 	// --------------------------------------------------------------------
@@ -150,9 +151,9 @@ class CI_DB_utility extends CI_DB_forge {
 			// Note: Due to a bug in current() that affects some versions
 			// of PHP we can not pass function call directly into it
 			$res = $query->result_array();
-			$res = current($res);
-			$key = str_replace($this->db->database.'.', '', current($res));
-			$keys = array_keys($res);
+			$res = astpp_current($res);
+			$key = str_replace($this->db->database.'.', '', astpp_current($res));
+			$keys = astpp_array_keys($res);
 			unset($res[$keys[0]]);
 
 			$result[$key] = $res;
@@ -184,7 +185,7 @@ class CI_DB_utility extends CI_DB_forge {
 		// Note: Due to a bug in current() that affects some versions
 		// of PHP we can not pass function call directly into it
 		$res = $query->result_array();
-		return current($res);
+		return astpp_current($res);
 	}
 
 	// --------------------------------------------------------------------
@@ -313,7 +314,7 @@ class CI_DB_utility extends CI_DB_forge {
 						);
 
 		// Did the user submit any preferences? If so set them....
-		if (count($params) > 0)
+		if (astpp_count($params) > 0)
 		{
 			foreach ($prefs as $key => $val)
 			{
@@ -328,7 +329,7 @@ class CI_DB_utility extends CI_DB_forge {
 
 		// Are we backing up a complete database or individual tables?
 		// If no table names were submitted we'll fetch the entire table list
-		if (count($prefs['tables']) == 0)
+		if (astpp_count($prefs['tables']) == 0)
 		{
 			$prefs['tables'] = $this->db->list_tables();
 		}
@@ -336,7 +337,7 @@ class CI_DB_utility extends CI_DB_forge {
 		// ------------------------------------------------------
 
 		// Validate the format
-		if ( ! in_array($prefs['format'], array('gzip', 'zip', 'txt'), TRUE))
+		if ( ! astpp_in_array($prefs['format'], array('gzip', 'zip', 'txt'), TRUE))
 		{
 			$prefs['format'] = 'txt';
 		}
@@ -361,8 +362,8 @@ class CI_DB_utility extends CI_DB_forge {
 		// Set the filename if not provided - Only needed with Zip files
 		if ($prefs['filename'] == '' AND $prefs['format'] == 'zip')
 		{
-			$prefs['filename'] = (count($prefs['tables']) == 1) ? $prefs['tables'] : $this->db->database;
-			$prefs['filename'] .= '_'.date('Y-m-d_H-i', time());
+			$prefs['filename'] = (astpp_count($prefs['tables']) == 1) ? $prefs['tables'] : $this->db->database;
+			$prefs['filename'] .= '_'.astpp_date('Y-m-d_H-i', time());
 		}
 
 		// ------------------------------------------------------

@@ -88,7 +88,7 @@
                     <nav aria-label="breadcrumb">
 						<ol class="breadcrumb m-0 p-0">
 						
-						<?php if($account_data['type']==0 || $account_data['type']==3){ ?>
+						<?php if(astpp_eq0($account_data['type']) || $account_data['type']==3){ ?>
 								<li class="breadcrumb-item"><a href=<?= base_url() . "user/user_myprofile/"; ?>><?php echo gettext('My Account')?></a></li>
 						  <?php }else{?>	
 							<li class="breadcrumb-item"><a href="#"><?php echo gettext('Configuration')?></a></li>
@@ -126,7 +126,7 @@
 								for ($i = 0; $i <= 9; $i++) {
 									?>
                                    
-                                        <div class="col-md-12 float-left p-2 card" id="key<?php echo $i; ?><?php echo $i + 1; ?>" style="display:block;">
+                                        <div class="col-md-12 float-left p-2 card" id="key<?php echo $i; ?><?php echo astpp_n($i) + 1; ?>" style="display:block;">
                                             <div class="col-md-2 col-2 float-left">
 													<label class="control-label"><?php echo $i; ?></label>
                                             </div>   
@@ -144,11 +144,11 @@
                                             </div>
                                             <div class="col-md-2 col-4 float-left">
                                                 <a  class="btn text-danger ml-2 float-right" onclick="remove_save_speed_dial('<?php echo $i; ?>')" title="Delete" name="click0<?php echo $i; ?>" id="click0<?php echo $i; ?>"><i class="fa fa-trash"></i></a>
-												 <a  class="btn text-secondary float-right" onclick="showdiv('key<?php echo $i; ?><?php echo $i + 1; ?>','key<?php echo $i; ?><?php echo $i + 2; ?>')"  title="Edit"><i class="fa fa-pencil-square-o"></i></a>
+												 <a  class="btn text-secondary float-right" onclick="showdiv('key<?php echo $i; ?><?php echo astpp_n($i) + 1; ?>','key<?php echo $i; ?><?php echo astpp_n($i) + 2; ?>')"  title="Edit"><i class="fa fa-pencil-square-o"></i></a>
                                              </div>
                                         </div>
                                         
-                                        <div class="col-md-12 float-left p-2 card" id="key<?php echo $i; ?><?php echo $i + 2; ?>" style="display:none;"> 
+                                        <div class="col-md-12 float-left p-2 card" id="key<?php echo $i; ?><?php echo astpp_n($i) + 2; ?>" style="display:none;"> 
 											<div class="col-md-2 col-2 float-left">
 													<label class="col-md-2">
 														

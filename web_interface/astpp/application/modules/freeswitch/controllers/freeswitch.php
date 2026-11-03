@@ -21,6 +21,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 // ##############################################################################
+#[\AllowDynamicProperties]
 class Freeswitch extends MX_Controller
 {
 
@@ -77,9 +78,9 @@ class Freeswitch extends MX_Controller
             'id' => $edit_id
         );
         $account = $this->freeswitch_model->get_edited_data($edit_id);
-        $data['reseller_id']=$account['reseller_id'] > 0 ? $account['reseller_id'] : '0';
+        $data['reseller_id']=astpp_gt($account['reseller_id'], 0) ? $account['reseller_id'] : '0';
     	$reseller_id=$data['reseller_id'];
-        $account['reseller_id'] = $account['reseller_id'] > 0 ? $this->common->build_concat_string("first_name,last_name,number,company_name", 'accounts', $account['reseller_id']) : 'Admin';
+        $account['reseller_id'] = astpp_gt($account['reseller_id'], 0) ? $this->common->build_concat_string("first_name,last_name,number,company_name", 'accounts', $account['reseller_id']) : 'Admin';
 
         if ($account_data['type'] == '-1') {
             $data['form'] = $this->form->build_form($this->freeswitch_form->get_freeswith_form_fields($edit_id, $reseller_id), $account);
@@ -319,8 +320,8 @@ class Freeswitch extends MX_Controller
         $response = $this->freeswitch_model->reload_freeswitch($command,$id);
         if($response != ""){
             $response_arr = json_decode(json_encode((array) simplexml_load_string(trim($response))),1);
-            if(array_key_exists("registration",$response_arr["registrations"])){
-                if(!array_key_exists("0",$response_arr["registrations"]['registration'])){
+            if(isset($response_arr["registrations"]) && is_array($response_arr["registrations"]) && astpp_array_key_exists("registration",$response_arr["registrations"])){ // PHP8: no registrations -> null
+                if(!astpp_array_key_exists("0",$response_arr["registrations"]['registration'])){
                     if($response_arr['registrations']['registration']['sip-auth-user'] != ''){
                         array_push($new_array, $response_arr['registrations']['registration']['sip-auth-user']);
                     }
@@ -345,13 +346,13 @@ class Freeswitch extends MX_Controller
             }
             // ASTPPCOM-943 Start
             $live_status = "<i class='fa fa-circle' style='color: #FF3131'></i>";
-            if (in_array($value['username'],$new_array)) {
+            if (astpp_in_array($value['username'],$new_array)) {
                 $live_status = "<i class='fa fa-circle' style='color: #00FF00'></i>";
             }
             // ASTPPCOM-943 END
             $account_data = $this->session->userdata("accountinfo");
             $reseller_ids = $value['reseller_id'];
-            if ($reseller_ids == 0) {
+            if (astpp_eq0($reseller_ids)) {
                 $reseller_number = 'Admin';
             } else {
                 $reseller_number = $this->common->get_field_name_coma_new('first_name,last_name,number,company_name', 'accounts', array(
@@ -360,7 +361,7 @@ class Freeswitch extends MX_Controller
             }
             // ASTPPCOM-943 Start
             $edit_permission=$value['username'];
-            if ((isset($permissioninfo['freeswitch']['fssipdevices']['edit']) && $permissioninfo['freeswitch']['fssipdevices']['edit'] == 0 or $permissioninfo['login_type'] == '-1' )) {
+            if ((isset($permissioninfo['freeswitch']['fssipdevices']['edit']) && astpp_eq0($permissioninfo['freeswitch']['fssipdevices']['edit']) or $permissioninfo['login_type'] == '-1' )) {
                 $base_url = base_url().'freeswitch/fssipdevices_edit/'.$value['id'];
                 $edit_permission="<span style='margin-right:8px' id='live_status_".$value['username']."'>".$live_status."</span><a href='/freeswitch/fssipdevices_edit/" . $value['id'] . "' style='cursor:pointer;color:#3b3280' rel='facebox_medium' title='".gettext('User Name')."'>" . $value['username'] . "</a>";
             }
@@ -386,12 +387,12 @@ class Freeswitch extends MX_Controller
 		        $this->get_action_buttons_fssipdevices ( $value ['id'] ) 
             );
             if ($account_data['type'] == 1) {
-                if (($key = array_search($reseller_number, $current_row)) !== false) {
+                if (($key = astpp_array_search($reseller_number, $current_row)) !== false) {
 
                     unset($current_row[$key]);
                 }
 
-                $current_row = array_values($current_row);
+                $current_row = astpp_array_values($current_row);
             }
 
             $json_data['rows'][] = array(
@@ -496,10 +497,10 @@ class Freeswitch extends MX_Controller
             $ret_url = '<a href="' . base_url() . 'user/user_fssipdevices_action/edit/' . $id . '/' . $accountid . '/" class="btn btn-royelblue btn-sm"  rel="facebox_medium" title="Edit">&nbsp;<i class="fa fa-pencil-square-o fa-fw"></i></a>&nbsp;';
             $ret_url .= '<a href="' . base_url() . 'user/user_fssipdevices_action/delete/' . $id . '/' . $accountid . '/" class="btn btn-royelblue btn-sm" title="Delete" onClick="return get_alert_msg();">&nbsp;<i class="fa fa-trash fa-fw"></i></a>';
         } else {
-            if (isset($permissioninfo['freeswitch']['fssipdevices']['EDIT']) and $permissioninfo['freeswitch']['fssipdevices']['EDIT'] == 0 and ($permissioninfo['login_type'] == '1' or $permissioninfo['login_type'] == '2' or $permissioninfo['login_type'] == '4') or $permissioninfo['login_type'] == '-1') {
+            if (isset($permissioninfo['freeswitch']['fssipdevices']['EDIT']) and astpp_eq0($permissioninfo['freeswitch']['fssipdevices']['EDIT']) and ($permissioninfo['login_type'] == '1' or $permissioninfo['login_type'] == '2' or $permissioninfo['login_type'] == '4') or $permissioninfo['login_type'] == '-1') {
                 $ret_url = '<a href="' . base_url() . 'accounts/' . $entity_type . '_fssipdevices_action/edit/' . $id . '/' . $accountid . '/" class="btn btn-royelblue btn-sm"  rel="facebox_medium" title="Edit">&nbsp;<i class="fa fa-pencil-square-o fa-fw"></i></a>&nbsp;';
             }
-            if (isset($permissioninfo['freeswitch']['fssipdevices']['DELETE']) and $permissioninfo['freeswitch']['fssipdevices']['DELETE'] == 0 and ($permissioninfo['login_type'] == '1' or $permissioninfo['login_type'] == '2' or $permissioninfo['login_type'] == '4') or $permissioninfo['login_type'] == '-1') {
+            if (isset($permissioninfo['freeswitch']['fssipdevices']['DELETE']) and astpp_eq0($permissioninfo['freeswitch']['fssipdevices']['DELETE']) and ($permissioninfo['login_type'] == '1' or $permissioninfo['login_type'] == '2' or $permissioninfo['login_type'] == '4') or $permissioninfo['login_type'] == '-1') {
                 $ret_url .= '<a href="' . base_url() . 'accounts/' . $entity_type . '_fssipdevices_action/delete/' . $id . '/' . $accountid . '/" class="btn btn-royelblue btn-sm" title="Delete" onClick="return get_alert_msg();">&nbsp;<i class="fa fa-trash fa-fw"></i></a>';
             }
         }
@@ -519,10 +520,10 @@ class Freeswitch extends MX_Controller
         $permissioninfo = $this->session->userdata('permissioninfo');
         $logintype = $this->session->userdata('logintype');
         $ret_url = '';
-        if (isset($permissioninfo['freeswitch']['fssipdevices']['EDIT']) and $permissioninfo['freeswitch']['fssipdevices']['EDIT'] == 0 and ($permissioninfo['login_type'] == '1' or $permissioninfo['login_type'] == '2' or $permissioninfo['login_type'] == '4') or $permissioninfo['login_type'] == '-1') {
+        if (isset($permissioninfo['freeswitch']['fssipdevices']['EDIT']) and astpp_eq0($permissioninfo['freeswitch']['fssipdevices']['EDIT']) and ($permissioninfo['login_type'] == '1' or $permissioninfo['login_type'] == '2' or $permissioninfo['login_type'] == '4') or $permissioninfo['login_type'] == '-1') {
             $ret_url = '<a href="' . base_url() . 'freeswitch/fssipdevices_edit/' . $id . '/" class="btn btn-royelblue btn-sm"  rel="facebox_medium" title="Edit">&nbsp;<i class="fa fa-pencil-square-o fa-fw"></i></a>&nbsp;';
         }
-        if (isset($permissioninfo['freeswitch']['fssipdevices']['DELETE']) and $permissioninfo['freeswitch']['fssipdevices']['DELETE'] == 0 and ($permissioninfo['login_type'] == '1' or $permissioninfo['login_type'] == '2' or $permissioninfo['login_type'] == '4') or $permissioninfo['login_type'] == '-1') {
+        if (isset($permissioninfo['freeswitch']['fssipdevices']['DELETE']) and astpp_eq0($permissioninfo['freeswitch']['fssipdevices']['DELETE']) and ($permissioninfo['login_type'] == '1' or $permissioninfo['login_type'] == '2' or $permissioninfo['login_type'] == '4') or $permissioninfo['login_type'] == '-1') {
             $ret_url .= '<a href="' . base_url() . 'freeswitch/fssipdevices_delete/' . $id . '/" class="btn btn-royelblue btn-sm" title="Delete" onClick="return get_alert_msg();">&nbsp;<i class="fa fa-trash fa-fw"></i></a>';
         }
         return $ret_url;
@@ -542,7 +543,7 @@ class Freeswitch extends MX_Controller
         if ($beginningPos === false || $endPos === false) {
             return $string;
         }
-        $textToDelete = substr($string, $beginningPos, ($endPos + strlen($end)) - $beginningPos);
+        $textToDelete = substr($string, $beginningPos, (astpp_n($endPos) + strlen($end)) - astpp_n($beginningPos));
         return str_replace($textToDelete, '', $string);
     }
 
@@ -555,18 +556,18 @@ class Freeswitch extends MX_Controller
         $data_header = array();
         $k = 0;
         $data = explode("\n", $response);
-        for ($i = 0; $i < count($data) - 2; $i ++) {
+        for ($i = 0; $i < astpp_count($data) - 2; $i ++) {
             if (trim($data[$i]) != '') {
-                if (count($data_header) == 0 || substr($data[$i], 0, 4) == "uuid") {
+                if (astpp_count($data_header) == 0 || substr($data[$i], 0, 4) == "uuid") {
                     $data_header = explode(",", $data[$i]);
                 } else {
                     // HP:Ignore , in bridge line.
                     $bridge_str = "";
                     $string = " " . $data[$i];
                     $ini = strpos($string, '[');
-                    if ($ini != 0) {
-                        $ini += strlen('[');
-                        $len = strpos($string, ']', $ini) - $ini;
+                    if ((!astpp_eq0($ini))) {
+                        $ini = astpp_n($ini) + strlen('[');
+                        $len = strpos($string, ']', $ini) - astpp_n($ini);
                         $bridge_str = substr($string, $ini, $len);
                     }
                     if ($bridge_str != '') {
@@ -575,7 +576,7 @@ class Freeswitch extends MX_Controller
                     }
                     // HP:END.
                     $data_call = explode(",", $data[$i]);
-                    for ($j = 0; $j < count($data_call); $j ++) {
+                    for ($j = 0; $j < astpp_count($data_call); $j ++) {
                         $calls[$k][@$data_header[$j]] = @$data_call[$j];
                         $calls_final[@$calls[$k]['uuid']] = @$calls[$k];
                     }
@@ -626,7 +627,7 @@ class Freeswitch extends MX_Controller
                         "<span style='color:" . $term_color . "'><b>" . @$term_data[2] . "</b></span>",
                         isset($term_data[3]) ? "<span style='color:" . $term_color . "'><b>" . $this->common_model->calculate_currency_customer(@trim($amount)) . "</b></span>" : "",
                         $value['dest'],
-                        date("H:i:s", strtotime(date("Y-m-d H:i:s")) - $value['created_epoch']),
+                        astpp_date("H:i:s", strtotime(date("Y-m-d H:i:s")) - astpp_n($value['created_epoch'])),
                         @$livecall_data[4],
                         "<span style='color:#fff;background-color:" . $status_color[$value['callstate']] . "'><b>" . $value['callstate'] . "</b></span>",
                         $value['read_codec'] . " / " . $value['write_codec']
@@ -690,7 +691,7 @@ class Freeswitch extends MX_Controller
         $response = $this->freeswitch_model->reload_freeswitch($command,$id);
         if($response != "" ){
            $response_arr = json_decode(json_encode((array) simplexml_load_string(trim($response))),1);
-           if(array_key_exists("0",$response_arr["gateway"]) && $response_arr != ""){
+           if(isset($response_arr["gateway"]) && is_array($response_arr["gateway"]) && astpp_array_key_exists("0",$response_arr["gateway"]) && $response_arr != ""){ // PHP8: no gateways -> null
                 foreach ($response_arr['gateway'] as $key => $value) {
                     if($value['state'] != 'FAIL_WAIT' && $value['state'] != 'TRYING' && $value['state'] !='FAILED' && $value['state'] !='UNREGED'){
                         array_push($new_array, $value['name']);
@@ -720,7 +721,7 @@ class Freeswitch extends MX_Controller
                     if ($gateway_key != "gateway_data") {
                         // Kinjal ASTPPCOM-943 Start
                         if($gateway_key == "name"){
-                            if (in_array($query_value['name'],$new_array)) {
+                            if (astpp_in_array($query_value['name'],$new_array)) {
                                 $live_status = "<i class='fa fa-circle hello' style='color: #00FF00'></i>";
                                 $element = "<span style='margin-right:8px' id='live_status_".$gateway_val."'>".$live_status."</span>";
                             }else{
@@ -736,7 +737,7 @@ class Freeswitch extends MX_Controller
                         $tmp = (array) json_decode($gateway_val);
                     }
                 }
-                $gateway_result[$key] = array_merge($gateway_data, $tmp);
+                $gateway_result[$key] = astpp_array_merge($gateway_data, $tmp);
             }
         }
         $grid_fields = json_decode($this->freeswitch_form->build_fsgateway_list_for_admin());
@@ -773,7 +774,7 @@ class Freeswitch extends MX_Controller
                     $gateway_data[$gateway_key] = $gatewau_val;
                 } else {
                     $tmp = (array) json_decode($gatewau_val);
-                    $gateway_result = array_merge($gateway_data, $tmp);
+                    $gateway_result = astpp_array_merge($gateway_data, $tmp);
                 }
             }
         }
@@ -834,7 +835,7 @@ class Freeswitch extends MX_Controller
                 if (isset($gateway_data['name'])) {
                     $query = $this->freeswitch_model->check_unique_gateway_name('edit', 'name', $gateway_data['name']);
                     $result = $query->result_array();
-                    if (count($result) > 0) {
+                    if (astpp_count($result) > 0) {
                         if ($result[0]['id'] != $gateway_data['id'] && $result[0]['name'] == $gateway_data['name']) {
                             echo json_encode(array(
                                 "name_error" => gettext("Gateways already exist in system.")
@@ -895,7 +896,7 @@ class Freeswitch extends MX_Controller
 
                 if (isset($gateway_data['name'])) {
                     $query = $this->freeswitch_model->check_unique_gateway_name('add', 'name', $gateway_data['name']);
-                    if ($query > 0) {
+                    if (astpp_gt($query, 0)) {
                         echo json_encode(array(
                             "name_error" => gettext("Gateways already exist in system.")
                         ));
@@ -1029,12 +1030,12 @@ class Freeswitch extends MX_Controller
                         $gateway_data[$gateway_key] = $gatewau_val;
                     } else {
                         $tmp = (array) json_decode($gatewau_val);
-                        $gateway_result = array_merge($gateway_data, $tmp);
+                        $gateway_result = astpp_array_merge($gateway_data, $tmp);
                     }
                 }
             }
         }
-        $paging_data = $this->form->load_grid_config(count($gateway_result), $_GET['rp'], $_GET['page']);
+        $paging_data = $this->form->load_grid_config(astpp_count($gateway_result), $_GET['rp'], $_GET['page']);
         $json_data = $paging_data["json_paging"];
 
         foreach ($gateway_result as $key => $value) {
@@ -1085,11 +1086,11 @@ class Freeswitch extends MX_Controller
         if ($add == 'add') {
             if (isset($sipprofile_data['name']) && $sipprofile_data['name'] != "") {
                 $query = $this->common_model->check_unique_data('add', 'name', $sipprofile_data['name'], 'sip_profiles');
-                if ($query > 0) {
+                if (astpp_gt($query, 0)) {
                     $this->form_validation->set_rules('name', 'Name', 'trim|xss_clean|is_unique[sip_profiles.name]');
                 }
             }
-            if ($query > 0) {
+            if (astpp_gt($query, 0)) {
                 if ($this->form_validation->run() == FALSE) {
                     $data['details']['name'] = isset($sipprofile_data['name']) ? $sipprofile_data['name'] : $sipprofile_data['name'];
                     $data['details']['sip_ip'] = isset($sipprofile_data['sip_ip']) ? $sipprofile_data['sip_ip'] : $sipprofile_data['sip_ip'];
@@ -1142,7 +1143,7 @@ class Freeswitch extends MX_Controller
             $query = $this->db_model->getSelect("*", "sip_profiles", $where);
             $profile_data_res = $query->num_rows();
 
-            if ($profile_data_res > 0) {
+            if (astpp_gt($profile_data_res, 0)) {
                 $this->session->set_flashdata('astpp_notification', gettext('Name must be unique!'));
                 redirect(base_url() . 'freeswitch/fssipprofile/');
             }
@@ -1191,7 +1192,7 @@ class Freeswitch extends MX_Controller
                     $gateway_data[$gateway_key] = $gatewau_val;
                 } else {
                     $tmp = (array) json_decode($gatewau_val);
-                    $gateway_result = array_merge($gateway_data, $tmp);
+                    $gateway_result = astpp_array_merge($gateway_data, $tmp);
                 }
             }
         }
@@ -1254,7 +1255,7 @@ class Freeswitch extends MX_Controller
                     $gateway_data[$gateway_key] = $gatewau_val;
                 } else {
                     $tmp = (array) json_decode($gatewau_val);
-                    $gateway_result = array_merge($gateway_data, $tmp);
+                    $gateway_result = astpp_array_merge($gateway_data, $tmp);
                 }
             }
         }
@@ -1281,7 +1282,7 @@ class Freeswitch extends MX_Controller
                     $gateway_data[$gateway_key] = $gatewau_val;
                 } else {
                     $tmp = (array) json_decode($gatewau_val);
-                    $gateway_result = array_merge($gateway_data, $tmp);
+                    $gateway_result = astpp_array_merge($gateway_data, $tmp);
                 }
             }
         }

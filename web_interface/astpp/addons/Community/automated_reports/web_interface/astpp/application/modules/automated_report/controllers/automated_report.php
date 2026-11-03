@@ -21,6 +21,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 // ##############################################################################
+#[\AllowDynamicProperties]
 class Automated_report extends MX_Controller
 {
     function __construct()
@@ -125,7 +126,7 @@ class Automated_report extends MX_Controller
             $add_array = $this->input->post();
             $data['form'] = $this->form->build_form($this->automated_report_form->get_automated_report_form_fields($add_array['id']), $add_array);
             if(isset($add_array['select_values']) && $add_array['select_values'] != ''){
-                $add_array['select_values'] = implode(',',$add_array['select_values']);
+                $add_array['select_values'] = astpp_implode(',',$add_array['select_values']);
             }
             if ($add_array['id'] != '') {
                 if ($this->form_validation->run() == FALSE) {

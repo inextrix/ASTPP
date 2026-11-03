@@ -28,6 +28,7 @@
  * @author		ExpressionEngine Dev Team
  * @link		http://codeigniter.com/user_guide/libraries/utf8.html
  */
+#[\AllowDynamicProperties]
 class CI_Utf8 {
 
 	/**

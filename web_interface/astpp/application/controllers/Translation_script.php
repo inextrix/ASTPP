@@ -20,6 +20,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 // ##############################################################################
+#[\AllowDynamicProperties]
 class Translation_script extends CI_Controller {
 	function __construct()
 	{
@@ -27,7 +28,7 @@ class Translation_script extends CI_Controller {
 		// Only internal (cron) calls or a logged-in administrator
 		if (! astpp_internal_request ()) {
 			$this->load->library ( 'session' );
-			if ($this->session->userdata ( 'user_login' ) != TRUE || ! in_array ( ( string ) $this->session->userdata ( 'logintype' ), array ( '2', '4' ), true )) {
+			if ($this->session->userdata ( 'user_login' ) != TRUE || ! astpp_in_array ( ( string ) $this->session->userdata ( 'logintype' ), array ( '2', '4' ), true )) {
 				show_404 ();
 			}
 		}

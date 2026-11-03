@@ -23,6 +23,7 @@
 if (! defined('BASEPATH'))
     exit('No direct script access allowed');
 
+#[\AllowDynamicProperties]
 class pricing_form extends common
 {
 
@@ -71,7 +72,7 @@ class pricing_form extends common
         } else {
             $loginid = "0";
         }
-        if ($id > 0) {
+        if (astpp_gt($id, 0)) {
             $routing_prefix = 'pricelists.routing_prefix.' . $id;
             $name = 'pricelists.name.' . $id;
             if ($this->CI->session->userdata("logintype") == '1') {
@@ -117,7 +118,7 @@ class pricing_form extends common
                 );
             }
         }
-        if ($account_data['reseller_id'] == 0) {
+        if (astpp_eq0($account_data['reseller_id'])) {
             $reseller_rate_group_array = array(
                 gettext('Admin Rate Group'),
                 'pricelist_id_admin',
@@ -1047,9 +1048,9 @@ class pricing_form extends common
         return $status_array;
     }
 
-    function get_routetype($select = "", $table = "", $status)
+    function get_routetype($select, $table, $status)
     {
-        if ($status == 0) {
+        if (astpp_eq0($status)) {
             return "LCR";
         } else if ($status == 1) {
             return "Cost";

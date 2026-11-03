@@ -1,6 +1,7 @@
 <?php
 defined('BASEPATH') or exit('No direct script access allowed');
 require APPPATH . '/controllers/common/account.php';
+#[\AllowDynamicProperties]
 class Notifications extends Account
 {
 	protected $postdata = "";
@@ -48,7 +49,7 @@ class Notifications extends Account
 		$function = isset ( $this->postdata ['action'] ) ? $this->postdata ['action'] : '';
 		if ($function != '') {
 			$function = '_' . $function;
-			if (( int ) method_exists ( $this, $function ) > 0) {
+			if (astpp_gt(( int ) method_exists ( $this, $function ), 0)) {
 				$this->$function ();
 			} else {
 				$this->response ( array (
@@ -88,7 +89,7 @@ class Notifications extends Account
 					'error' => $this->lang->line('valid_start_limit')
 			), 400 );
 		}
-		$start = $this->postdata['start_limit']-1;
+		$start = astpp_n($this->postdata['start_limit'])-1;
 		$limit = $this->postdata['end_limit'];
 		$no_of_records = (int)$limit - (int)$start;
 		$object_where_params = $this->postdata['object_where_params'];
@@ -134,7 +135,7 @@ class Notifications extends Account
 		if(!empty($like_array)) {
 			$this->db->where($like_array); 
 		}
-		$this->db->order_by('id',DESC);
+		$this->db->order_by('id', 'DESC');
 		if($this->accountinfo['type'] == '1' && $this->postdata['action'] != 'reseller_notifications_list'){
 			$this->db->where('reseller_id', $this->postdata['id']); 
 		}

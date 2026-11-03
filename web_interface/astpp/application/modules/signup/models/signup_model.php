@@ -21,6 +21,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 // ##############################################################################
+#[\AllowDynamicProperties]
 class Signup_model extends CI_Model
 {
 
@@ -50,7 +51,7 @@ class Signup_model extends CI_Model
         unset($data['agreeCheck']);
         unset($data['key_unique']);
         $data['creation'] = gmdate('Y-m-d H:i:s');
-        $data['expiry'] = date('Y-m-d H:i:s', strtotime('+10 years'));
+        $data['expiry'] = astpp_date('Y-m-d H:i:s', strtotime('+10 years'));
         $data['type'] = 0;
         $this->db->insert("accounts", $data);
         $last_id = $this->db->insert_id();

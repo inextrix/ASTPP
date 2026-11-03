@@ -20,6 +20,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 // ##############################################################################
+#[\AllowDynamicProperties]
 class Product_model extends CI_Model {
 	function Plans_model() {
 		parent::__construct ();
@@ -38,7 +39,7 @@ class Product_model extends CI_Model {
 			} else {
 						$this->db->order_by("products.id","DESC");
 			}
-			if($accountinfo["reseller_id"] > 0){
+			if(astpp_gt($accountinfo["reseller_id"], 0)){
 				$this->db_model->build_search ( 'product_list_search','reseller_products.' );
 				$this->db->where ("product_id NOT IN (select CONCAT(product_id) from reseller_products where is_owner = 1 and is_optin = 0 and account_id = ".$accountinfo['id']." )");
 				$this->db->where("product_category IN (".$categoryinfo.")",NULL, false);
@@ -88,7 +89,7 @@ buycost,reseller_products.price,reseller_products.billing_type,reseller_products
 			$this->db->where($str_where);
 			$this->db->where('reseller_products.account_id',$accountinfo['id']);
 			
-			if($accountinfo['reseller_id'] > 0){
+			if(astpp_gt($accountinfo['reseller_id'], 0)){
 				if ($flag) {
 					if (isset ( $_GET ['sortname'] ) && $_GET ['sortname'] != 'undefined') {
 						$this->db->order_by ( $_GET ['sortname'], ($_GET ['sortorder'] == 'undefined') ? 'desc' : $_GET ['sortorder'] );
@@ -133,7 +134,7 @@ buycost,reseller_products.price,reseller_products.billing_type,reseller_products
 		unset ( $add_array ["email_notify"] );
 		$insert_array = array(
 				"name"=>($add_array['product_category'] == 4 || $add_array['product_category'] == "DID" )?$add_array['number']:$add_array['product_name'],
-				"country_id"=>(isset($add_array['country_id']) && $add_array['country_id'] > 0) ? $add_array['country_id'] : "",
+				"country_id"=>(isset($add_array['country_id']) && astpp_gt($add_array['country_id'], 0)) ? $add_array['country_id'] : "",
 				"description"=>isset($add_array['product_description'])?$add_array['product_description']:"",
 				"product_category"=>$add_array['product_category'],
 				"buy_cost"=>isset($add_array['product_buy_cost'])?$this->common_model->add_calculate_currency ($add_array['product_buy_cost'], "", '', false, false ):"0.00",
@@ -146,10 +147,10 @@ buycost,reseller_products.price,reseller_products.billing_type,reseller_products
 				"billing_type"=>isset($add_array['billing_type'])?$add_array['billing_type']:"",
 				"billing_days"=>isset($add_array['billing_days'])?$add_array['billing_days']:"",
 				"free_minutes"=>isset($add_array['free_minutes'])?$add_array['free_minutes']:"",
-				"apply_on_rategroups"=>isset($add_array['product_rate_group'])?implode(",",$add_array['product_rate_group']):"",
-				"destination_rategroups"=>isset($patternSearchArr['destination_rategroups'])?implode(",",$patternSearchArr['destination_rategroups']):"",
-				"destination_countries"=>isset($patternSearchArr['destination_countries'])?implode(",",$patternSearchArr['destination_countries']):"",
-				"destination_calltypes"=>isset($patternSearchArr['destination_calltypes'])?implode(",",$patternSearchArr['destination_calltypes']):"",
+				"apply_on_rategroups"=>isset($add_array['product_rate_group'])?astpp_implode(",",$add_array['product_rate_group']):"",
+				"destination_rategroups"=>isset($patternSearchArr['destination_rategroups'])?astpp_implode(",",$patternSearchArr['destination_rategroups']):"",
+				"destination_countries"=>isset($patternSearchArr['destination_countries'])?astpp_implode(",",$patternSearchArr['destination_countries']):"",
+				"destination_calltypes"=>isset($patternSearchArr['destination_calltypes'])?astpp_implode(",",$patternSearchArr['destination_calltypes']):"",
 				"apply_on_existing_account"=>isset($add_array['apply_on_existing_account'])?$add_array['apply_on_existing_account']:0,
 				"applicable_for"=>isset($add_array['applicable_for'])?$add_array['applicable_for']:0,
 				"release_no_balance"=>isset($add_array['release_no_balance'])?$add_array['release_no_balance']:"0",
@@ -193,7 +194,7 @@ buycost,reseller_products.price,reseller_products.billing_type,reseller_products
 			$reseller_products_array = array(
 					"product_id"=>$last_id,
 					"account_id"=>isset($add_array['reseller_id'])?$add_array['reseller_id']:0,							"buy_cost"=>isset($add_array['product_buy_cost'])?$add_array['product_buy_cost']:"",
-					"country_id"=>($add_array['country_id'] > 0) ? $add_array['country_id'] : "",
+					"country_id"=>(astpp_gt($add_array['country_id'], 0)) ? $add_array['country_id'] : "",
 					"price"=>$this->common_model->add_calculate_currency ($add_array['price'], "", '', false, false ),
 					"buy_cost"=>isset($add_array['product_buy_cost'])?$this->common_model->add_calculate_currency ($add_array['product_buy_cost'], "", '', false, false ):"0.00",
 					"setup_fee"=>isset($add_array['setup_fee'])?$this->common_model->add_calculate_currency ($add_array['setup_fee'], "", '', false, false ):"0.00",
@@ -228,7 +229,7 @@ buycost,reseller_products.price,reseller_products.billing_type,reseller_products
 
 		$update_fields [] = "patterns=VALUES(patterns),destination=VALUES(destination),country_id=VALUES(country_id)";
 		$insert_string = "INSERT INTO package_patterns (product_id,country_id,patterns,destination) VALUES ";
-		$update_string = " ON DUPLICATE KEY UPDATE " . implode ( ', ', $update_fields );
+		$update_string = " ON DUPLICATE KEY UPDATE " . astpp_implode ( ', ', $update_fields );
 
 		$pattern_str = "";
 		if($pattern_array->num_rows != 0){
@@ -237,7 +238,7 @@ buycost,reseller_products.price,reseller_products.billing_type,reseller_products
 			foreach($pattern_array as $key => $package_pattern){
 			$package_pattern_update = array();
 			$package_pattern_update = array($product_last_id,$package_pattern['country_id'],$package_pattern['pattern'],$package_pattern['comment']);
-				$pattern_str.= "('" . implode ( "','", $package_pattern_update) . "'),";
+				$pattern_str.= "('" . astpp_implode ( "','", $package_pattern_update) . "'),";
 
 			}
 			$pattern_str= rtrim ( $pattern_str, "," );
@@ -286,7 +287,7 @@ buycost,reseller_products.price,reseller_products.billing_type,reseller_products
 
 		$update_array = array(
 				"name"=>($add_array['product_category'] == "DID" || $add_array['product_category'] == 4)?$add_array['number']:$add_array['product_name'],
-				"country_id"=>($add_array['country_id'] > 0) ? $add_array['country_id'] : "",
+				"country_id"=>(astpp_gt($add_array['country_id'], 0)) ? $add_array['country_id'] : "",
 				"description"=>isset($add_array['product_description'])?$add_array['product_description']:"",
 				"buy_cost"=>isset($add_array['product_buy_cost'])?$this->common_model->add_calculate_currency ($add_array['product_buy_cost'], "", '', false, false ):"0.00",
 				"price"=>$this->common_model->add_calculate_currency ($add_array['price'], "", '', false, false ),
@@ -299,9 +300,9 @@ buycost,reseller_products.price,reseller_products.billing_type,reseller_products
 				"billing_days"=>isset($add_array['billing_days'])?$add_array['billing_days']:"",
 				"free_minutes"=>isset($add_array['free_minutes'])?$add_array['free_minutes']:"",
 				"applicable_for"=>isset($add_array['applicable_for'])?$add_array['applicable_for']:0,
-				"destination_rategroups"=>isset($editpatternSearchArr['destination_rategroups'])?implode(",",$editpatternSearchArr['destination_rategroups']):"",
-				"destination_countries"=>isset($editpatternSearchArr['destination_countries'])?implode(",",$editpatternSearchArr['destination_countries']):"",
-				"destination_calltypes"=>isset($editpatternSearchArr['destination_calltypes'])?implode(",",$editpatternSearchArr['destination_calltypes']):"",
+				"destination_rategroups"=>isset($editpatternSearchArr['destination_rategroups'])?astpp_implode(",",$editpatternSearchArr['destination_rategroups']):"",
+				"destination_countries"=>isset($editpatternSearchArr['destination_countries'])?astpp_implode(",",$editpatternSearchArr['destination_countries']):"",
+				"destination_calltypes"=>isset($editpatternSearchArr['destination_calltypes'])?astpp_implode(",",$editpatternSearchArr['destination_calltypes']):"",
 				"release_no_balance"=>isset($add_array['release_no_balance'])?$add_array['release_no_balance']:"0",
 				"created_by"=>$add_array['accountid'],
 				"creation_date"=>gmdate("Y-m-d H:i:s"),
@@ -315,7 +316,7 @@ buycost,reseller_products.price,reseller_products.billing_type,reseller_products
 			$reseller_products_array = array(
 						"product_id"=>$add_array['id'],
 						"account_id"=>isset($add_array['accountid'])?$add_array['accountid']:0,						"buy_cost"=>isset($add_array['product_buy_cost'])?$this->common_model->add_calculate_currency ($add_array['product_buy_cost'], "", '', false, false ):"0.00",
-						"country_id"=>($add_array['country_id'] > 0) ? $add_array['country_id'] : "",
+						"country_id"=>(astpp_gt($add_array['country_id'], 0)) ? $add_array['country_id'] : "",
 						"price"=>$this->common_model->add_calculate_currency ($add_array['price'], "", '', false, false ),
 						"setup_fee"=>isset($add_array['setup_fee'])?$this->common_model->add_calculate_currency ($add_array['setup_fee'], "", '', false, false ):"0.00",
 						"reseller_id"=>isset($accountinfo ['reseller_id'])?$accountinfo ['reseller_id']:0,
@@ -360,7 +361,7 @@ buycost,reseller_products.price,reseller_products.billing_type,reseller_products
 	}
 	function update_reseller_optin_product($add_array,$productid,$accountinfo){
 		if($this->session->userdata ( 'logintype' ) == 1){
-		 	if($accountinfo ['reseller_id'] > 0 ){
+		 	if(astpp_gt($accountinfo ['reseller_id'], 0) ){
 				$product_info = $this->db_model->getSelect ( "*", " reseller_products", array ('product_id' =>$productid,'reseller_products.account_id'=>$accountinfo['id'],'reseller_products.reseller_id'=>$accountinfo['reseller_id']));
 			}else{
 				$product_info = $this->db_model->getSelect ( "*", " reseller_products", array ('product_id' => $productid,'reseller_products.account_id'=>$accountinfo['id']));

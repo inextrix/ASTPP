@@ -41,6 +41,7 @@
  *
  */
 
+#[\AllowDynamicProperties]
 class CI_DB_oci8_driver extends CI_DB {
 
 	var $dbdriver = 'oci8';
@@ -772,7 +773,7 @@ class CI_DB_oci8_driver extends CI_DB {
 	 */
 	protected function _limit($sql, $limit, $offset)
 	{
-		$limit = $offset + $limit;
+		$limit = astpp_n($offset) + astpp_n($limit);
 		$newsql = "SELECT * FROM (select inner_query.*, rownum rnum FROM ($sql) inner_query WHERE rownum < $limit)";
 
 		if ($offset != 0)

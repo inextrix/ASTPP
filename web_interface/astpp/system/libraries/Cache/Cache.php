@@ -26,6 +26,7 @@
  * @author		ExpressionEngine Dev Team
  * @link		
  */
+#[\AllowDynamicProperties]
 class CI_Cache extends CI_Driver_Library {
 	
 	protected $valid_drivers = array(
@@ -163,7 +164,7 @@ class CI_Cache extends CI_Driver_Library {
 
 		if (isset($config['backup']))
 		{
-			if (in_array('cache_'.$config['backup'], $this->valid_drivers))
+			if (astpp_in_array('cache_'.$config['backup'], $this->valid_drivers))
 			{
 				$this->_backup_driver = $config['backup'];
 			}

@@ -21,6 +21,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###############################################################################
+#[\AllowDynamicProperties]
 class AutomatedReport extends MX_Controller {
     public static $global_config;
     public $account_arr = array();
@@ -45,7 +46,7 @@ class AutomatedReport extends MX_Controller {
 		$this->date = gmdate('Y-m-d');
 		$this->log_path = Common_model::$global_config ['system_config'] ['log_path'];
 		$this->fp = fopen($this->log_path."astpp_automated_report_".$this->date.".log", "a+");
-		$this->currentdate = date("Y-m-d",strtotime($this->currentdatetime));
+		$this->currentdate = astpp_date("Y-m-d",strtotime($this->currentdatetime));
 		$this->$Error_flag = true;
     }
     function Automated_Report() {
@@ -70,15 +71,15 @@ class AutomatedReport extends MX_Controller {
 				$automated_report_value['filters_where'] = json_decode($automated_report_value['filters_where'],true);
 				$automated_report_value['interval_frequency_on'] = (int)$automated_report_value['interval_frequency_on'];
 				foreach ($automated_report_value['filters_where'] as $automated_report_key => $json_data_value) {
-					$date =  $automated_report_value['update_flag'] == 0 ? 'creation_date' :  'next_execution_date';
+					$date =  astpp_eq0($automated_report_value['update_flag']) ? 'creation_date' :  'next_execution_date';
 					if($date == 'creation_date'){
-						$automated_report_value[$date] = date("Y-m-d ", strtotime($automated_report_value['creation_date']));
+						$automated_report_value[$date] = astpp_date("Y-m-d ", strtotime($automated_report_value['creation_date']));
 					}
 					$this->PrintLogger($this->Error_flag, " ::::: Automated Report Date ::::::\n\n");
 					$this->PrintLogger($this->Error_flag, print_r($automated_report_value[$date],true)."\n\n");
 					$explode_date  = explode(" ",$automated_report_value[$date]); 
 					
-					$automated_report_value['execute_on'] = date("Y-m-d ", strtotime($explode_date[0]. "-". $automated_report_value['report_interval_days'].'days'));
+					$automated_report_value['execute_on'] = astpp_date("Y-m-d ", strtotime($explode_date[0]. "-". $automated_report_value['report_interval_days'].'days'));
 					$this->PrintLogger($this->Error_flag,"::: Automated Report Execute On ::: \n\n");
 					$this->PrintLogger($this->Error_flag, print_r($automated_report_value['execute_on'],true)."\n\n");
 					$select_where = $json_data_value['select_where'];
@@ -156,7 +157,7 @@ class AutomatedReport extends MX_Controller {
 		{
 			$file = getcwd().'/attachments/'.$attachment_availalble;
 			$filesize = filesize($file); // bytes
-			$filesize = round($filesize / 1024 / 1024, 1); // megabytes with 1 digit
+			$filesize = astpp_round(astpp_n($filesize) / 1024 / 1024, 1); // megabytes with 1 digit
 			$this->largefile_mail_to_users($final_array,$attachment_availalble,$automated_report_value,$file);
 		}
 	}
@@ -164,7 +165,7 @@ class AutomatedReport extends MX_Controller {
 	function largefile_mail_to_users($final_array,$attachment_availalble,$accountDetails,$file){
 		// Kinjal issue no 5003
 		if(common_model::$global_config['system_config']['automated_report_attachment_deleted'] !="" && common_model::$global_config['system_config']['automated_report_attachment_deleted']!="-1" && is_numeric(common_model::$global_config['system_config']['automated_report_attachment_deleted'])) {
-			$purge_date = date('Y-m-d', strtotime('+'.common_model::$global_config['system_config']['automated_report_attachment_deleted']." days", strtotime($this->date)));
+			$purge_date = astpp_date('Y-m-d', strtotime('+'.common_model::$global_config['system_config']['automated_report_attachment_deleted']." days", strtotime($this->date)));
 		}
 		// END
 		$uniq_string = md5(uniqid(rand(), true));
@@ -179,12 +180,12 @@ class AutomatedReport extends MX_Controller {
 		$final_array['email']=$accountDetails['account_email'];
 		$final_array['attachment']=$attachment_availalble;
 		$final_array['subject_title']=$accountDetails['report_name'];
-		$final_array['interval_freq_of_email']=$accountDetails['interval_frequency_on'] == 0 ? "Day" : (($accountDetails['interval_frequency_on'] == 1)  ? "Week" : $accountDetails['interval_frequency_on'] == 2 ? "Month" :"Biweekly");
+		$final_array['interval_freq_of_email']=astpp_eq0($accountDetails['interval_frequency_on']) ? "Day" : (($accountDetails['interval_frequency_on'] == 1)  ? "Week" : ($accountDetails['interval_frequency_on'] == 2 ? "Month" : "Biweekly")); // PHP8: nested ternary
 		$final_array['interval_filter_on']='callstart';
 		$final_array['report_interval_days']=$accountDetails['report_interval_days'];
 		$final_array['reseller_id']='0';
 		$final_array['id']='1';
-		$final_array['report_interval_recurring']= 	$accountDetails['report_interval_recurring'] == 0 ? "Day" : (($accountDetails['report_interval_recurring'] == 1)  ? "Week" : "Month");
+		$final_array['report_interval_recurring']= 	astpp_eq0($accountDetails['report_interval_recurring']) ? "Day" : (($accountDetails['report_interval_recurring'] == 1)  ? "Week" : "Month");
 		$this->common->mail_to_users ( 'automated_report', $final_array,"","",$filePath );
 	}
 	function automated_report_export_zip($automated_array, $automated_report_value){
@@ -204,13 +205,13 @@ class AutomatedReport extends MX_Controller {
 		$full_path = FCPATH.'invoices/';
 		$fileArr =array();
 		$fileArr[]=$csv_file_path;	
-		$array_params_keys = array_keys($automated_array['array_params']);
+		$array_params_keys = astpp_array_keys($automated_array['array_params']);
 		$total_rows=$num_rows;
 		$csv_limit=1000000;
 		$limit = 50000;
 		$zip_array=array();
 		$zip_flag=false;
-		$zip_limit=ceil($total_rows/$csv_limit);  
+		$zip_limit=astpp_ceil(astpp_div($total_rows, $csv_limit));  
 		$this->PrintLogger($this->Error_flag,":::: ZIP Limit :::: \n\n");
 		$this->PrintLogger($this->Error_flag, $zip_limit."\n\n");
 		$k=0;
@@ -226,11 +227,11 @@ class AutomatedReport extends MX_Controller {
 			fputcsv($fp,$Header);
 			$zip_array[$k]=$full_path.$file_name;
 			$zip_flag=true;
-			$inner_limit=($csv_limit/$limit) * ($k+1);
+			$inner_limit=(astpp_div($csv_limit, $limit)) * (astpp_n($k)+1);
 			if($inner_limit > $total_rows){
 				$inner_limit =$total_rows;
 			}
-			$i=($csv_limit/$limit)*$k;
+			$i=(astpp_div($csv_limit, $limit))*astpp_n($k);
 			for ($i; $i < $inner_limit; $i++) {
 					if(isset($automated_array['where']) && !empty($automated_array['where'])){
 						// Kinjal issue no 3898 
@@ -248,16 +249,16 @@ class AutomatedReport extends MX_Controller {
 							foreach($automated_report_details as $automated_report_key => $automatedValue){
 								
 								foreach ($automatedValue as $key => $value) {
-									if(in_array($key,$array_params_keys)!= FALSE){
+									if(astpp_in_array($key,$array_params_keys)!= FALSE){
 										$explode_key =  explode	(',',$automated_array['array_params'][$key]);
 										if($explode_key[0] != ""){
 											if(strpos($string, $key) !== false){
-												$automatedValue[$key] = $value != 0? $this->common->build_concat_string('first_name,last_name,number,company_name', 'accounts', $automatedValue[$key]) : "Admin";
+												$automatedValue[$key] = (!astpp_eq0($value))? $this->common->build_concat_string('first_name,last_name,number,company_name', 'accounts', $automatedValue[$key]) : "Admin";
 											}else{
 												$automatedValue[$key] = $this->common->get_field_name($explode_key[1],$explode_key[0],array('id' => $automatedValue[$key]));
 											}
 										}else{
-											$automatedValue[$key] = $value == 0 ? $explode_key[1] : $explode_key[2];
+											$automatedValue[$key] = astpp_eq0($value) ? $explode_key[1] : $explode_key[2];
 										}
 									}
 									// Kinjal issue no 4931
@@ -280,7 +281,7 @@ class AutomatedReport extends MX_Controller {
 								}
 								$result=null;
 								$automatedValue=null;
-								$j = $j + $limit;
+								$j = astpp_n($j) + astpp_n($limit);
 						}
 					}
 			}

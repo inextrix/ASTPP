@@ -28,6 +28,7 @@
  * @author		ExpressionEngine Dev Team
  * @link		http://codeigniter.com/user_guide/libraries/config.html
  */
+#[\AllowDynamicProperties]
 class CI_Config {
 
 	/**
@@ -109,7 +110,7 @@ class CI_Config {
 			{
 				$file_path = $path.'config/'.$location.'.php';
 
-				if (in_array($file_path, $this->is_loaded, TRUE))
+				if (astpp_in_array($file_path, $this->is_loaded, TRUE))
 				{
 					$loaded = TRUE;
 					continue 2;
@@ -142,14 +143,14 @@ class CI_Config {
 			{
 				if (isset($this->config[$file]))
 				{
-					$this->config[$file] = array_merge($this->config[$file], $config);
+					$this->config[$file] = astpp_array_merge($this->config[$file], $config);
 				} else
 				{
 					$this->config[$file] = $config;
 				}
 			} else
 			{
-				$this->config = array_merge($this->config, $config);
+				$this->config = astpp_array_merge($this->config, $config);
 			}
 
 			$this->is_loaded[] = $file_path;
@@ -294,7 +295,7 @@ class CI_Config {
 		{
 			if (is_array($uri))
 			{
-				$uri = implode('/', $uri);
+				$uri = astpp_implode('/', $uri);
 			}
 			$uri = trim($uri, '/');
 		} else
@@ -326,7 +327,7 @@ class CI_Config {
 	function system_url()
 	{
 		$x = explode("/", preg_replace("|/*(.+?)/*$|", "\\1", BASEPATH));
-		return $this->slash_item('base_url').end($x).'/';
+		return $this->slash_item('base_url').astpp_end($x).'/';
 	}
 
 	// --------------------------------------------------------------------

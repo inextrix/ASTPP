@@ -44,7 +44,7 @@ table.details_table td {
 				<td><?=$refill_coupon_details['callingcard']?></td>
 			</tr>
 			<th><?php echo gettext('Status')?></th>
-			<td><?php if ($refill_coupon_details['status'] == 0) { echo "Inactive"; } elseif ($refill_coupon_details['status'] == 1) { echo "Active"; } elseif ($refill_coupon_details['status'] == 2) { echo "Inuse"; } else { echo "Expired"; }?></td>
+			<td><?php if (astpp_eq0($refill_coupon_details['status'])) { echo "Inactive"; } elseif ($refill_coupon_details['status'] == 1) { echo "Active"; } elseif ($refill_coupon_details['status'] == 2) { echo "Inuse"; } else { echo "Expired"; }?></td>
 			</tr>
 		</table>
         
@@ -62,8 +62,8 @@ table.details_table td {
 
 foreach ($cdrs as $cdr) {
                 $debit = '';
-                $debit = ($cdr['debit'] / 10000);
-                $debit = $debit + 0;
+                $debit = (astpp_n($cdr['debit']) / 10000);
+                $debit = astpp_n($debit) + 0;
                 ?>
         <tr>
 				<td><?=$cdr['destination']?></td>

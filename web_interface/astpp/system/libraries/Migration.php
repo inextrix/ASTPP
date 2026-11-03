@@ -27,6 +27,7 @@
  * @author		Reactor Engineers
  * @link
  */
+#[\AllowDynamicProperties]
 class CI_Migration {
 
 	protected $_migration_enabled = FALSE;
@@ -116,19 +117,19 @@ class CI_Migration {
 
 		// We now prepare to actually DO the migrations
 		// But first let's make sure that everything is the way it should be
-		for ($i = $start; $i != $stop; $i += $step)
+		for ($i = $start; $i != $stop; $i = astpp_n($i) + astpp_n($step))
 		{
 			$f = glob(sprintf($this->_migration_path.'%03d_*.php', $i));
 
 			// Only one migration per step is permitted
-			if (count($f) > 1)
+			if (astpp_count($f) > 1)
 			{
 				$this->_error_string = sprintf($this->lang->line('migration_multiple_version'), $i);
 				return FALSE;
 			}
 
 			// Migration step not found
-			if (count($f) == 0)
+			if (astpp_count($f) == 0)
 			{
 				// If trying to migrate up to a version greater than the last
 				// existing one, migrate to the last one.
@@ -152,7 +153,7 @@ class CI_Migration {
 				$match[1] = strtolower($match[1]);
 
 				// Cannot repeat a migration at different steps
-				if (in_array($match[1], $migrations))
+				if (astpp_in_array($match[1], $migrations))
 				{
 					$this->_error_string = sprintf($this->lang->line('migration_multiple_version'), $match[1]);
 					return FALSE;
@@ -183,7 +184,7 @@ class CI_Migration {
 
 		log_message('debug', 'Current migration: '.$current_version);
 
-		$version = $i + ($step == 1 ? -1 : 0);
+		$version = astpp_n($i) + (astpp_n($step == 1 ? -1 : 0));
 
 		// If there is nothing to do so quit
 		if ($migrations === array())
@@ -200,7 +201,7 @@ class CI_Migration {
 			$class = 'Migration_'.ucfirst(strtolower($migration));
 			call_user_func(array(new $class, $method));
 
-			$current_version += $step;
+			$current_version = astpp_n($current_version) + astpp_n($step);
 			$this->_update_version($current_version);
 		}
 
@@ -225,7 +226,7 @@ class CI_Migration {
 			return false;
 		}
 
-		$last_migration = basename(end($migrations));
+		$last_migration = basename(astpp_end($migrations));
 
 		// Calculate the last migration step from existing migration
 		// filenames and procceed to the standard version migration
@@ -270,7 +271,7 @@ class CI_Migration {
 	{
 		// Load all *_*.php files in the migrations path
 		$files = glob($this->_migration_path.'*_*.php');
-		$file_count = count($files);
+		$file_count = astpp_count($files);
 
 		for ($i = 0; $i < $file_count; $i++)
 		{

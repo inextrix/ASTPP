@@ -20,6 +20,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 // ##############################################################################
+#[\AllowDynamicProperties]
 class Astpp_common extends CI_Model {
 	public function __construct() {
 		parent::__construct ();
@@ -32,7 +33,7 @@ class Astpp_common extends CI_Model {
 		$query = $this->db->query ( $q );
 		if ($query->num_rows () > 0) {
 			foreach ( $query->result_array () as $row ) {
-				if ($row ['charge'] > 0) {
+				if (astpp_gt($row ['charge'], 0)) {
 					$row ['charge'] = $this->common_model->calculate_currency ( $row ['charge'] );
 				}
 				$item_arr [$row ['id']] = $row ['description'] . ' - ' . $row ['charge'];
@@ -74,7 +75,7 @@ class Astpp_common extends CI_Model {
 			$row = $query->row_array ();
 			$posted_balance = $row ['balance'];
 		}
-		$balance = ($debit - $credit + $posted_balance);
+		$balance = (astpp_n($debit) - astpp_n($credit) + astpp_n($posted_balance));
 		return $balance;
 	}
 	function accounts_total_balance($reseller) {
@@ -93,7 +94,7 @@ class Astpp_common extends CI_Model {
 		}
 		$posted_balance = $this->db_get_item ( $tmp, "val1" );
 		
-		$balance = ($debit - $credit + $posted_balance);
+		$balance = (astpp_n($debit) - astpp_n($credit) + astpp_n($posted_balance));
 		return $balance;
 	}
 	function count_dids($test) {
@@ -151,7 +152,7 @@ class Astpp_common extends CI_Model {
 			$this->db->where($where_arr);
 			$this->db->where($wherearr);
 			$query = $this->db_model->getJionQuery('products', 'products.id,products.name,products.product_category,products.buy_cost,products.commission,reseller_products.setup_fee,reseller_products.price,reseller_products.billing_type,reseller_products.billing_days,reseller_products.free_minutes,products.status,products.last_modified_date,reseller_products.product_id', array('reseller_products.status'=>0,'products.can_purchase'=>0,'products.is_deleted'=>0), 'reseller_products','products.id=reseller_products.product_id', 'inner','','','desc','products.id');
-		}else if($reseller_id > 0){
+		}else if(astpp_gt($reseller_id, 0)){
 			$where_arr = "(reseller_products.reseller_id= ".$reseller_id." OR  reseller_products.account_id= ".$reseller_id.")";
 			$wherearr = "(product_category IN ($categoryinfo))";	
 			$this->db->where($where_arr);

@@ -21,6 +21,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 // ##############################################################################
+#[\AllowDynamicProperties]
 class Refill_coupon_model extends CI_Model
 {
 
@@ -52,11 +53,11 @@ class Refill_coupon_model extends CI_Model
         return $query;
     }
 
-    function get_customer_refill_coupon_list($flag, $start = 0, $limit = 0, $accountid)
+    function get_customer_refill_coupon_list($flag, $start, $limit, $accountid)
     {
         $this->db_model->build_search('refill_coupon_list_search');
         $accountinfo = $this->session->userdata('accountinfo');
-        $reseller_id = $accountinfo['type'] == 1 ? $accountinfo['id'] : ($accountinfo['type'] == 0 ? $accountinfo['reseller_id'] : 0);
+        $reseller_id = $accountinfo['type'] == 1 ? $accountinfo['id'] : (astpp_eq0($accountinfo['type']) ? $accountinfo['reseller_id'] : 0);
         $where = array(
             'reseller_id' => $reseller_id,
             "account_id" => $accountid
@@ -85,8 +86,8 @@ class Refill_coupon_model extends CI_Model
         $insert_arr = array();
         $account_length = Common_model::$global_config['system_config']['refill_coupon_length'];
         $length = strlen($prefix);
-        if ($length != 0) {
-            $number_length = $account_length - $length;
+        if ((!astpp_eq0($length))) {
+            $number_length = astpp_n($account_length) - astpp_n($length);
         } else {
             $number_length = $account_length;
         }

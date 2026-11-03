@@ -144,10 +144,10 @@
 			<div class="dropdown bootstrap-select show-tick select field multiselectable  col-md-12 form-control dropup">
                       <select  name="product_rate_group[]"  multiple="multiple"  class=" selectpicker select field multiselectable col-md-12 form-control form-control-lg" data-hide-disabled='true' data-actions-box='true' data-live-search='true' datadata-live-search-style='begins'>
                          <?php
-			$product_rategrp =$add_array['product_rate_group'];
+			$product_rategrp = isset($add_array['product_rate_group']) ? (array) $add_array['product_rate_group'] : array(); // PHP8: in_array() on null throws TypeError
 			foreach($product_rate_group as $key => $rate_group) { 
 				$selected ='';		
-				if ( in_array($key, $product_rategrp)) {
+				if ( astpp_in_array($key, $product_rategrp)) {
 					$selected = 'selected = selected';
 				}
 			?>

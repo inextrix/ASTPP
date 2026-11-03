@@ -28,6 +28,7 @@
  * @author		ExpressionEngine Dev Team
  * @link		http://codeigniter.com/user_guide/libraries/input.html
  */
+#[\AllowDynamicProperties]
 class CI_Input {
 
 	/**
@@ -120,6 +121,7 @@ class CI_Input {
 	 */
 	function _fetch_from_array(&$array, $index = '', $xss_clean = FALSE)
 	{
+		if ($index === NULL) { $index = ''; } // PHP8.5: null as array offset is deprecated
 		if ( ! isset($array[$index]))
 		{
 			return FALSE;
@@ -152,7 +154,7 @@ class CI_Input {
 			$get = array();
 
 			// loop through the full _GET array
-			foreach (array_keys($_GET) as $key)
+			foreach (astpp_array_keys($_GET) as $key)
 			{
 				$get[$key] = $this->_fetch_from_array($_GET, $key, $xss_clean);
 			}
@@ -181,7 +183,7 @@ class CI_Input {
 			$post = array();
 
 			// Loop through the full _POST array and return it
-			foreach (array_keys($_POST) as $key)
+			foreach (astpp_array_keys($_POST) as $key)
 			{
 				$post[$key] = $this->_fetch_from_array($_POST, $key, $xss_clean);
 			}
@@ -282,7 +284,7 @@ class CI_Input {
 			$expire = time() - 86500;
 		} else
 		{
-			$expire = ($expire > 0) ? time() + $expire : 0;
+			$expire = (astpp_gt($expire, 0)) ? time() + astpp_n($expire) : 0;
 		}
 
 		setcookie($prefix.$name, $value, $expire, $path, $domain, $secure);
@@ -323,7 +325,7 @@ class CI_Input {
 			$proxies = preg_split('/[\s,]/', config_item('proxy_ips'), -1, PREG_SPLIT_NO_EMPTY);
 			$proxies = is_array($proxies) ? $proxies : array($proxies);
 
-			$this->ip_address = in_array($_SERVER['REMOTE_ADDR'], $proxies) ? $_SERVER['HTTP_X_FORWARDED_FOR'] : $_SERVER['REMOTE_ADDR'];
+			$this->ip_address = astpp_in_array($_SERVER['REMOTE_ADDR'], $proxies) ? $_SERVER['HTTP_X_FORWARDED_FOR'] : $_SERVER['REMOTE_ADDR'];
 		} elseif ($this->server('REMOTE_ADDR') AND $this->server('HTTP_CLIENT_IP'))
 		{
 			$this->ip_address = $_SERVER['HTTP_CLIENT_IP'];
@@ -347,7 +349,7 @@ class CI_Input {
 		if (strpos($this->ip_address, ',') !== FALSE)
 		{
 			$x = explode(',', $this->ip_address);
-			$this->ip_address = trim(end($x));
+			$this->ip_address = trim(astpp_end($x));
 		}
 
 		if ( ! $this->valid_ip($this->ip_address))
@@ -428,7 +430,7 @@ class CI_Input {
 		{
 			if ( ! is_array($global))
 			{
-				if ( ! in_array($global, $protected))
+				if ( ! astpp_in_array($global, $protected))
 				{
 					global $$global;
 					$$global = NULL;
@@ -437,7 +439,7 @@ class CI_Input {
 			{
 				foreach ($global as $key => $val)
 				{
-					if ( ! in_array($key, $protected))
+					if ( ! astpp_in_array($key, $protected))
 					{
 						global $$key;
 						$$key = NULL;
@@ -452,7 +454,7 @@ class CI_Input {
 			$_GET = array();
 		} else
 		{
-			if (is_array($_GET) AND count($_GET) > 0)
+			if (is_array($_GET) AND astpp_count($_GET) > 0)
 			{
 				foreach ($_GET as $key => $val)
 				{
@@ -462,7 +464,7 @@ class CI_Input {
 		}
 
 		// Clean $_POST Data
-		if (is_array($_POST) AND count($_POST) > 0)
+		if (is_array($_POST) AND astpp_count($_POST) > 0)
 		{
 			foreach ($_POST as $key => $val)
 			{
@@ -471,7 +473,7 @@ class CI_Input {
 		}
 
 		// Clean $_COOKIE Data
-		if (is_array($_COOKIE) AND count($_COOKIE) > 0)
+		if (is_array($_COOKIE) AND astpp_count($_COOKIE) > 0)
 		{
 			// Also get rid of specially treated cookies that might be set by a server
 			// or silly application, that are of no use to a CI application anyway

@@ -11,6 +11,7 @@ if ( ! class_exists('FPDF'))
 {
 define('FPDF_VERSION', '1.7');
 
+#[\AllowDynamicProperties]
 class FPDF
 {
 var $page; // current page number
@@ -77,7 +78,7 @@ var $PDFVersion; // PDF version number
 *******************************************************************************/
 function __construct($props = array())
 {
-	 if(count($props) == 3)
+	 if(astpp_count($props) == 3)
 	 {
 		 list($orientation,$unit,$format) = $props;
 		 $this->initialize($orientation,$unit,$format);
@@ -159,17 +160,17 @@ function initialize($orientation='P',$unit='mm',$size='A4')
 	else
 		$this->Error('Incorrect orientation: '.$orientation);
 	$this->CurOrientation = $this->DefOrientation;
-	$this->wPt = $this->w * $this->k;
-	$this->hPt = $this->h * $this->k;
+	$this->wPt = astpp_n($this->w) * astpp_n($this->k);
+	$this->hPt = astpp_n($this->h) * astpp_n($this->k);
 	// Page margins (1 cm)
-	$margin = 28.35 / $this->k;
+	$margin = astpp_div(28.35, $this->k);
 	$this->SetMargins($margin, $margin);
 	// Interior cell margin (1 mm)
-	$this->cMargin = $margin / 10;
+	$this->cMargin = astpp_n($margin) / 10;
 	// Line width (0.2 mm)
-	$this->LineWidth = .567 / $this->k;
+	$this->LineWidth = astpp_div(.567, $this->k);
 	// Automatic page break
-	$this->SetAutoPageBreak(true, 2 * $margin);
+	$this->SetAutoPageBreak(true, 2 * astpp_n($margin));
 	// Default display mode
 	$this->SetDisplayMode('default');
 	// Enable compression
@@ -197,7 +198,7 @@ function SetLeftMargin($margin)
 {
 	// Set left margin
 	$this->lMargin = $margin;
-	if ($this->page > 0 && $this->x < $margin)
+	if (astpp_gt($this->page, 0) && $this->x < $margin)
 		$this->x = $margin;
 }
 
@@ -221,7 +222,7 @@ function SetAutoPageBreak($auto, $margin=0)
 	// Set auto page break mode and triggering margin
 	$this->AutoPageBreak = $auto;
 	$this->bMargin = $margin;
-	$this->PageBreakTrigger = $this->h-$margin;
+	$this->PageBreakTrigger = astpp_n($this->h)-astpp_n($margin);
 }
 
 /**
@@ -315,7 +316,7 @@ function Close()
 	// Terminate document
 	if ($this->state == 3)
 		return;
-	if ($this->page == 0)
+	if (astpp_eq0($this->page))
 		$this->AddPage();
 	// Page footer
 	$this->InFooter = true;
@@ -330,7 +331,7 @@ function Close()
 function AddPage($orientation = '', $size = '')
 {
 	// Start a new page
-	if ($this->state == 0)
+	if (astpp_eq0($this->state))
 		$this->Open();
 	$family = $this->FontFamily;
 	$style = $this->FontStyle.($this->underline ? 'U' : '');
@@ -340,7 +341,7 @@ function AddPage($orientation = '', $size = '')
 	$fc = $this->FillColor;
 	$tc = $this->TextColor;
 	$cf = $this->ColorFlag;
-	if ($this->page > 0)
+	if (astpp_gt($this->page, 0))
 	{
 		// Page footer
 		$this->InFooter = true;
@@ -355,7 +356,7 @@ function AddPage($orientation = '', $size = '')
 	$this->_out('2 J');
 	// Set line width
 	$this->LineWidth = $lw;
-	$this->_out(sprintf('%.2F w', $lw * $this->k));
+	$this->_out(sprintf('%.2F w', astpp_n($lw) * astpp_n($this->k)));
 	// Set font
 	if ($family)
 		$this->SetFont($family, $style, $fontsize);
@@ -376,7 +377,7 @@ function AddPage($orientation = '', $size = '')
 	if ($this->LineWidth != $lw)
 	{
 		$this->LineWidth = $lw;
-		$this->_out(sprintf('%.2F w', $lw * $this->k));
+		$this->_out(sprintf('%.2F w', astpp_n($lw) * astpp_n($this->k)));
 	}
 	// Restore font
 	if ($family)
@@ -415,11 +416,11 @@ function PageNo()
 function SetDrawColor($r, $g=null, $b=null)
 {
 	// Set color for all stroking operations
-	if(($r==0 && $g==0 && $b==0) || $g===null)
-		$this->DrawColor = sprintf('%.3F G',$r/255);
+	if((astpp_eq0($r) && astpp_eq0($g) && astpp_eq0($b)) || $g===null)
+		$this->DrawColor = sprintf('%.3F G',astpp_n($r)/255);
 	else
-		$this->DrawColor = sprintf('%.3F %.3F %.3F RG',$r/255,$g/255,$b/255);
-	if($this->page>0)
+		$this->DrawColor = sprintf('%.3F %.3F %.3F RG',astpp_n($r)/255,astpp_n($g)/255,astpp_n($b)/255);
+	if(astpp_gt($this->page, 0))
 		$this->_out($this->DrawColor);
 }
 
@@ -431,22 +432,22 @@ function SetDrawColor($r, $g=null, $b=null)
 function SetFillColor($r, $g=null, $b=null)
 {
 	// Set color for all filling operations
-	if(($r==0 && $g==0 && $b==0) || $g===null)
-		$this->FillColor = sprintf('%.3F g',$r/255);
+	if((astpp_eq0($r) && astpp_eq0($g) && astpp_eq0($b)) || $g===null)
+		$this->FillColor = sprintf('%.3F g',astpp_n($r)/255);
 	else
-		$this->FillColor = sprintf('%.3F %.3F %.3F rg',$r/255,$g/255,$b/255);
+		$this->FillColor = sprintf('%.3F %.3F %.3F rg',astpp_n($r)/255,astpp_n($g)/255,astpp_n($b)/255);
 	$this->ColorFlag = ($this->FillColor!=$this->TextColor);
-	if($this->page>0)
+	if(astpp_gt($this->page, 0))
 		$this->_out($this->FillColor);
 }
 
 function SetTextColor($r, $g=null, $b=null)
 {
 	// Set color for text
-	if(($r==0 && $g==0 && $b==0) || $g===null)
-		$this->TextColor = sprintf('%.3F g',$r/255);
+	if((astpp_eq0($r) && astpp_eq0($g) && astpp_eq0($b)) || $g===null)
+		$this->TextColor = sprintf('%.3F g',astpp_n($r)/255);
 	else
-		$this->TextColor = sprintf('%.3F %.3F %.3F rg',$r/255,$g/255,$b/255);
+		$this->TextColor = sprintf('%.3F %.3F %.3F rg',astpp_n($r)/255,astpp_n($g)/255,astpp_n($b)/255);
 	$this->ColorFlag = ($this->FillColor!=$this->TextColor);
 }
 
@@ -458,17 +459,17 @@ function GetStringWidth($s)
 	$w = 0;
 	$l = strlen($s);
 	for($i=0;$i<$l;$i++) {
-			$w += $cw[$s[$i]];
+			$w = astpp_n($w) + astpp_n($cw[$s[$i]]);
 	}
-	return $w*$this->FontSize/1000;
+	return astpp_n($w)*astpp_n($this->FontSize)/1000;
 }
 
 function SetLineWidth($width)
 {
 	// Set line width
 	$this->LineWidth = $width;
-	if($this->page>0) {
-			$this->_out(sprintf('%.2F w',$width*$this->k));
+	if(astpp_gt($this->page, 0)) {
+			$this->_out(sprintf('%.2F w',astpp_n($width)*astpp_n($this->k)));
 	}
 	}
 
@@ -479,7 +480,7 @@ function SetLineWidth($width)
 function Line($x1, $y1, $x2, $y2)
 {
 	// Draw a line
-	$this->_out(sprintf('%.2F %.2F m %.2F %.2F l S',$x1*$this->k,($this->h-$y1)*$this->k,$x2*$this->k,($this->h-$y2)*$this->k));
+	$this->_out(sprintf('%.2F %.2F m %.2F %.2F l S',astpp_n($x1)*astpp_n($this->k),(astpp_n($this->h)-astpp_n($y1))*astpp_n($this->k),astpp_n($x2)*astpp_n($this->k),(astpp_n($this->h)-astpp_n($y2))*astpp_n($this->k)));
 }
 
 function Rect($x, $y, $w, $h, $style='')
@@ -492,7 +493,7 @@ function Rect($x, $y, $w, $h, $style='')
 	} else {
 			$op = 'S';
 	}
-	$this->_out(sprintf('%.2F %.2F %.2F %.2F re %s',$x*$this->k,($this->h-$y)*$this->k,$w*$this->k,-$h*$this->k,$op));
+	$this->_out(sprintf('%.2F %.2F %.2F %.2F re %s',astpp_n($x)*astpp_n($this->k),(astpp_n($this->h)-astpp_n($y))*astpp_n($this->k),astpp_n($w)*astpp_n($this->k),-astpp_n($h)*astpp_n($this->k),$op));
 }
 
 /**
@@ -514,14 +515,14 @@ function AddFont($family, $style='', $file='')
 			return;
 	}
 	$info = $this->_loadfont($file);
-	$info['i'] = count($this->fonts)+1;
+	$info['i'] = astpp_count($this->fonts)+1;
 	if(!empty($info['diff']))
 	{
 		// Search existing encodings
-		$n = array_search($info['diff'],$this->diffs);
+		$n = astpp_array_search($info['diff'],$this->diffs);
 		if(!$n)
 		{
-			$n = count($this->diffs)+1;
+			$n = astpp_count($this->diffs)+1;
 			$this->diffs[$n] = $info['diff'];
 		}
 		$info['diffn'] = $n;
@@ -560,7 +561,7 @@ function SetFont($family, $style='', $size=0)
 	if($style=='IB') {
 			$style = 'BI';
 	}
-	if($size==0) {
+	if(astpp_eq0($size)) {
 			$size = $this->FontSizePt;
 	}
 	// Test if font is already selected
@@ -575,7 +576,7 @@ function SetFont($family, $style='', $size=0)
 		if($family=='arial') {
 					$family = 'helvetica';
 		}
-		if(in_array($family,$this->CoreFonts))
+		if(astpp_in_array($family,$this->CoreFonts))
 		{
 			if($family=='symbol' || $family=='zapfdingbats') {
 							$style = '';
@@ -592,9 +593,9 @@ function SetFont($family, $style='', $size=0)
 	$this->FontFamily = $family;
 	$this->FontStyle = $style;
 	$this->FontSizePt = $size;
-	$this->FontSize = $size / $this->k;
+	$this->FontSize = astpp_div($size, $this->k);
 	$this->CurrentFont = &$this->fonts[$fontkey];
-	if ($this->page > 0)
+	if (astpp_gt($this->page, 0))
 		$this->_out(sprintf('BT /F%d %.2F Tf ET', $this->CurrentFont['i'], $this->FontSizePt));
 }
 
@@ -604,15 +605,15 @@ function SetFontSize($size)
 	if ($this->FontSizePt == $size)
 		return;
 	$this->FontSizePt = $size;
-	$this->FontSize = $size / $this->k;
-	if ($this->page > 0)
+	$this->FontSize = astpp_div($size, $this->k);
+	if (astpp_gt($this->page, 0))
 		$this->_out(sprintf('BT /F%d %.2F Tf ET', $this->CurrentFont['i'], $this->FontSizePt));
 }
 
 function AddLink()
 {
 	// Create a new internal link
-	$n = count($this->links) + 1;
+	$n = astpp_count($this->links) + 1;
 	$this->links[$n] = array(0, 0);
 	return $n;
 }
@@ -634,13 +635,13 @@ function SetLink($link, $y = 0, $page = -1)
 function Link($x, $y, $w, $h, $link)
 {
 	// Put a link on the page
-	$this->PageLinks[$this->page][] = array($x * $this->k, $this->hPt - $y * $this->k, $w * $this->k, $h * $this->k, $link);
+	$this->PageLinks[$this->page][] = array(astpp_n($x) * astpp_n($this->k), astpp_n($this->hPt) - astpp_n($y) * astpp_n($this->k), astpp_n($w) * astpp_n($this->k), astpp_n($h) * astpp_n($this->k), $link);
 }
 
 function Text($x, $y, $txt)
 {
 	// Output a string
-	$s = sprintf('BT %.2F %.2F Td (%s) Tj ET', $x * $this->k, ($this->h - $y) * $this->k, $this->_escape($txt));
+	$s = sprintf('BT %.2F %.2F Td (%s) Tj ET', astpp_n($x) * astpp_n($this->k), (astpp_n($this->h) - astpp_n($y)) * astpp_n($this->k), $this->_escape($txt));
 	if ($this->underline && $txt != '')
 		$s .= ' '.$this->_dounderline($x, $y, $txt);
 	if ($this->ColorFlag)
@@ -658,26 +659,26 @@ function Cell($w, $h=0, $txt='', $border=0, $ln=0, $align='', $fill=false, $link
 {
 	// Output a cell
 	$k = $this->k;
-	if($this->y+$h>$this->PageBreakTrigger && !$this->InHeader && !$this->InFooter && $this->AcceptPageBreak())
+	if(astpp_n($this->y)+astpp_n($h)>$this->PageBreakTrigger && !$this->InHeader && !$this->InFooter && $this->AcceptPageBreak())
 	{
 		// Automatic page break
 		$x = $this->x;
 		$ws = $this->ws;
-		if($ws>0)
+		if(astpp_gt($ws, 0))
 		{
 			$this->ws = 0;
 			$this->_out('0 Tw');
 		}
 		$this->AddPage($this->CurOrientation,$this->CurPageSize);
 		$this->x = $x;
-		if($ws>0)
+		if(astpp_gt($ws, 0))
 		{
 			$this->ws = $ws;
-			$this->_out(sprintf('%.3F Tw',$ws*$k));
+			$this->_out(sprintf('%.3F Tw',astpp_n($ws)*astpp_n($k)));
 		}
 	}
-	if($w==0)
-		$w = $this->w-$this->rMargin-$this->x;
+	if(astpp_eq0($w))
+		$w = astpp_n($this->w)-astpp_n($this->rMargin)-astpp_n($this->x);
 	$s = '';
 	if($fill || $border==1)
 	{
@@ -685,52 +686,52 @@ function Cell($w, $h=0, $txt='', $border=0, $ln=0, $align='', $fill=false, $link
 			$op = ($border==1) ? 'B' : 'f';
 		else
 			$op = 'S';
-		$s = sprintf('%.2F %.2F %.2F %.2F re %s ',$this->x*$k,($this->h-$this->y)*$k,$w*$k,-$h*$k,$op);
+		$s = sprintf('%.2F %.2F %.2F %.2F re %s ',astpp_n($this->x)*astpp_n($k),(astpp_n($this->h)-astpp_n($this->y))*astpp_n($k),astpp_n($w)*astpp_n($k),-astpp_n($h)*astpp_n($k),$op);
 	}
 	if(is_string($border))
 	{
 		$x = $this->x;
 		$y = $this->y;
 		if(strpos($border,'L')!==false)
-			$s .= sprintf('%.2F %.2F m %.2F %.2F l S ',$x*$k,($this->h-$y)*$k,$x*$k,($this->h-($y+$h))*$k);
+			$s .= sprintf('%.2F %.2F m %.2F %.2F l S ',astpp_n($x)*astpp_n($k),(astpp_n($this->h)-astpp_n($y))*astpp_n($k),astpp_n($x)*astpp_n($k),(astpp_n($this->h)-(astpp_n($y)+astpp_n($h)))*astpp_n($k));
 		if(strpos($border,'T')!==false)
-			$s .= sprintf('%.2F %.2F m %.2F %.2F l S ',$x*$k,($this->h-$y)*$k,($x+$w)*$k,($this->h-$y)*$k);
+			$s .= sprintf('%.2F %.2F m %.2F %.2F l S ',astpp_n($x)*astpp_n($k),(astpp_n($this->h)-astpp_n($y))*astpp_n($k),(astpp_n($x)+astpp_n($w))*astpp_n($k),(astpp_n($this->h)-astpp_n($y))*astpp_n($k));
 		if(strpos($border,'R')!==false)
-			$s .= sprintf('%.2F %.2F m %.2F %.2F l S ',($x+$w)*$k,($this->h-$y)*$k,($x+$w)*$k,($this->h-($y+$h))*$k);
+			$s .= sprintf('%.2F %.2F m %.2F %.2F l S ',(astpp_n($x)+astpp_n($w))*astpp_n($k),(astpp_n($this->h)-astpp_n($y))*astpp_n($k),(astpp_n($x)+astpp_n($w))*astpp_n($k),(astpp_n($this->h)-(astpp_n($y)+astpp_n($h)))*astpp_n($k));
 		if(strpos($border,'B')!==false)
-			$s .= sprintf('%.2F %.2F m %.2F %.2F l S ',$x*$k,($this->h-($y+$h))*$k,($x+$w)*$k,($this->h-($y+$h))*$k);
+			$s .= sprintf('%.2F %.2F m %.2F %.2F l S ',astpp_n($x)*astpp_n($k),(astpp_n($this->h)-(astpp_n($y)+astpp_n($h)))*astpp_n($k),(astpp_n($x)+astpp_n($w))*astpp_n($k),(astpp_n($this->h)-(astpp_n($y)+astpp_n($h)))*astpp_n($k));
 	}
 	if($txt!=='')
 	{
 		if($align=='R')
-			$dx = $w-$this->cMargin-$this->GetStringWidth($txt);
+			$dx = astpp_n($w)-astpp_n($this->cMargin)-astpp_n($this->GetStringWidth($txt));
 		elseif($align=='C')
-			$dx = ($w-$this->GetStringWidth($txt))/2;
+			$dx = (astpp_n($w)-astpp_n($this->GetStringWidth($txt)))/2;
 		else
 			$dx = $this->cMargin;
 		if($this->ColorFlag)
 			$s .= 'q '.$this->TextColor.' ';
 		$txt2 = str_replace(')','\\)',str_replace('(','\\(',str_replace('\\','\\\\',$txt)));
-		$s .= sprintf('BT %.2F %.2F Td (%s) Tj ET',($this->x+$dx)*$k,($this->h-($this->y+.5*$h+.3*$this->FontSize))*$k,$txt2);
+		$s .= sprintf('BT %.2F %.2F Td (%s) Tj ET',(astpp_n($this->x)+astpp_n($dx))*astpp_n($k),(astpp_n($this->h)-(astpp_n($this->y)+.5*astpp_n($h)+.3*astpp_n($this->FontSize)))*astpp_n($k),$txt2);
 		if($this->underline)
-			$s .= ' '.$this->_dounderline($this->x+$dx,$this->y+.5*$h+.3*$this->FontSize,$txt);
+			$s .= ' '.$this->_dounderline(astpp_n($this->x)+astpp_n($dx),astpp_n($this->y)+.5*astpp_n($h)+.3*astpp_n($this->FontSize),$txt);
 		if($this->ColorFlag)
 			$s .= ' Q';
 		if($link)
-			$this->Link($this->x+$dx,$this->y+.5*$h-.5*$this->FontSize,$this->GetStringWidth($txt),$this->FontSize,$link);
+			$this->Link(astpp_n($this->x)+astpp_n($dx),astpp_n($this->y)+.5*astpp_n($h)-.5*astpp_n($this->FontSize),$this->GetStringWidth($txt),$this->FontSize,$link);
 	}
 	if($s)
 		$this->_out($s);
 	$this->lasth = $h;
-	if($ln>0)
+	if(astpp_gt($ln, 0))
 	{
 		// Go to next line
-		$this->y += $h;
+		$this->y = astpp_n($this->y) + astpp_n($h);
 		if($ln==1)
 			$this->x = $this->lMargin;
 	}
 	else
-		$this->x += $w;
+		$this->x = astpp_n($this->x) + astpp_n($w);
 }
 
 /**
@@ -741,12 +742,12 @@ function MultiCell($w, $h, $txt, $border=0, $align='J', $fill=false)
 {
 	// Output text with automatic or explicit line breaks
 	$cw = &$this->CurrentFont['cw'];
-	if($w==0)
-		$w = $this->w-$this->rMargin-$this->x;
-	$wmax = ($w-2*$this->cMargin)*1000/$this->FontSize;
+	if(astpp_eq0($w))
+		$w = astpp_n($this->w)-astpp_n($this->rMargin)-astpp_n($this->x);
+	$wmax = astpp_div((astpp_n($w)-2*astpp_n($this->cMargin))*1000, $this->FontSize);
 	$s = str_replace("\r",'',$txt);
 	$nb = strlen($s);
-	if($nb>0 && $s[$nb-1]=="\n")
+	if(astpp_gt($nb, 0) && $s[astpp_n($nb)-1]=="\n")
 		$nb--;
 	$b = 0;
 	if($border)
@@ -780,12 +781,12 @@ function MultiCell($w, $h, $txt, $border=0, $align='J', $fill=false)
 		if ($c == "\n")
 		{
 			// Explicit line break
-			if ($this->ws > 0)
+			if (astpp_gt($this->ws, 0))
 			{
 				$this->ws = 0;
 				$this->_out('0 Tw');
 			}
-			$this->Cell($w, $h, substr($s, $j, $i - $j), $b, 2, $align, $fill);
+			$this->Cell($w, $h, substr($s, $j, astpp_n($i) - astpp_n($j)), $b, 2, $align, $fill);
 			$i++;
 			$sep = -1;
 			$j = $i;
@@ -802,7 +803,7 @@ function MultiCell($w, $h, $txt, $border=0, $align='J', $fill=false)
 			$ls = $l;
 			$ns++;
 		}
-		$l += $cw[$c];
+		$l = astpp_n($l) + astpp_n($cw[$c]);
 		if ($l > $wmax)
 		{
 			// Automatic line break
@@ -810,22 +811,22 @@ function MultiCell($w, $h, $txt, $border=0, $align='J', $fill=false)
 			{
 				if ($i == $j)
 					$i++;
-				if ($this->ws > 0)
+				if (astpp_gt($this->ws, 0))
 				{
 					$this->ws = 0;
 					$this->_out('0 Tw');
 				}
-				$this->Cell($w, $h, substr($s, $j, $i - $j), $b, 2, $align, $fill);
+				$this->Cell($w, $h, substr($s, $j, astpp_n($i) - astpp_n($j)), $b, 2, $align, $fill);
 			}
 			else
 			{
 				if ($align == 'J')
 				{
-					$this->ws = ($ns > 1) ? ($wmax - $ls) / 1000 * $this->FontSize / ($ns - 1) : 0;
-					$this->_out(sprintf('%.3F Tw', $this->ws * $this->k));
+					$this->ws = ($ns > 1) ? astpp_div((astpp_n($wmax) - astpp_n($ls)) / 1000 * astpp_n($this->FontSize), astpp_n($ns) - 1) : 0;
+					$this->_out(sprintf('%.3F Tw', astpp_n($this->ws) * astpp_n($this->k)));
 				}
-				$this->Cell($w, $h, substr($s, $j, $sep - $j), $b, 2, $align, $fill);
-				$i = $sep + 1;
+				$this->Cell($w, $h, substr($s, $j, astpp_n($sep) - astpp_n($j)), $b, 2, $align, $fill);
+				$i = astpp_n($sep) + 1;
 			}
 			$sep = -1;
 			$j = $i;
@@ -839,14 +840,14 @@ function MultiCell($w, $h, $txt, $border=0, $align='J', $fill=false)
 			$i++;
 	}
 	// Last chunk
-	if ($this->ws > 0)
+	if (astpp_gt($this->ws, 0))
 	{
 		$this->ws = 0;
 		$this->_out('0 Tw');
 	}
 	if ($border && strpos($border, 'B') !== false)
 		$b .= 'B';
-	$this->Cell($w, $h, substr($s, $j, $i - $j), $b, 2, $align, $fill);
+	$this->Cell($w, $h, substr($s, $j, astpp_n($i) - astpp_n($j)), $b, 2, $align, $fill);
 	$this->x = $this->lMargin;
 }
 
@@ -854,8 +855,8 @@ function Write($h, $txt, $link = '')
 {
 	// Output text in flowing mode
 	$cw = &$this->CurrentFont['cw'];
-	$w = $this->w - $this->rMargin - $this->x;
-	$wmax = ($w - 2 * $this->cMargin) * 1000 / $this->FontSize;
+	$w = astpp_n($this->w) - astpp_n($this->rMargin) - astpp_n($this->x);
+	$wmax = astpp_div((astpp_n($w) - 2 * astpp_n($this->cMargin)) * 1000, $this->FontSize);
 	$s = str_replace("\r", '', $txt);
 	$nb = strlen($s);
 	$sep = -1;
@@ -870,7 +871,7 @@ function Write($h, $txt, $link = '')
 		if ($c == "\n")
 		{
 			// Explicit line break
-			$this->Cell($w, $h, substr($s, $j, $i - $j), 0, 2, '', 0, $link);
+			$this->Cell($w, $h, substr($s, $j, astpp_n($i) - astpp_n($j)), 0, 2, '', 0, $link);
 			$i++;
 			$sep = -1;
 			$j = $i;
@@ -878,15 +879,15 @@ function Write($h, $txt, $link = '')
 			if ($nl == 1)
 			{
 				$this->x = $this->lMargin;
-				$w = $this->w - $this->rMargin - $this->x;
-				$wmax = ($w - 2 * $this->cMargin) * 1000 / $this->FontSize;
+				$w = astpp_n($this->w) - astpp_n($this->rMargin) - astpp_n($this->x);
+				$wmax = astpp_div((astpp_n($w) - 2 * astpp_n($this->cMargin)) * 1000, $this->FontSize);
 			}
 			$nl++;
 			continue;
 		}
 		if ($c == ' ')
 			$sep = $i;
-		$l += $cw[$c];
+		$l = astpp_n($l) + astpp_n($cw[$c]);
 		if ($l > $wmax)
 		{
 			// Automatic line break
@@ -896,21 +897,21 @@ function Write($h, $txt, $link = '')
 				{
 					// Move to next line
 					$this->x = $this->lMargin;
-					$this->y += $h;
-					$w = $this->w - $this->rMargin - $this->x;
-					$wmax = ($w - 2 * $this->cMargin) * 1000 / $this->FontSize;
+					$this->y = astpp_n($this->y) + astpp_n($h);
+					$w = astpp_n($this->w) - astpp_n($this->rMargin) - astpp_n($this->x);
+					$wmax = astpp_div((astpp_n($w) - 2 * astpp_n($this->cMargin)) * 1000, $this->FontSize);
 					$i++;
 					$nl++;
 					continue;
 				}
 				if ($i == $j)
 					$i++;
-				$this->Cell($w, $h, substr($s, $j, $i - $j), 0, 2, '', 0, $link);
+				$this->Cell($w, $h, substr($s, $j, astpp_n($i) - astpp_n($j)), 0, 2, '', 0, $link);
 			}
 			else
 			{
-				$this->Cell($w, $h, substr($s, $j, $sep - $j), 0, 2, '', 0, $link);
-				$i = $sep + 1;
+				$this->Cell($w, $h, substr($s, $j, astpp_n($sep) - astpp_n($j)), 0, 2, '', 0, $link);
+				$i = astpp_n($sep) + 1;
 			}
 			$sep = -1;
 			$j = $i;
@@ -918,8 +919,8 @@ function Write($h, $txt, $link = '')
 			if ($nl == 1)
 			{
 				$this->x = $this->lMargin;
-				$w = $this->w - $this->rMargin - $this->x;
-				$wmax = ($w - 2 * $this->cMargin) * 1000 / $this->FontSize;
+				$w = astpp_n($this->w) - astpp_n($this->rMargin) - astpp_n($this->x);
+				$wmax = astpp_div((astpp_n($w) - 2 * astpp_n($this->cMargin)) * 1000, $this->FontSize);
 			}
 			$nl++;
 		}
@@ -928,7 +929,7 @@ function Write($h, $txt, $link = '')
 	}
 	// Last chunk
 	if ($i != $j)
-		$this->Cell($l / 1000 * $this->FontSize, $h, substr($s, $j), 0, 0, '', 0, $link);
+		$this->Cell(astpp_n($l) / 1000 * astpp_n($this->FontSize), $h, substr($s, $j), 0, 0, '', 0, $link);
 }
 
 function Ln($h = null)
@@ -936,9 +937,9 @@ function Ln($h = null)
 	// Line feed; default value is last cell height
 	$this->x = $this->lMargin;
 	if ($h === null)
-		$this->y += $this->lasth;
+		$this->y = astpp_n($this->y) + astpp_n($this->lasth);
 	else
-		$this->y += $h;
+		$this->y = astpp_n($this->y) + astpp_n($h);
 }
 
 function Image($file, $x = null, $y = null, $w = 0, $h = 0, $type = '', $link = '')
@@ -952,7 +953,7 @@ function Image($file, $x = null, $y = null, $w = 0, $h = 0, $type = '', $link = 
 			$pos = strrpos($file, '.');
 			if ( ! $pos)
 				$this->Error('Image file has no extension and no type was specified: '.$file);
-			$type = substr($file, $pos + 1);
+			$type = substr($file, astpp_n($pos) + 1);
 		}
 		$type = strtolower($type);
 		if ($type == 'jpeg')
@@ -961,32 +962,32 @@ function Image($file, $x = null, $y = null, $w = 0, $h = 0, $type = '', $link = 
 		if ( ! method_exists($this, $mtd))
 			$this->Error('Unsupported image type: '.$type);
 		$info = $this->{$mtd}($file);
-		$info['i'] = count($this->images) + 1;
+		$info['i'] = astpp_count($this->images) + 1;
 		$this->images[$file] = $info;
 	}
 	else
 		$info = $this->images[$file];
 
 	// Automatic width and height calculation if needed
-	if ($w == 0 && $h == 0)
+	if (astpp_eq0($w) && astpp_eq0($h))
 	{
 		// Put image at 96 dpi
 		$w = -96;
 		$h = -96;
 	}
-	if ($w < 0)
-		$w = -$info['w'] * 72 / $w / $this->k;
-	if ($h < 0)
-		$h = -$info['h'] * 72 / $h / $this->k;
-	if ($w == 0)
-		$w = $h * $info['w'] / $info['h'];
-	if ($h == 0)
-		$h = $w * $info['h'] / $info['w'];
+	if (astpp_lt($w, 0))
+		$w = astpp_div(astpp_div(-astpp_n($info['w']) * 72, $w), $this->k);
+	if (astpp_lt($h, 0))
+		$h = astpp_div(astpp_div(-astpp_n($info['h']) * 72, $h), $this->k);
+	if (astpp_eq0($w))
+		$w = astpp_div(astpp_n($h) * astpp_n($info['w']), $info['h']);
+	if (astpp_eq0($h))
+		$h = astpp_div(astpp_n($w) * astpp_n($info['h']), $info['w']);
 
 	// Flowing mode
 	if ($y === null)
 	{
-		if ($this->y + $h > $this->PageBreakTrigger && ! $this->InHeader && ! $this->InFooter && $this->AcceptPageBreak())
+		if (astpp_n($this->y) + astpp_n($h) > $this->PageBreakTrigger && ! $this->InHeader && ! $this->InFooter && $this->AcceptPageBreak())
 		{
 			// Automatic page break
 			$x2 = $this->x;
@@ -994,12 +995,12 @@ function Image($file, $x = null, $y = null, $w = 0, $h = 0, $type = '', $link = 
 			$this->x = $x2;
 		}
 		$y = $this->y;
-		$this->y += $h;
+		$this->y = astpp_n($this->y) + astpp_n($h);
 	}
 
 	if ($x === null)
 		$x = $this->x;
-	$this->_out(sprintf('q %.2F 0 0 %.2F %.2F %.2F cm /I%d Do Q', $w * $this->k, $h * $this->k, $x * $this->k, ($this->h - ($y + $h)) * $this->k, $info['i']));
+	$this->_out(sprintf('q %.2F 0 0 %.2F %.2F %.2F cm /I%d Do Q', astpp_n($w) * astpp_n($this->k), astpp_n($h) * astpp_n($this->k), astpp_n($x) * astpp_n($this->k), (astpp_n($this->h) - (astpp_n($y) + astpp_n($h))) * astpp_n($this->k), $info['i']));
 	if ($link)
 		$this->Link($x, $y, $w, $h, $link);
 }
@@ -1016,7 +1017,7 @@ function SetX($x)
 	if ($x >= 0)
 		$this->x = $x;
 	else
-		$this->x = $this->w + $x;
+		$this->x = astpp_n($this->w) + astpp_n($x);
 }
 
 function GetY()
@@ -1032,7 +1033,7 @@ function SetY($y)
 	if ($y >= 0)
 		$this->y = $y;
 	else
-		$this->y = $this->h + $y;
+		$this->y = astpp_n($this->h) + astpp_n($y);
 }
 
 /**
@@ -1117,7 +1118,7 @@ function _dochecks()
 	if (ini_get('mbstring.func_overload') & 2)
 		$this->Error('mbstring overloading must be disabled');
 	// Ensure runtime magic quotes are disabled
-	if (get_magic_quotes_runtime())
+	if (function_exists('get_magic_quotes_runtime') && get_magic_quotes_runtime()) // PHP8: removed function
 		@set_magic_quotes_runtime(0);
 }
 
@@ -1149,7 +1150,7 @@ function _getpagesize($size)
 		if ( ! isset($this->StdPageSizes[$size]))
 			$this->Error('Unknown page size: '.$size);
 		$a = $this->StdPageSizes[$size];
-		return array($a[0] / $this->k, $a[1] / $this->k);
+		return array(astpp_div($a[0], $this->k), astpp_div($a[1], $this->k));
 	}
 	else
 	{
@@ -1193,9 +1194,9 @@ function _beginpage($orientation, $size)
 			$this->w = $size[1];
 			$this->h = $size[0];
 		}
-		$this->wPt = $this->w * $this->k;
-		$this->hPt = $this->h * $this->k;
-		$this->PageBreakTrigger = $this->h - $this->bMargin;
+		$this->wPt = astpp_n($this->w) * astpp_n($this->k);
+		$this->hPt = astpp_n($this->h) * astpp_n($this->k);
+		$this->PageBreakTrigger = astpp_n($this->h) - astpp_n($this->bMargin);
 		$this->CurOrientation = $orientation;
 		$this->CurPageSize = $size;
 	}
@@ -1251,20 +1252,20 @@ function _UTF8toUTF16($s)
 			// 3-byte character
 			$c2 = ord($s[$i++]);
 			$c3 = ord($s[$i++]);
-			$res .= chr((($c1 & 0x0F) << 4) + (($c2 & 0x3C) >> 2));
-			$res .= chr((($c2 & 0x03) << 6) + ($c3 & 0x3F));
+			$res .= astpp_chr((($c1 & 0x0F) << 4) + (($c2 & 0x3C) >> 2));
+			$res .= astpp_chr((($c2 & 0x03) << 6) + (astpp_n($c3 & 0x3F)));
 		}
 		elseif ($c1 >= 192)
 		{
 			// 2-byte character
 			$c2 = ord($s[$i++]);
-			$res .= chr(($c1 & 0x1C) >> 2);
-			$res .= chr((($c1 & 0x03) << 6) + ($c2 & 0x3F));
+			$res .= astpp_chr(($c1 & 0x1C) >> 2);
+			$res .= astpp_chr((($c1 & 0x03) << 6) + (astpp_n($c2 & 0x3F)));
 		}
 		else
 		{
 			// Single-byte character
-			$res .= "\0".chr($c1);
+			$res .= "\0".astpp_chr($c1);
 		}
 	}
 	return $res;
@@ -1275,8 +1276,8 @@ function _dounderline($x, $y, $txt)
 	// Underline text
 	$up = $this->CurrentFont['up'];
 	$ut = $this->CurrentFont['ut'];
-	$w = $this->GetStringWidth($txt) + $this->ws * substr_count($txt, ' ');
-	return sprintf('%.2F %.2F %.2F %.2F re f', $x * $this->k, ($this->h - ($y - $up / 1000 * $this->FontSize)) * $this->k, $w * $this->k, -$ut / 1000 * $this->FontSizePt);
+	$w = astpp_n($this->GetStringWidth($txt)) + astpp_n($this->ws) * substr_count($txt, ' ');
+	return sprintf('%.2F %.2F %.2F %.2F re f', astpp_n($x) * astpp_n($this->k), (astpp_n($this->h) - (astpp_n($y) - astpp_n($up) / 1000 * astpp_n($this->FontSize))) * astpp_n($this->k), astpp_n($w) * astpp_n($this->k), -astpp_n($ut) / 1000 * astpp_n($this->FontSizePt));
 }
 
 function _parsejpg($file)
@@ -1315,7 +1316,7 @@ function _parsepng($file)
 function _parsepngstream($f, $file)
 {
 	// Check signature
-	if ($this->_readstream($f, 8) != chr(137).'PNG'.chr(13).chr(10).chr(26).chr(10))
+	if ($this->_readstream($f, 8) != astpp_chr(137).'PNG'.astpp_chr(13).astpp_chr(10).astpp_chr(26).astpp_chr(10))
 		$this->Error('Not a PNG file: '.$file);
 
 	// Read header chunk
@@ -1328,7 +1329,7 @@ function _parsepngstream($f, $file)
 	if ($bpc > 8)
 		$this->Error('16-bit depth not supported: '.$file);
 	$ct = ord($this->_readstream($f, 1));
-	if ($ct == 0 || $ct == 4)
+	if (astpp_eq0($ct) || $ct == 4)
 		$colspace = 'DeviceGray';
 	elseif ($ct == 2 || $ct == 6)
 		$colspace = 'DeviceRGB';
@@ -1363,13 +1364,13 @@ function _parsepngstream($f, $file)
 		{
 			// Read transparency info
 			$t = $this->_readstream($f, $n);
-			if ($ct == 0)
+			if (astpp_eq0($ct))
 				$trns = array(ord(substr($t, 1, 1)));
 			elseif ($ct == 2)
 				$trns = array(ord(substr($t, 1, 1)), ord(substr($t, 3, 1)), ord(substr($t, 5, 1)));
 			else
 			{
-				$pos = strpos($t, chr(0));
+				$pos = strpos($t, astpp_chr(0));
 				if ($pos !== false)
 					$trns = array($pos);
 			}
@@ -1384,7 +1385,7 @@ function _parsepngstream($f, $file)
 		elseif ($type == 'IEND')
 			break;
 		else
-			$this->_readstream($f, $n + 4);
+			$this->_readstream($f, astpp_n($n) + 4);
 	}
 	while ($n);
 
@@ -1402,26 +1403,26 @@ function _parsepngstream($f, $file)
 		if ($ct == 4)
 		{
 			// Gray image
-			$len = 2 * $w;
+			$len = 2 * astpp_n($w);
 			for ($i = 0; $i < $h; $i++)
 			{
-				$pos = (1 + $len) * $i;
+				$pos = (1 + astpp_n($len)) * astpp_n($i);
 				$color .= $data[$pos];
 				$alpha .= $data[$pos];
-				$line = substr($data, $pos + 1, $len);
+				$line = substr($data, astpp_n($pos) + 1, $len);
 				$color .= preg_replace('/(.)./s', '$1', $line);
 				$alpha .= preg_replace('/.(.)/s', '$1', $line);
 			}
 		} else
 		{
 			// RGB image
-			$len = 4 * $w;
+			$len = 4 * astpp_n($w);
 			for ($i = 0; $i < $h; $i++)
 			{
-				$pos = (1 + $len) * $i;
+				$pos = (1 + astpp_n($len)) * astpp_n($i);
 				$color .= $data[$pos];
 				$alpha .= $data[$pos];
-				$line = substr($data, $pos + 1, $len);
+				$line = substr($data, astpp_n($pos) + 1, $len);
 				$color .= preg_replace('/(.{3})./s', '$1', $line);
 				$alpha .= preg_replace('/.{3}(.)/s', '$1', $line);
 			}
@@ -1445,7 +1446,7 @@ function _readstream($f, $n)
 		$s = fread($f, $n);
 		if ($s === false)
 			$this->Error('Error while reading stream');
-		$n -= strlen($s);
+		$n = astpp_n($n) - strlen($s);
 		$res .= $s;
 	}
 	if ($n > 0)
@@ -1478,7 +1479,7 @@ function _parsegif($file)
 		ob_start();
 		imagepng($im);
 		$data = ob_get_clean();
-		imagedestroy($im);
+		PHP_VERSION_ID < 80000 && imagedestroy($im);
 		fwrite($f, $data);
 		rewind($f);
 		$info = $this->_parsepngstream($f, $file);
@@ -1492,7 +1493,7 @@ function _parsegif($file)
 			$this->Error('Unable to create a temporary file');
 		if ( ! imagepng($im, $tmp))
 			$this->Error('Error while saving to temporary file');
-		imagedestroy($im);
+		PHP_VERSION_ID < 80000 && imagedestroy($im);
 		$info = $this->_parsepng($tmp);
 		unlink($tmp);
 	}
@@ -1534,13 +1535,13 @@ function _putpages()
 	}
 	if ($this->DefOrientation == 'P')
 	{
-		$wPt = $this->DefPageSize[0] * $this->k;
-		$hPt = $this->DefPageSize[1] * $this->k;
+		$wPt = astpp_n($this->DefPageSize[0]) * astpp_n($this->k);
+		$hPt = astpp_n($this->DefPageSize[1]) * astpp_n($this->k);
 	}
 	else
 	{
-		$wPt = $this->DefPageSize[1] * $this->k;
-		$hPt = $this->DefPageSize[0] * $this->k;
+		$wPt = astpp_n($this->DefPageSize[1]) * astpp_n($this->k);
+		$hPt = astpp_n($this->DefPageSize[0]) * astpp_n($this->k);
 	}
 	$filter = ($this->compress) ? '/Filter /FlateDecode ' : '';
 	for ($n = 1; $n <= $nb; $n++)
@@ -1558,7 +1559,7 @@ function _putpages()
 			$annots = '/Annots [';
 			foreach ($this->PageLinks[$n] as $pl)
 			{
-				$rect = sprintf('%.2F %.2F %.2F %.2F', $pl[0], $pl[1], $pl[0] + $pl[2], $pl[1] - $pl[3]);
+				$rect = sprintf('%.2F %.2F %.2F %.2F', $pl[0], $pl[1], astpp_n($pl[0]) + astpp_n($pl[2]), astpp_n($pl[1]) - astpp_n($pl[3]));
 				$annots .= '<</Type /Annot /Subtype /Link /Rect ['.$rect.'] /Border [0 0 0] ';
 				if (is_string($pl[4]))
 					$annots .= '/A <</S /URI /URI '.$this->_textstring($pl[4]).'>>>>';
@@ -1566,14 +1567,14 @@ function _putpages()
 				{
 					$l = $this->links[$pl[4]];
 					$h = isset($this->PageSizes[$l[0]]) ? $this->PageSizes[$l[0]][1] : $hPt;
-					$annots .= sprintf('/Dest [%d 0 R /XYZ 0 %.2F null]>>', 1 + 2 * $l[0], $h - $l[1] * $this->k);
+					$annots .= sprintf('/Dest [%d 0 R /XYZ 0 %.2F null]>>', 1 + 2 * astpp_n($l[0]), astpp_n($h) - astpp_n($l[1]) * astpp_n($this->k));
 				}
 			}
 			$this->_out($annots.']');
 		}
 		if ($this->PDFVersion > '1.3')
 			$this->_out('/Group <</Type /Group /S /Transparency /CS /DeviceRGB>>');
-		$this->_out('/Contents '.($this->n + 1).' 0 R>>');
+		$this->_out('/Contents '.(astpp_n($this->n) + 1).' 0 R>>');
 		$this->_out('endobj');
 		// Page content
 		$p = ($this->compress) ? gzcompress($this->pages[$n]) : $this->pages[$n];
@@ -1588,7 +1589,7 @@ function _putpages()
 	$this->_out('<</Type /Pages');
 	$kids = '/Kids [';
 	for ($i = 0; $i < $nb; $i++)
-		$kids .= (3 + 2 * $i).' 0 R ';
+		$kids .= (3 + 2 * astpp_n($i)).' 0 R ';
 	$this->_out($kids.']');
 	$this->_out('/Count '.$nb);
 	$this->_out(sprintf('/MediaBox [0 0 %.2F %.2F]', $wPt, $hPt));
@@ -1616,7 +1617,7 @@ function _putfonts()
 			$this->Error('Font file not found: '.$file);
 		$compressed = (substr($file, -2) == '.z');
 		if ( ! $compressed && isset($info['length2']))
-			$font = substr($font, 6, $info['length1']).substr($font, 6 + $info['length1'] + 6, $info['length2']);
+			$font = substr($font, 6, $info['length1']).substr($font, 6 + astpp_n($info['length1']) + 6, $info['length2']);
 		$this->_out('<</Length '.strlen($font));
 		if ($compressed)
 			$this->_out('/Filter /FlateDecode');
@@ -1630,7 +1631,7 @@ function _putfonts()
 	foreach ($this->fonts as $k=>$font)
 	{
 		// Font objects
-		$this->fonts[$k]['n'] = $this->n + 1;
+		$this->fonts[$k]['n'] = astpp_n($this->n) + 1;
 		$type = $font['type'];
 		$name = $font['name'];
 		if ($type == 'Core')
@@ -1653,10 +1654,10 @@ function _putfonts()
 			$this->_out('/BaseFont /'.$name);
 			$this->_out('/Subtype /'.$type);
 			$this->_out('/FirstChar 32 /LastChar 255');
-			$this->_out('/Widths '.($this->n + 1).' 0 R');
-			$this->_out('/FontDescriptor '.($this->n + 2).' 0 R');
+			$this->_out('/Widths '.(astpp_n($this->n) + 1).' 0 R');
+			$this->_out('/FontDescriptor '.(astpp_n($this->n) + 2).' 0 R');
 			if (isset($font['diffn']))
-				$this->_out('/Encoding '.($nf + $font['diffn']).' 0 R');
+				$this->_out('/Encoding '.(astpp_n($nf) + astpp_n($font['diffn'])).' 0 R');
 			else
 				$this->_out('/Encoding /WinAnsiEncoding');
 			$this->_out('>>');
@@ -1666,7 +1667,7 @@ function _putfonts()
 			$cw = &$font['cw'];
 			$s = '[';
 			for ($i = 32; $i <= 255; $i++)
-				$s .= $cw[chr($i)].' ';
+				$s .= $cw[astpp_chr($i)].' ';
 			$this->_out($s.']');
 			$this->_out('endobj');
 			// Descriptor
@@ -1692,7 +1693,7 @@ function _putfonts()
 
 function _putimages()
 {
-	foreach (array_keys($this->images) as $file)
+	foreach (astpp_array_keys($this->images) as $file)
 	{
 		$this->_putimage($this->images[$file]);
 		unset($this->images[$file]['data']);
@@ -1709,7 +1710,7 @@ function _putimage(&$info)
 	$this->_out('/Width '.$info['w']);
 	$this->_out('/Height '.$info['h']);
 	if ($info['cs'] == 'Indexed')
-		$this->_out('/ColorSpace [/Indexed /DeviceRGB '.(strlen($info['pal']) / 3 - 1).' '.($this->n + 1).' 0 R]');
+		$this->_out('/ColorSpace [/Indexed /DeviceRGB '.(strlen($info['pal']) / 3 - 1).' '.(astpp_n($this->n) + 1).' 0 R]');
 	else
 	{
 		$this->_out('/ColorSpace /'.$info['cs']);
@@ -1724,12 +1725,12 @@ function _putimage(&$info)
 	if (isset($info['trns']) && is_array($info['trns']))
 	{
 		$trns = '';
-		for ($i = 0; $i < count($info['trns']); $i++)
+		for ($i = 0; $i < astpp_count($info['trns']); $i++)
 			$trns .= $info['trns'][$i].' '.$info['trns'][$i].' ';
 		$this->_out('/Mask ['.$trns.']');
 	}
 	if (isset($info['smask']))
-		$this->_out('/SMask '.($this->n + 1).' 0 R');
+		$this->_out('/SMask '.(astpp_n($this->n) + 1).' 0 R');
 	$this->_out('/Length '.strlen($info['data']).'>>');
 	$this->_putstream($info['data']);
 	$this->_out('endobj');
@@ -1810,7 +1811,7 @@ function _putcatalog()
 	elseif ($this->ZoomMode == 'real')
 		$this->_out('/OpenAction [3 0 R /XYZ null null 1]');
 	elseif ( ! is_string($this->ZoomMode))
-		$this->_out('/OpenAction [3 0 R /XYZ null null '.sprintf('%.2F', $this->ZoomMode / 100).']');
+		$this->_out('/OpenAction [3 0 R /XYZ null null '.sprintf('%.2F', astpp_n($this->ZoomMode) / 100).']');
 	if ($this->LayoutMode == 'single')
 		$this->_out('/PageLayout /SinglePage');
 	elseif ($this->LayoutMode == 'continuous')
@@ -1826,9 +1827,9 @@ function _putheader()
 
 function _puttrailer()
 {
-	$this->_out('/Size '.($this->n + 1));
+	$this->_out('/Size '.(astpp_n($this->n) + 1));
 	$this->_out('/Root '.$this->n.' 0 R');
-	$this->_out('/Info '.($this->n - 1).' 0 R');
+	$this->_out('/Info '.(astpp_n($this->n) - 1).' 0 R');
 }
 
 function _enddoc()
@@ -1851,7 +1852,7 @@ function _enddoc()
 	// Cross-ref
 	$o = strlen($this->buffer);
 	$this->_out('xref');
-	$this->_out('0 '.($this->n + 1));
+	$this->_out('0 '.(astpp_n($this->n) + 1));
 	$this->_out('0000000000 65535 f ');
 	for ($i = 1; $i <= $this->n; $i++)
 		$this->_out(sprintf('%010d 00000 n ', $this->offsets[$i]));

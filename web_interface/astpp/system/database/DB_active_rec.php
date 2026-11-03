@@ -28,6 +28,7 @@
  * @author		ExpressionEngine Dev Team
  * @link		http://codeigniter.com/user_guide/database/
  */
+#[\AllowDynamicProperties]
 class CI_DB_active_record extends CI_DB_driver {
 
 	var $ar_select = array();
@@ -188,7 +189,7 @@ class CI_DB_active_record extends CI_DB_driver {
 
 		$type = strtoupper($type);
 
-		if ( ! in_array($type, array('MAX', 'MIN', 'AVG', 'SUM')))
+		if ( ! astpp_in_array($type, array('MAX', 'MIN', 'AVG', 'SUM')))
 		{
 			show_error('Invalid function type: '.$type);
 		}
@@ -224,7 +225,7 @@ class CI_DB_active_record extends CI_DB_driver {
 	{
 		if (strpos($item, '.') !== FALSE)
 		{
-			return end(explode('.', $item));
+			return astpp_end(explode('.', $item));
 		}
 
 		return $item;
@@ -316,7 +317,7 @@ class CI_DB_active_record extends CI_DB_driver {
 		{
 			$type = strtoupper(trim($type));
 
-			if ( ! in_array($type, array('LEFT', 'RIGHT', 'OUTER', 'INNER', 'LEFT OUTER', 'RIGHT OUTER')))
+			if ( ! astpp_in_array($type, array('LEFT', 'RIGHT', 'OUTER', 'INNER', 'LEFT OUTER', 'RIGHT OUTER')))
 			{
 				$type = '';
 			} else
@@ -413,7 +414,7 @@ class CI_DB_active_record extends CI_DB_driver {
 
 		foreach ($key as $k => $v)
 		{
-			$prefix = (count($this->ar_where) == 0 AND count($this->ar_cache_where) == 0) ? '' : $type;
+			$prefix = (astpp_count($this->ar_where) == 0 AND astpp_count($this->ar_cache_where) == 0) ? '' : $type;
 
 			if (is_null($v) && ! $this->_has_operator($k))
 			{
@@ -552,9 +553,9 @@ class CI_DB_active_record extends CI_DB_driver {
 			$this->ar_wherein[] = $this->escape($value);
 		}
 
-		$prefix = (count($this->ar_where) == 0) ? '' : $type;
+		$prefix = (astpp_count($this->ar_where) == 0) ? '' : $type;
 
-		$where_in = $prefix.$this->_protect_identifiers($key).$not." IN (".implode(", ", $this->ar_wherein).") ";
+		$where_in = $prefix.$this->_protect_identifiers($key).$not." IN (".astpp_implode(", ", $this->ar_wherein).") ";
 
 		$this->ar_where[] = $where_in;
 		if ($this->ar_caching === TRUE)
@@ -660,7 +661,7 @@ class CI_DB_active_record extends CI_DB_driver {
 		{
 			$k = $this->_protect_identifiers($k);
 
-			$prefix = (count($this->ar_like) == 0) ? '' : $type;
+			$prefix = (astpp_count($this->ar_like) == 0) ? '' : $type;
 
 			$v = $this->escape_like_str($v);
 
@@ -777,7 +778,7 @@ class CI_DB_active_record extends CI_DB_driver {
 
 		foreach ($key as $k => $v)
 		{
-			$prefix = (count($this->ar_having) == 0) ? '' : $type;
+			$prefix = (astpp_count($this->ar_having) == 0) ? '' : $type;
 
 			if ($escape === TRUE)
 			{
@@ -822,7 +823,7 @@ class CI_DB_active_record extends CI_DB_driver {
 			$direction = $this->_random_keyword;
 		} elseif (trim($direction) != '')
 		{
-			$direction = (in_array(strtoupper(trim($direction)), array('ASC', 'DESC'), TRUE)) ? ' '.$direction : ' ASC';
+			$direction = (astpp_in_array(strtoupper(trim($direction)), array('ASC', 'DESC'), TRUE)) ? ' '.$direction : ' ASC';
 		}
 
 
@@ -832,7 +833,7 @@ class CI_DB_active_record extends CI_DB_driver {
 			foreach (explode(',', $orderby) as $part)
 			{
 				$part = trim($part);
-				if ( ! in_array($part, $this->ar_aliased_tables))
+				if ( ! astpp_in_array($part, $this->ar_aliased_tables))
 				{
 					$part = $this->_protect_identifiers(trim($part));
 				}
@@ -840,7 +841,7 @@ class CI_DB_active_record extends CI_DB_driver {
 				$temp[] = $part;
 			}
 
-			$orderby = implode(', ', $temp);
+			$orderby = astpp_implode(', ', $temp);
 		} else if ($direction != $this->_random_keyword)
 		{
 			$orderby = $this->_protect_identifiers($orderby);
@@ -1044,7 +1045,7 @@ class CI_DB_active_record extends CI_DB_driver {
 			$this->set_insert_batch($set);
 		}
 
-		if (count($this->ar_set) == 0)
+		if (astpp_count($this->ar_set) == 0)
 		{
 			if ($this->db_debug)
 			{
@@ -1069,10 +1070,10 @@ class CI_DB_active_record extends CI_DB_driver {
 		}
 
 		// Batch this baby
-		for ($i = 0, $total = count($this->ar_set); $i < $total; $i = $i + 100)
+		for ($i = 0, $total = astpp_count($this->ar_set); $i < $total; $i = astpp_n($i) + 100)
 		{
 
-			$sql = $this->_insert_batch($this->_protect_identifiers($table, TRUE, NULL, FALSE), $this->ar_keys, array_slice($this->ar_set, $i, 100));
+			$sql = $this->_insert_batch($this->_protect_identifiers($table, TRUE, NULL, FALSE), $this->ar_keys, astpp_array_slice($this->ar_set, $i, 100));
 
 			//echo $sql;
 
@@ -1104,12 +1105,12 @@ class CI_DB_active_record extends CI_DB_driver {
 			$key = array($key => $value);
 		}
 
-		$keys = array_keys(current($key));
+		$keys = astpp_array_keys(astpp_current($key));
 		sort($keys);
 
 		foreach ($key as $row)
 		{
-			if (count(array_diff($keys, array_keys($row))) > 0 OR count(array_diff(array_keys($row), $keys)) > 0)
+			if (astpp_count(astpp_array_diff($keys, astpp_array_keys($row))) > 0 OR astpp_count(astpp_array_diff(astpp_array_keys($row), $keys)) > 0)
 			{
 				// batch function above returns an error on an empty array
 				$this->ar_set[] = array();
@@ -1120,7 +1121,7 @@ class CI_DB_active_record extends CI_DB_driver {
 
 			if ($escape === FALSE)
 			{
-				$this->ar_set[] = '('.implode(',', $row).')';
+				$this->ar_set[] = '('.astpp_implode(',', $row).')';
 			}
 			else
 			{
@@ -1131,7 +1132,7 @@ class CI_DB_active_record extends CI_DB_driver {
 					$clean[] = $this->escape($value);
 				}
 
-				$this->ar_set[] = '('.implode(',', $clean).')';
+				$this->ar_set[] = '('.astpp_implode(',', $clean).')';
 			}
 		}
 
@@ -1161,7 +1162,7 @@ class CI_DB_active_record extends CI_DB_driver {
 			$this->set($set);
 		}
 
-		if (count($this->ar_set) == 0)
+		if (astpp_count($this->ar_set) == 0)
 		{
 			if ($this->db_debug)
 			{
@@ -1184,7 +1185,7 @@ class CI_DB_active_record extends CI_DB_driver {
 			$table = $this->ar_from[0];
 		}
 
-		$sql = $this->_insert($this->_protect_identifiers($table, TRUE, NULL, FALSE), array_keys($this->ar_set), array_values($this->ar_set));
+		$sql = $this->_insert($this->_protect_identifiers($table, TRUE, NULL, FALSE), astpp_array_keys($this->ar_set), astpp_array_values($this->ar_set));
 
 		$this->_reset_write();
 		return $this->query($sql);
@@ -1208,7 +1209,7 @@ class CI_DB_active_record extends CI_DB_driver {
 			$this->set($set);
 		}
 
-		if (count($this->ar_set) == 0)
+		if (astpp_count($this->ar_set) == 0)
 		{
 			if ($this->db_debug)
 			{
@@ -1231,7 +1232,7 @@ class CI_DB_active_record extends CI_DB_driver {
 			$table = $this->ar_from[0];
 		}
 
-		$sql = $this->_replace($this->_protect_identifiers($table, TRUE, NULL, FALSE), array_keys($this->ar_set), array_values($this->ar_set));
+		$sql = $this->_replace($this->_protect_identifiers($table, TRUE, NULL, FALSE), astpp_array_keys($this->ar_set), astpp_array_values($this->ar_set));
 
 		$this->_reset_write();
 		return $this->query($sql);
@@ -1259,7 +1260,7 @@ class CI_DB_active_record extends CI_DB_driver {
 			$this->set($set);
 		}
 
-		if (count($this->ar_set) == 0)
+		if (astpp_count($this->ar_set) == 0)
 		{
 			if ($this->db_debug)
 			{
@@ -1331,7 +1332,7 @@ class CI_DB_active_record extends CI_DB_driver {
 			$this->set_update_batch($set, $index);
 		}
 
-		if (count($this->ar_set) == 0)
+		if (astpp_count($this->ar_set) == 0)
 		{
 			if ($this->db_debug)
 			{
@@ -1356,9 +1357,9 @@ class CI_DB_active_record extends CI_DB_driver {
 		}
 
 		// Batch this baby
-		for ($i = 0, $total = count($this->ar_set); $i < $total; $i = $i + 100)
+		for ($i = 0, $total = astpp_count($this->ar_set); $i < $total; $i = astpp_n($i) + 100)
 		{
-			$sql = $this->_update_batch($this->_protect_identifiers($table, TRUE, NULL, FALSE), array_slice($this->ar_set, $i, 100), $this->_protect_identifiers($index), $this->ar_where);
+			$sql = $this->_update_batch($this->_protect_identifiers($table, TRUE, NULL, FALSE), astpp_array_slice($this->ar_set, $i, 100), $this->_protect_identifiers($index), $this->ar_where);
 
 			$this->query($sql);
 		}
@@ -1548,7 +1549,7 @@ class CI_DB_active_record extends CI_DB_driver {
 			$this->limit($limit);
 		}
 
-		if (count($this->ar_where) == 0 && count($this->ar_wherein) == 0 && count($this->ar_like) == 0)
+		if (astpp_count($this->ar_where) == 0 && astpp_count($this->ar_wherein) == 0 && astpp_count($this->ar_like) == 0)
 		{
 			if ($this->db_debug)
 			{
@@ -1641,7 +1642,7 @@ class CI_DB_active_record extends CI_DB_driver {
 			$table = trim(strrchr($table, " "));
 
 			// Store the alias, if it doesn't already exist
-			if ( ! in_array($table, $this->ar_aliased_tables))
+			if ( ! astpp_in_array($table, $this->ar_aliased_tables))
 			{
 				$this->ar_aliased_tables[] = $table;
 			}
@@ -1674,7 +1675,7 @@ class CI_DB_active_record extends CI_DB_driver {
 		{
 			$sql = ( ! $this->ar_distinct) ? 'SELECT ' : 'SELECT DISTINCT ';
 
-			if (count($this->ar_select) == 0)
+			if (astpp_count($this->ar_select) == 0)
 			{
 				$sql .= '*';
 			} else
@@ -1688,7 +1689,7 @@ class CI_DB_active_record extends CI_DB_driver {
 					$this->ar_select[$key] = $this->_protect_identifiers($val, FALSE, $no_escape);
 				}
 
-				$sql .= implode(', ', $this->ar_select);
+				$sql .= astpp_implode(', ', $this->ar_select);
 			}
 		}
 
@@ -1696,7 +1697,7 @@ class CI_DB_active_record extends CI_DB_driver {
 
 		// Write the "FROM" portion of the query
 
-		if (count($this->ar_from) > 0)
+		if (astpp_count($this->ar_from) > 0)
 		{
 			$sql .= "\nFROM ";
 
@@ -1707,67 +1708,67 @@ class CI_DB_active_record extends CI_DB_driver {
 
 		// Write the "JOIN" portion of the query
 
-		if (count($this->ar_join) > 0)
+		if (astpp_count($this->ar_join) > 0)
 		{
 			$sql .= "\n";
 
-			$sql .= implode("\n", $this->ar_join);
+			$sql .= astpp_implode("\n", $this->ar_join);
 		}
 
 		// ----------------------------------------------------------------
 
 		// Write the "WHERE" portion of the query
 
-		if (count($this->ar_where) > 0 OR count($this->ar_like) > 0)
+		if (astpp_count($this->ar_where) > 0 OR astpp_count($this->ar_like) > 0)
 		{
 			$sql .= "\nWHERE ";
 		}
 
-		$sql .= implode("\n", $this->ar_where);
+		$sql .= astpp_implode("\n", $this->ar_where);
 
 		// ----------------------------------------------------------------
 
 		// Write the "LIKE" portion of the query
 
-		if (count($this->ar_like) > 0)
+		if (astpp_count($this->ar_like) > 0)
 		{
-			if (count($this->ar_where) > 0)
+			if (astpp_count($this->ar_where) > 0)
 			{
 				$sql .= "\nAND ";
 			}
 
-			$sql .= implode("\n", $this->ar_like);
+			$sql .= astpp_implode("\n", $this->ar_like);
 		}
 
 		// ----------------------------------------------------------------
 
 		// Write the "GROUP BY" portion of the query
 
-		if (count($this->ar_groupby) > 0)
+		if (astpp_count($this->ar_groupby) > 0)
 		{
 			$sql .= "\nGROUP BY ";
 
-			$sql .= implode(', ', $this->ar_groupby);
+			$sql .= astpp_implode(', ', $this->ar_groupby);
 		}
 
 		// ----------------------------------------------------------------
 
 		// Write the "HAVING" portion of the query
 
-		if (count($this->ar_having) > 0)
+		if (astpp_count($this->ar_having) > 0)
 		{
 			$sql .= "\nHAVING ";
-			$sql .= implode("\n", $this->ar_having);
+			$sql .= astpp_implode("\n", $this->ar_having);
 		}
 
 		// ----------------------------------------------------------------
 
 		// Write the "ORDER BY" portion of the query
 
-		if (count($this->ar_orderby) > 0)
+		if (astpp_count($this->ar_orderby) > 0)
 		{
 			$sql .= "\nORDER BY ";
-			$sql .= implode(', ', $this->ar_orderby);
+			$sql .= astpp_implode(', ', $this->ar_orderby);
 
 			if ($this->ar_order !== FALSE)
 			{
@@ -1837,7 +1838,7 @@ class CI_DB_active_record extends CI_DB_driver {
 
 		$array = array();
 		$out = get_object_vars($object);
-		$fields = array_keys($out);
+		$fields = astpp_array_keys($out);
 
 		foreach ($fields as $val)
 		{
@@ -1924,7 +1925,7 @@ class CI_DB_active_record extends CI_DB_driver {
 	 */
 	protected function _merge_cache()
 	{
-		if (count($this->ar_cache_exists) == 0)
+		if (astpp_count($this->ar_cache_exists) == 0)
 		{
 			return;
 		}
@@ -1934,17 +1935,17 @@ class CI_DB_active_record extends CI_DB_driver {
 			$ar_variable = 'ar_'.$val;
 			$ar_cache_var = 'ar_cache_'.$val;
 
-			if (count($this->{$ar_cache_var}) == 0)
+			if (astpp_count($this->{$ar_cache_var}) == 0)
 			{
 				continue;
 			}
 
-			$this->{$ar_variable} = array_unique(array_merge($this->{$ar_cache_var}, $this->{$ar_variable}));
+			$this->{$ar_variable} = astpp_array_unique(astpp_array_merge($this->{$ar_cache_var}, $this->{$ar_variable}));
 		}
 
 		// If we are "protecting identifiers" we need to examine the "from"
 		// portion of the query to determine if there are any aliases
-		if ($this->_protect_identifiers === TRUE AND count($this->ar_cache_from) > 0)
+		if ($this->_protect_identifiers === TRUE AND astpp_count($this->ar_cache_from) > 0)
 		{
 			$this->_track_aliases($this->ar_from);
 		}
@@ -1964,7 +1965,7 @@ class CI_DB_active_record extends CI_DB_driver {
 	{
 		foreach ($ar_reset_items as $item => $default_value)
 		{
-			if ( ! in_array($item, $this->ar_store_array))
+			if ( ! astpp_in_array($item, $this->ar_store_array))
 			{
 				$this->{$item} = $default_value;
 			}
@@ -2021,7 +2022,7 @@ class CI_DB_active_record extends CI_DB_driver {
 				$this->set($set);
 			}
 
-			if (count($this->ar_set) == 0)
+			if (astpp_count($this->ar_set) == 0)
 			{
 				if ($this->db_debug)
 				{
@@ -2046,7 +2047,7 @@ class CI_DB_active_record extends CI_DB_driver {
 
 
 //            $sql = $this->_insert_update_batch($this->_protect_identifiers($this->dbprefix.$table), $this->ar_set );
-		for ($i = 1, $total = count($this->ar_set); $i < $total; $i++)
+		for ($i = 1, $total = astpp_count($this->ar_set); $i < $total; $i++)
 		{
 
 				$sql = $this->_insert_update_batch($this->_protect_identifiers($table, TRUE, NULL, FALSE), $this->ar_set[$this->_protect_identifiers($i)]);
@@ -2080,7 +2081,7 @@ class CI_DB_active_record extends CI_DB_driver {
 				   $this->set_insert_batch($set);
 		  }
 
-		  if (count($this->ar_set) == 0)
+		  if (astpp_count($this->ar_set) == 0)
 		  {
 				   if ($this->db_debug)
 				   {
@@ -2104,9 +2105,9 @@ class CI_DB_active_record extends CI_DB_driver {
 				  $table = $this->ar_from[0];
 		  }
 		  // Batch this baby
-		  for ($i = 0, $total = count($this->ar_set); $i < $total; $i = $i + 500)
+		  for ($i = 0, $total = astpp_count($this->ar_set); $i < $total; $i = astpp_n($i) + 500)
 		  {
-				$sql = $this->_insert_on_duplicate_update_batch($this->_protect_identifiers($table, TRUE, NULL, FALSE), $this->ar_keys, array_slice($this->ar_set, $i, 500));
+				$sql = $this->_insert_on_duplicate_update_batch($this->_protect_identifiers($table, TRUE, NULL, FALSE), $this->ar_keys, astpp_array_slice($this->ar_set, $i, 500));
 
 				// echo $sql;
 				$this->query($sql);
@@ -2135,7 +2136,7 @@ class CI_DB_active_record extends CI_DB_driver {
 				  foreach($keys as $key)
 				  $update_fields[] = $key.'=VALUES('.$key.')';
 
-				  return "INSERT INTO ".$table." (".implode(', ', $keys).") VALUES ".implode(', ', $values)." ON DUPLICATE KEY UPDATE ".implode(', ', $update_fields);
+				  return "INSERT INTO ".$table." (".astpp_implode(', ', $keys).") VALUES ".astpp_implode(', ', $values)." ON DUPLICATE KEY UPDATE ".astpp_implode(', ', $update_fields);
 		 }
 
 
@@ -2172,7 +2173,7 @@ class CI_DB_active_record extends CI_DB_driver {
 		$this->set_insert_batch($set);
 	    }
 
-	    if (count($this->ar_set) == 0)
+	    if (astpp_count($this->ar_set) == 0)
 	    {
 		if ($this->db_debug)
 		{
@@ -2197,10 +2198,10 @@ class CI_DB_active_record extends CI_DB_driver {
 	    }
 
 	    // Batch this baby
-	    for ($i = 0, $total = count($this->ar_set); $i < $total; $i = $i + 100)
+	    for ($i = 0, $total = astpp_count($this->ar_set); $i < $total; $i = astpp_n($i) + 100)
 	    {
 
-		$sql = $this->_insert_batch($this->_protect_identifiers($table, TRUE, NULL, FALSE), $this->ar_keys, array_slice($this->ar_set, $i, 100));
+		$sql = $this->_insert_batch($this->_protect_identifiers($table, TRUE, NULL, FALSE), $this->ar_keys, astpp_array_slice($this->ar_set, $i, 100));
 		$sql = str_replace('INSERT INTO','INSERT IGNORE INTO',$sql);
 		//echo $sql;
 

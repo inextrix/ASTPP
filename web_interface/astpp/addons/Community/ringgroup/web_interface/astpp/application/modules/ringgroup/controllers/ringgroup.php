@@ -19,6 +19,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>
 ############################################################################
+#[\AllowDynamicProperties]
 class Ringgroup extends MX_Controller {
     function __construct() {
         
@@ -113,7 +114,7 @@ class Ringgroup extends MX_Controller {
                 $data ['edit_array'] = $add_array;
                 $this->load->view ( 'view_ringgroup_add', $data);
             } else {
-                if (!array_key_exists("accountid",$add_array)) {
+                if (!astpp_array_key_exists("accountid",$add_array)) {
                     $add_array['accountid'] = '0';
                 }
                 
@@ -138,7 +139,7 @@ class Ringgroup extends MX_Controller {
     }
     function ringgroup_field_add($count,$val="",$extensions="",$type="") {
         $account_data = $this->session->userdata ( "accountinfo" );
-        if($account_data ['type'] == 0) {
+        if(astpp_eq0($account_data ['type'])) {
             $data['accountid']  = $account_data ['id'] ;
         } else {
             $data['accountid']  = $this->uri->segment(4);
@@ -153,12 +154,12 @@ class Ringgroup extends MX_Controller {
         $account_data = $this->session->userdata ( "accountinfo" );
 
         $data['count']      = $_POST ['count'];
-        if (array_key_exists('value', $_POST)) {
+        if (astpp_array_key_exists('value', $_POST)) {
             $data['val']        = $_POST ['value'];
         } else {
             $data['val']        = '';
         }
-        if($account_data ['type'] == 0) {
+        if(astpp_eq0($account_data ['type'])) {
             $data['accountid']  = $account_data ['id'] ;
         } else {
             $data['accountid']  = $_POST ['extensions'];
@@ -277,7 +278,7 @@ function ringgroup_did_change($account_type,$did_id='') {
             $account_data = $account->result_array();
             $did_arr      = array();
             foreach ($account_data as  $value) {
-                if($value['accountid'] == 0) {
+                if(astpp_eq0($value['accountid'])) {
                     $admin_name= "Admin";
                 } else {
                     $first_name = $this->common->get_field_name('first_name', 'accounts', array('id'=>$value['accountid']));
@@ -336,7 +337,7 @@ function ringgroup_quick_change($account_type) {
             foreach ($account_data as  $value) {
                 $value['accountid'] = $value['id'];
 
-                if($value['accountid'] == 0) {
+                if(astpp_eq0($value['accountid'])) {
                     $admin_name= "Admin";
                 } else {
                     $first_name = $this->common->get_field_name('first_name', 'accounts', array('id'=>$value['accountid']));
@@ -367,7 +368,7 @@ function ringgroup_sip_list($act_id,$ext='',$count='') {
             $sip_devices_data = $sip_devices->result_array();
             $sip_devices_arr  = array();
             foreach ($sip_devices_data as  $value) {
-                if($value['accountid'] == 0) {
+                if(astpp_eq0($value['accountid'])) {
                     $admin_name= "Admin";
                 } else {
                     $first_name = $this->common->get_field_name('first_name', 'accounts', array('id'=>$value['accountid']));

@@ -1,6 +1,7 @@
 <?php
 defined('BASEPATH') or exit('No direct script access allowed');
 require APPPATH . '/controllers/common/account.php';
+#[\AllowDynamicProperties]
 class User_sip_device extends Account
 {
 	protected $postdata = "";
@@ -43,7 +44,7 @@ class User_sip_device extends Account
 		if ($function != '') {
 			$function = '_' . $function;
 		
-			if (( int ) method_exists ( $this, $function ) > 0) {
+			if (astpp_gt(( int ) method_exists ( $this, $function ), 0)) {
 				$this->$function ();
 			} else {
 				$this->response ( array (
@@ -91,7 +92,7 @@ class User_sip_device extends Account
 				}
 			}
 		}
-		$start = $this->postdata['start_limit']-1;
+		$start = astpp_n($this->postdata['start_limit'])-1;
 		$limit = $this->postdata['end_limit'];
 		$no_of_records = (int)$limit - (int)$start;
 		$where = array('accountid' => $this->postdata['id'] );
@@ -192,7 +193,7 @@ class User_sip_device extends Account
 			$postdata['send_all_message'] = 'true';
 		}
 		$digits = 5;
-    	$random_password = rand(pow(10, $digits - 1), pow(10, $digits) - 1);
+    	$random_password = rand(pow(10, astpp_n($digits) - 1), pow(10, $digits) - 1);
     	$reseller_id = $this->common->get_field_name('reseller_id','accounts', array('id' => $postdata['id']));
 		$sipdevice_array = array (
 			'username' => $postdata['username'],
@@ -340,7 +341,7 @@ class User_sip_device extends Account
 				'error'  => $this->lang->line('something_wrong_contact_admin')
 			), 400);
 		}
-		$new_count  = $string_cnt - 3;
+		$new_count  = astpp_n($string_cnt) - 3;
 		$sip_number = substr($string, 0, $new_count);
 		$this->db->where(array("username" => $sip_number));
 		$sip_devices_res = (array) $this->db->get('sip_devices')->first_row();

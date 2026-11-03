@@ -2,6 +2,7 @@
 
 require APPPATH . '/controllers/common/account.php';
 
+#[\AllowDynamicProperties]
 class Did_admin extends Account
 {
     protected $postdata = "";
@@ -47,7 +48,7 @@ class Did_admin extends Account
         $function = isset ( $this->postdata ['action'] ) ? $this->postdata ['action'] : '';
         if ($function != '') {
             $function = '_' . $function;
-            if (( int ) method_exists ( $this, $function ) > 0) {
+            if (astpp_gt(( int ) method_exists ( $this, $function ), 0)) {
                 $this->$function ();
             } else {
                 $this->response ( array (
@@ -464,7 +465,7 @@ class Did_admin extends Account
 
                             if ($acc_info->num_rows > 0) {
                                 $acc_info_result = $acc_info->result_array()[0];
-                                $final_array = array_merge($acc_info_result, $did_delete);
+                                $final_array = astpp_array_merge($acc_info_result, $did_delete);
                                 $this->common->mail_to_users('product_release', $final_array);
                             }
                         }
@@ -580,7 +581,7 @@ class Did_admin extends Account
             $where = rtrim($where,"AND ");
             $this->db->where($where);
         }
-        $start = $this->postdata['start_limit']-1;
+        $start = astpp_n($this->postdata['start_limit'])-1;
         $limit = $this->postdata['end_limit'];
         $no_of_records = (int)$limit - (int)$start;
         
@@ -607,29 +608,29 @@ class Did_admin extends Account
            $dids_arrays[$key]['cc'] =  $dids_arrays[$key]['maxchannels'];
            $dids_arrays[$key]['call_type'] = $this->common->get_call_type("call_type","dids",$dids_arrays[$key]['call_type']);
             //not anyone assign
-            if($dids_arrays[$key]['accountid'] == 0 && $dids_arrays[$key]['parent_id'] == 0 && $dids_arrays[$key]['status'] == 0){
+            if(astpp_eq0($dids_arrays[$key]['accountid']) && astpp_eq0($dids_arrays[$key]['parent_id']) && astpp_eq0($dids_arrays[$key]['status'])){
                 $dids_arrays[$key]['is_purchased'] = "Assign Number";
             }
             //assign to customer
-            elseif($dids_arrays[$key]['accountid'] != 0 && $dids_arrays[$key]['parent_id'] == 0 && $dids_arrays[$key]['status'] == 0){
+            elseif((!astpp_eq0($dids_arrays[$key]['accountid'])) && astpp_eq0($dids_arrays[$key]['parent_id']) && astpp_eq0($dids_arrays[$key]['status'])){
                 $dids_arrays[$key]['is_purchased'] = "Release(C)";
             }
             //just reseller purchased 
-            elseif($dids_arrays[$key]['accountid'] == 0 && $dids_arrays[$key]['parent_id'] != 0 && $dids_arrays[$key]['status'] == 0){
+            elseif(astpp_eq0($dids_arrays[$key]['accountid']) && (!astpp_eq0($dids_arrays[$key]['parent_id'])) && astpp_eq0($dids_arrays[$key]['status'])){
                 $dids_arrays[$key]['is_purchased'] = "Release(R)";
             }//customer of reseller
-            elseif($dids_arrays[$key]['accountid'] != 0 && $dids_arrays[$key]['parent_id'] != 0 && $dids_arrays[$key]['status'] == 0){
+            elseif((!astpp_eq0($dids_arrays[$key]['accountid'])) && (!astpp_eq0($dids_arrays[$key]['parent_id'])) && astpp_eq0($dids_arrays[$key]['status'])){
                 $dids_arrays[$key]['is_purchased'] = "Release(C)";
             }
             //customer of reseller
-            elseif($dids_arrays[$key]['accountid'] != 0 && $dids_arrays[$key]['parent_id'] != 0 && $dids_arrays[$key]['status'] == 0){
+            elseif((!astpp_eq0($dids_arrays[$key]['accountid'])) && (!astpp_eq0($dids_arrays[$key]['parent_id'])) && astpp_eq0($dids_arrays[$key]['status'])){
                 $dids_arrays[$key]['is_purchased'] = "Release(C)";
             }
             else{
                 $dids_arrays[$key]['is_purchased'] = "Inactive";
             }
 
-            if($product_did['billing_type'] == 0){
+            if(astpp_eq0($product_did['billing_type'])){
                  $dids_arrays[$key]['billing_type'] ="One Time";
             }
             elseif ($product_did['billing_type'] == 1) {
@@ -640,7 +641,7 @@ class Did_admin extends Account
             }
             $dids_arrays[$key]['billing_days'] = $product_did['billing_days'];
           
-           if($dids_arrays[$key]['status'] == 0){
+           if(astpp_eq0($dids_arrays[$key]['status'])){
             $dids_arrays[$key]['status'] = "Active";
            }
            elseif ($dids_arrays[$key]['status'] == 1) {
@@ -650,7 +651,7 @@ class Did_admin extends Account
             $dids_arrays[$key]['status'] = "On Hold";
            }
             $dids_arrays[$key]['accountid'] = $this->common->get_field_name_coma_new('first_name,last_name,number,company_name','accounts', $dids_arrays[$key]['accountid']);
-           $dids_arrays[$key]['reseller_id'] = $dids_arrays[$key]['parent_id'] == 0 ? "Admin" : $this->common->get_field_name_coma_new('first_name,last_name,number,company_name','accounts', $dids_arrays[$key]['did_id']);
+           $dids_arrays[$key]['reseller_id'] = astpp_eq0($dids_arrays[$key]['parent_id']) ? "Admin" : $this->common->get_field_name_coma_new('first_name,last_name,number,company_name','accounts', $dids_arrays[$key]['did_id']);
            unset($dids_arrays[$key]['maxchannels'],$dids_arrays[$key]['leg_timeout'],$dids_arrays[$key]['parent_id'],$dids_arrays[$key]['setup'],$dids_arrays[$key]['last_modified_date'],$dids_arrays[$key]['inc'],$dids_arrays[$key]['init_inc'], $dids_arrays[$key]['did_id_new'],$dids_arrays[$key]['id'],$dids_arrays[$key]['productid']);
         }
         if (empty($dids_arrays)) { 
@@ -681,7 +682,7 @@ class Did_admin extends Account
                 'error' => $this->lang->line ('numeric_did_number') 
             ), 400 );
         }
-         if ($this->accountinfo['reseller_id'] > 0) {
+         if (astpp_gt($this->accountinfo['reseller_id'], 0)) {
             $this->db->select('dids.id, dids.number, reseller_products.setup_fee, reseller_products.price');
            $where =  array('dids.number' => $this->postdata['did_number'],'dids.status'=> 0,'dids.parent_id' => $this->accountinfo['reseller_id'],'dids.accountid'=> 0,'dids.number'=> $this->postdata['did_number']);
             $this->db->where($where);
@@ -709,7 +710,7 @@ class Did_admin extends Account
                     $did_arr['is_parent_billing'] = "false";
                     $order_id = '';
                     $payment_gateway = '';
-                    if ($this->accountinfo['reseller_id'] > 0) {
+                    if (astpp_gt($this->accountinfo['reseller_id'], 0)) {
                         $product_query = $this->db_model->getJionQuery('products', 'products.id,products.name,products.product_category,products.buy_cost,products.can_purchase,products.can_resell,products.commission,reseller_products.price,reseller_products.setup_fee,products.billing_type,products.billing_days,reseller_products.free_minutes,products.status,products.last_modified_date,reseller_products.product_id,reseller_products.setup_fee,reseller_products.is_optin', array(
                             'products.status' => 0,
                             'reseller_products.product_id' => $did_arr['product_id'],
@@ -733,30 +734,30 @@ class Did_admin extends Account
                      $today = gmdate("d");
             if($today <= 28 && $product_array['billing_type'] == "2"){
                 $nxt_date =gmdate("Y-m-$today 23:59:59");   
-                $next_bill_date =gmdate("Y-m-d 23:59:59",strtotime($nxt_date."+".(1)." months"));
+                $next_bill_date =astpp_gmdate("Y-m-d 23:59:59",strtotime($nxt_date."+".(1)." months"));
             }
-            if(gmdate("d",strtotime($next_bill_date)) > 28 && $product_array['billing_type'] == "2"){
-                $next_bill_date =gmdate("Y-m-01 23:59:59",strtotime($next_bill_date."+".($product_array['billing_days'])." days"));
+            if(astpp_gmdate("d",strtotime($next_bill_date)) > 28 && $product_array['billing_type'] == "2"){
+                $next_bill_date =astpp_gmdate("Y-m-01 23:59:59",strtotime($next_bill_date."+".($product_array['billing_days'])." days"));
             }
             if($today > 28 && $product_array['billing_type'] == "2"){
-                $next_bill_date = gmdate("Y-m-01 23:59:59",strtotime("+".(2)." months"));
+                $next_bill_date = astpp_gmdate("Y-m-01 23:59:59",strtotime("+".(2)." months"));
             }
-            if($product_array['billing_type'] == 0){
-                $next_bill_date = ($product_array['billing_days'] == 0)?gmdate('Y-m-d 23:59:59', strtotime('+10 years')):gmdate("Y-m-d 23:59:59",strtotime("+".($product_array['billing_days']-1)." days"));
+            if(astpp_eq0($product_array['billing_type'])){
+                $next_bill_date = (astpp_eq0($product_array['billing_days']))?astpp_gmdate('Y-m-d 23:59:59', strtotime('+10 years')):astpp_gmdate("Y-m-d 23:59:59",strtotime("+".(astpp_n($product_array['billing_days'])-1)." days"));
             }
             if($product_array['billing_type'] == 1){
-                $next_bill_date = ($product_array['billing_days'] == 0)?gmdate('Y-m-d 23:59:59', strtotime('+10 years')):gmdate("Y-m-d 23:59:59",strtotime("+".($product_array['billing_days']-1)." days"));
+                $next_bill_date = (astpp_eq0($product_array['billing_days']))?astpp_gmdate('Y-m-d 23:59:59', strtotime('+10 years')):astpp_gmdate("Y-m-d 23:59:59",strtotime("+".(astpp_n($product_array['billing_days'])-1)." days"));
             }   
             
             $did_arr['next_billing_date'] = $next_bill_date;
             $did_arr['payment_by'] = "Account Balance";
             $last_id = $this->order->confirm_order($did_arr, $this->accountinfo['id'], $this->accountinfo);
-            $final_array = array_merge($account_arr, $did_arr);
-                    if ($last_id > 0) {
+            $final_array = astpp_array_merge($account_arr, $did_arr);
+                    if (astpp_gt($last_id, 0)) {
                         $final_array['quantity'] = 1;
-                        $final_array['price'] = ($did_arr['setup_fee'] + $did_arr['price']);
-                        $final_array['total_price'] = ($product_array['setup_fee'] + $product_array['price']) * ($final_array['quantity']);
-                        $final_array['total_price_amount'] = ($product_array['setup_fee'] + $product_array['price']);
+                        $final_array['price'] = (astpp_n($did_arr['setup_fee']) + astpp_n($did_arr['price']));
+                        $final_array['total_price'] = (astpp_n($product_array['setup_fee']) + astpp_n($product_array['price'])) * (astpp_n($final_array['quantity']));
+                        $final_array['total_price_amount'] = (astpp_n($product_array['setup_fee']) + astpp_n($product_array['price']));
                         $final_array['payment_by'] = "Account Balance";
                     }
                 }
@@ -837,7 +838,7 @@ class Did_admin extends Account
                 $add_array['product_id'] = $this->postdata['did_id'];
                 // END
                 $order_id = $this->order->confirm_order($add_array, $this->postdata['accountid'], $this->accountinfo);
-                if ($order_id > 0) {
+                if (astpp_gt($order_id, 0)) {
                         $this->db->where("product_id", $this->postdata['did_id']);
                         $this->db->update("dids", array(
                             "accountid" =>$this->postdata['accountid']
@@ -922,7 +923,7 @@ class Did_admin extends Account
         }else{
             $where = array('parent_id' => $this->postdata['reseller_id'], 'accountid' => 0, 'status' => 0,'product_id'=> $this->postdata['did_id']);
         }
-        if ($this->accountinfo['reseller_id'] > 0) {
+        if (astpp_gt($this->accountinfo['reseller_id'], 0)) {
             $where = array( 
                 'reseller_products.account_id' => $this->accountinfo['reseller_id'],
                 'dids.status' => 0,
@@ -952,7 +953,7 @@ class Did_admin extends Account
         }
           $add_array['price'] = $this->postdata['price'];
           $add_array['setup_fee'] = $this->postdata['setup_fee'];
-          if($this->postdata['did_id'] != '' && $this->postdata['did_id'] != 0) {
+          if($this->postdata['did_id'] != '' && (!astpp_eq0($this->postdata['did_id']))) {
                 $did_id = $this->common->get_field_name("id", "dids", array(
                     "product_id" => $this->postdata['did_id']
                 ));
@@ -992,12 +993,12 @@ class Did_admin extends Account
                         $add_array['billing_days'] = $product_info['billing_days'];
                         $add_array['commission'] = $product_info['commission'];
                         $add_array['free_minutes'] = isset($product_info['free_minutes']) ? $product_info['free_minutes'] : 0;
-                        if (($this->accountinfo['reseller_id'] > 0 || $this->accountinfo['type'] == 1) && $this->accountinfo['is_distributor'] == 0) {
+                        if ((astpp_gt($this->accountinfo['reseller_id'], 0) || $this->accountinfo['type'] == 1) && astpp_eq0($this->accountinfo['is_distributor'])) {
                             $add_array['buy_cost'] = $this->common_model->add_calculate_currency($did_product_id['cost'], "", '', false, false);
                         } else {
                             $add_array['buy_cost'] = $product_info['buy_cost'];
                         }
-                        if ($account_info['is_distributor'] == 0) {
+                        if (astpp_eq0($account_info['is_distributor'])) {
                             $add_array['price'] = isset($this->postdata['price']) && $this->postdata['price'] != "" ? $this->common_model->add_calculate_currency($this->postdata['price'], "", '', false, false) : $this->common_model->add_calculate_currency($product_info['price'], "", '', false, false);
                             $add_array['setup_fee'] = isset($this->postdata['setup_fee']) && $this->postdata['setup_fee'] != "" ? $this->common_model->add_calculate_currency($this->postdata['setup_fee'], "", '', false, false) : $this->common_model->add_calculate_currency($product_info['setup_fee'], "", '', false, false);
                         } else {
@@ -1012,7 +1013,7 @@ class Did_admin extends Account
                     }
                 }
                     $order_id = $this->order->confirm_order($add_array, $account_info['id'], $account_info);
-                    if ($order_id > 0) {
+                    if (astpp_gt($order_id, 0)) {
                         if($this->postdata['account_id'] != ""){
                             $this->db->where("product_id", $this->postdata['did_id']);
                             $did_update = $this->db->update("dids", array(
@@ -1074,23 +1075,23 @@ class Did_admin extends Account
         
         $dids_data = $this->db_model->getSelect ("*", "dids",
          array("product_id" => $this->postdata['did_id']))->row_array();
-        if (empty($dids_data) || $dids_data == "" || ($dids_data['accountid'] == 0 && $dids_data['parent_id'] == 0 && $dids_data['status'] == 0) || ($dids_data['status'] != 0)) {
+        if (empty($dids_data) || $dids_data == "" || (astpp_eq0($dids_data['accountid']) && astpp_eq0($dids_data['parent_id']) && astpp_eq0($dids_data['status'])) || ((!astpp_eq0($dids_data['status'])))) {
                 $this->response(array(
                     'status' =>false,
                     'error' => $this->lang->line('did_not_found')
                 ), 400);
         }
-        if($dids_data['parent_id'] != 0 && $dids_data['accountid'] == 0 && $dids_data['status'] == 0){
+        if((!astpp_eq0($dids_data['parent_id'])) && astpp_eq0($dids_data['accountid']) && astpp_eq0($dids_data['status'])){
             //did_on_hold code
             $did_info = (array)$this->db->get_where('dids',array("product_id"=>$this->postdata['did_id']))->first_row();
             if(!empty($did_info)){
-              if($did_info['accountid'] > 0){
+              if(astpp_gt($did_info['accountid'], 0)){
                 $this->db->where('product_id',$this->postdata['did_id']);
                 $this->db->update('dids',array('status'=>'0','accountid'=>'0','onhold_date'=> '0000-00-00 00:00:00'));
                 $this->db->where('id',$did_info['product_id']);
                 $this->db->update('products',array('status'=>'0'));
               }else{
-                 if($did_info['parent_id'] > 0){
+                 if(astpp_gt($did_info['parent_id'], 0)){
                     $where = "product_id =". $did_info['product_id'];
                     $reseller_info = (array)$this->db->get_where('accounts',array("id"=>$did_info['parent_id']))->first_row();
                     $did_update_array = array(
@@ -1161,7 +1162,7 @@ class Did_admin extends Account
             if(!empty($did_info)) {
             $this->did_model->did_number_release($did_info, $this->accountinfo, 'release');
             
-            $final_array = array_merge($did_info, $this->accountinfo);
+            $final_array = astpp_array_merge($did_info, $this->accountinfo);
             $final_array['next_billing_date'] = gmdate('Y-m-d H:i:s');
             $this->did_release($final_array);
             
@@ -1190,7 +1191,7 @@ class Did_admin extends Account
         }
         $dids_data = $this->db_model->getSelect ("*", "dids",
          array("product_id" => $this->postdata['did_id']))->row_array();
-        if (empty($dids_data) || $dids_data == "" || ($dids_data['accountid'] == 0 && $dids_data['parent_id'] == 0 && $dids_data['status'] == 0) || ($dids_data['status'] != 2)) {
+        if (empty($dids_data) || $dids_data == "" || (astpp_eq0($dids_data['accountid']) && astpp_eq0($dids_data['parent_id']) && astpp_eq0($dids_data['status'])) || ($dids_data['status'] != 2)) {
                 $this->response(array(
                     'status' =>false,
                     'error' => $this->lang->line('did_not_found')
@@ -1198,13 +1199,13 @@ class Did_admin extends Account
         }
         $did_info = (array)$this->db->get_where('dids',array("product_id"=>$this->postdata['did_id']))->first_row();
         if(!empty($did_info)){
-            if($did_info['accountid'] > 0){
+            if(astpp_gt($did_info['accountid'], 0)){
                 $this->db->where('product_id',$this->postdata['did_id']);
                 $this->db->update('dids',array('status'=>'0','accountid'=>'0','onhold_date'=> '0000-00-00 00:00:00'));
                 $this->db->where('id',$did_info['product_id']);
                $this->db->update('products',array('status'=>'0'));
             }else{
-              if($did_info['parent_id'] > 0){
+              if(astpp_gt($did_info['parent_id'], 0)){
                 $where = "product_id =". $did_info['product_id'];
                 $reseller_info = (array)$this->db->get_where('accounts',array("id"=>$did_info['parent_id']))->first_row();
 
@@ -1283,22 +1284,22 @@ class Did_admin extends Account
         ) );
 
         $didinfo = $this->did_model->get_did_by_number ( $did );
-        if ($request_from['type'] == 1 && $accountinfo ['reseller_id'] > 0){ 
-            if ($didinfo['parent_id'] > 0 && $didinfo['accountid'] > 0 )
+        if ($request_from['type'] == 1 && astpp_gt($accountinfo ['reseller_id'], 0)){ 
+            if (astpp_gt($didinfo['parent_id'], 0) && astpp_gt($didinfo['accountid'], 0) )
             {
                 return array("NOT_AVAL_FOR_PURCHASE","This DID is already purchased by someone.");
             }else{
                 $reseller_pricing_query = $this->db_model->getJionQuery('dids', 'dids.id,dids.number,dids.cost,dids.inc,dids.call_type,dids.extensions,dids.connectcost,dids.includedseconds,reseller_products.buy_cost,reseller_products.commission,reseller_products.setup_fee,reseller_products.price,reseller_products.billing_type,reseller_products.billing_days,reseller_products.status,reseller_products.billing_days,reseller_products.billing_type,dids.last_modified_date,dids.product_id', array('dids.number'=>$didinfo['number']), 'reseller_products','dids.product_id=reseller_products.product_id', 'inner','','','','');
             if(!empty($reseller_pricing_query)){ 
                 $reseller_pricing_result = ( array ) $reseller_pricing_query->first_row ();
-                $didinfo ['call_type'] = ($reseller_pricing_result ['call_type'] > 0)?$reseller_pricing_result ['call_type']:0;
-                $didinfo ['extensions'] = ($reseller_pricing_result ['extensions']>0)?$reseller_pricing_result ['extensions']:'';
-                $didinfo ['setup_fee'] = ($reseller_pricing_result ['setup_fee'] > 0)?$reseller_pricing_result ['setup_fee']:0;
-                $didinfo ['price'] = ($reseller_pricing_result ['price'] > 0)?$reseller_pricing_result ['price']:0;
-                $didinfo ['connectcost'] = ($reseller_pricing_result ['connectcost'] > 0)?$reseller_pricing_result ['connectcost']:0;
-                $didinfo ['includedseconds'] = ($reseller_pricing_result ['includedseconds'] > 0)?$reseller_pricing_result ['includedseconds']:0;
-                $didinfo ['cost'] = ($reseller_pricing_result ['cost'] > 0)?$reseller_pricing_result ['cost']:0;
-                $didinfo ['inc'] = ($reseller_pricing_result ['inc']>0)?$reseller_pricing_result ['inc']:0;
+                $didinfo ['call_type'] = (astpp_gt($reseller_pricing_result ['call_type'], 0))?$reseller_pricing_result ['call_type']:0;
+                $didinfo ['extensions'] = (astpp_gt($reseller_pricing_result ['extensions'], 0))?$reseller_pricing_result ['extensions']:'';
+                $didinfo ['setup_fee'] = (astpp_gt($reseller_pricing_result ['setup_fee'], 0))?$reseller_pricing_result ['setup_fee']:0;
+                $didinfo ['price'] = (astpp_gt($reseller_pricing_result ['price'], 0))?$reseller_pricing_result ['price']:0;
+                $didinfo ['connectcost'] = (astpp_gt($reseller_pricing_result ['connectcost'], 0))?$reseller_pricing_result ['connectcost']:0;
+                $didinfo ['includedseconds'] = (astpp_gt($reseller_pricing_result ['includedseconds'], 0))?$reseller_pricing_result ['includedseconds']:0;
+                $didinfo ['cost'] = (astpp_gt($reseller_pricing_result ['cost'], 0))?$reseller_pricing_result ['cost']:0;
+                $didinfo ['inc'] = (astpp_gt($reseller_pricing_result ['inc'], 0))?$reseller_pricing_result ['inc']:0;
                 $didinfo ['billing_days'] = $reseller_pricing_result['billing_days'];
                 $didinfo ['billing_type'] = $reseller_pricing_result['billing_type'];
                 
@@ -1306,22 +1307,22 @@ class Did_admin extends Account
 
             }
         }
-        if ($request_from['type'] == 1 && $accountinfo ['reseller_id'] == 0){ 
-            if ($didinfo['parent_id'] > 0 && $didinfo['accountid'] > 0 )
+        if ($request_from['type'] == 1 && astpp_eq0($accountinfo ['reseller_id'])){ 
+            if (astpp_gt($didinfo['parent_id'], 0) && astpp_gt($didinfo['accountid'], 0) )
             {
                 return array("NOT_AVAL_FOR_PURCHASE","This DID is already purchased by someone.");
             }else{ 
                 $reseller_pricing_query = $this->db_model->getJionQuery('dids', 'dids.id,dids.number,dids.cost,dids.inc,dids.call_type,dids.extensions,dids.connectcost,dids.includedseconds,products.buy_cost,products.commission,products.setup_fee,products.price,products.billing_type,products.billing_days,products.status,dids.last_modified_date,dids.product_id', array('dids.number'=>$didinfo['number']), 'products','dids.product_id=products.id', 'inner','','','','');
             if(!empty($reseller_pricing_query)){
                 $reseller_pricing_result = ( array ) $reseller_pricing_query->first_row ();
-                $didinfo ['call_type'] = ($reseller_pricing_result ['call_type'] > 0)?$reseller_pricing_result ['call_type']:0;
-                $didinfo ['extensions'] = ($reseller_pricing_result ['extensions']>0)?$reseller_pricing_result ['extensions']:'';
-                $didinfo ['setup_fee'] = ($reseller_pricing_result ['setup_fee'] > 0)?$reseller_pricing_result ['setup_fee']:0;
-                $didinfo ['price'] = ($reseller_pricing_result ['price'] > 0)?$reseller_pricing_result ['price']:0;
-                $didinfo ['connectcost'] = ($reseller_pricing_result ['connectcost'] > 0)?$reseller_pricing_result ['connectcost']:0;
-                $didinfo ['includedseconds'] = ($reseller_pricing_result ['includedseconds'] > 0)?$reseller_pricing_result ['includedseconds']:0;
-                $didinfo ['cost'] = ($reseller_pricing_result ['cost'] > 0)?$reseller_pricing_result ['cost']:0;
-                $didinfo ['inc'] = ($reseller_pricing_result ['inc']>0)?$reseller_pricing_result ['inc']:0;
+                $didinfo ['call_type'] = (astpp_gt($reseller_pricing_result ['call_type'], 0))?$reseller_pricing_result ['call_type']:0;
+                $didinfo ['extensions'] = (astpp_gt($reseller_pricing_result ['extensions'], 0))?$reseller_pricing_result ['extensions']:'';
+                $didinfo ['setup_fee'] = (astpp_gt($reseller_pricing_result ['setup_fee'], 0))?$reseller_pricing_result ['setup_fee']:0;
+                $didinfo ['price'] = (astpp_gt($reseller_pricing_result ['price'], 0))?$reseller_pricing_result ['price']:0;
+                $didinfo ['connectcost'] = (astpp_gt($reseller_pricing_result ['connectcost'], 0))?$reseller_pricing_result ['connectcost']:0;
+                $didinfo ['includedseconds'] = (astpp_gt($reseller_pricing_result ['includedseconds'], 0))?$reseller_pricing_result ['includedseconds']:0;
+                $didinfo ['cost'] = (astpp_gt($reseller_pricing_result ['cost'], 0))?$reseller_pricing_result ['cost']:0;
+                $didinfo ['inc'] = (astpp_gt($reseller_pricing_result ['inc'], 0))?$reseller_pricing_result ['inc']:0;
                 $didinfo ['billing_days'] = $reseller_pricing_result['billing_days'];
                 $didinfo ['billing_type'] = $reseller_pricing_result['billing_type'];
             }
@@ -1329,9 +1330,9 @@ class Did_admin extends Account
             }
         }
 
-        if ($accountinfo ['reseller_id'] > 0 && $accountinfo ['type'] == 0  ) {
+        if (astpp_gt($accountinfo ['reseller_id'], 0) && astpp_eq0($accountinfo ['type'])  ) {
 
-            if ($didinfo['accountid'] > 0)
+            if (astpp_gt($didinfo['accountid'], 0))
             {
                 return array("NOT_AVAL_FOR_PURCHASE","This DID is already purchased by someone.");
             }else{ 
@@ -1350,8 +1351,8 @@ class Did_admin extends Account
                 $didinfo ['billing_type'] = $customer_result_array['billing_type'];
             }
         }
-        if($accountinfo ['reseller_id'] == 0 && $accountinfo ['type'] == 0){
-            if ($didinfo['accountid'] > 0)
+        if(astpp_eq0($accountinfo ['reseller_id']) && astpp_eq0($accountinfo ['type'])){
+            if (astpp_gt($didinfo['accountid'], 0))
             {
                 return array("NOT_AVAL_FOR_PURCHASE","This DID is already purchased by someone.");
             }else{ 
@@ -1382,15 +1383,15 @@ class Did_admin extends Account
 
         //$account_balance = $accountinfo ['posttoexternal'] == 1 ? $accountinfo ['credit_limit'] - ($accountinfo ['balance']) : $accountinfo ['balance'];
 
-        $account_balance = $accountinfo ['posttoexternal'] == 1 ? $accountinfo ['credit_limit'] - ($accountinfo ['balance']) : $accountinfo ['balance'];        
+        $account_balance = $accountinfo ['posttoexternal'] == 1 ? astpp_n($accountinfo ['credit_limit']) - (astpp_n($accountinfo ['balance'])) : $accountinfo ['balance'];        
         $account_balance =$this->common_model->calculate_currency($account_balance, '', $currency_name, true, false );  
 
-        $didinfo ["setup_fee"] = (isset($extra_info['setup_fee']) && $extra_info['setup_fee'] > 0)?$extra_info['setup_fee']:$didinfo ["setup_fee"];
+        $didinfo ["setup_fee"] = (isset($extra_info['setup_fee']) && astpp_gt($extra_info['setup_fee'], 0))?$extra_info['setup_fee']:$didinfo ["setup_fee"];
 
-        $didinfo ["price"] = (isset($extra_info['price']) && $extra_info['price'] > 0)?$extra_info['price']:$didinfo ["price"];
+        $didinfo ["price"] = (isset($extra_info['price']) && astpp_gt($extra_info['price'], 0))?$extra_info['price']:$didinfo ["price"];
 
 
-        if ($account_balance  >= ($didinfo ["setup_fee"]+$didinfo ["price"]) || $skip_balance_check==true) {
+        if ($account_balance  >= (astpp_n($didinfo ["setup_fee"])+astpp_n($didinfo ["price"])) || $skip_balance_check==true) {
             
             if ($request_from['type'] == 2 || ($request_from['type'] == 1 && $request_from['id']) == $accountinfo ['id']){
 
@@ -1400,7 +1401,7 @@ class Did_admin extends Account
             }elseif($request_from['type'] == 1){
 
                 $field_name = $accountinfo ['type'] == 1 ? "parent_id" : 'accountid';
-                if ($accountinfo ['type'] == 0 ||$accountinfo ['type'] == 3 )
+                if (astpp_eq0($accountinfo ['type']) ||$accountinfo ['type'] == 3 )
                 {
                     $this->db_model->update ( "dids", array (
                         "accountid" => $accountinfo ['id']
@@ -1410,7 +1411,7 @@ class Did_admin extends Account
                 }
 
                 
-            }elseif($request_from['type'] == 0 || $request_from['type'] == 4 || $request_from['type'] == 3){
+            }elseif(astpp_eq0($request_from['type']) || $request_from['type'] == 4 || $request_from['type'] == 3){
                 $this->db_model->update ( "dids", array (
                     "accountid" => $accountinfo ['id'] 
                 ), array (
@@ -1423,8 +1424,8 @@ class Did_admin extends Account
             if($today <= 28 && $didinfo['billing_type'] == "2"){
                 //Riya  new issue no 2738 Monthly billing 28 days billing issue.
                 //$next_bill_date =gmdate("Y-m-d H:i:s",strtotime("+".($didinfo['billing_days'])." days"));
-                $next_bill_date =gmdate("Y-m-d H:i:s",strtotime($next_bill_date."+".(1)." months"));
-                $next_bill_date =date ("Y-m-d H:i:s",strtotime($next_bill_date));
+                $next_bill_date =astpp_gmdate("Y-m-d H:i:s",strtotime($next_bill_date."+".(1)." months"));
+                $next_bill_date =astpp_date ("Y-m-d H:i:s",strtotime($next_bill_date));
             }
             //Riya  new issue no 2738 Monthly billing 28 days billing issue.
             /*if(gmdate("d",strtotime($next_bill_date)) > 28 && $didinfo['billing_type'] == "2"){
@@ -1439,29 +1440,29 @@ class Did_admin extends Account
                 $days_of_month = $this->common->days_in_next_month();
                 if($today == 29 && $today <= $days_of_month){
                     //Riya final new issue no 2738 Monthly billing 28 days billing issue.
-                    $next_bill_date = gmdate("Y-m-29 H:i:s",strtotime("+".(1)." months",$first_of_month));
+                    $next_bill_date = astpp_gmdate("Y-m-29 H:i:s",strtotime("+".(1)." months",$first_of_month));
                 }
                 elseif($today == 30 && $today <= $days_of_month){
                     //Riya final new issue no 2738 Monthly billing 28 days billing issue.
-                    $next_bill_date = gmdate("Y-m-30 H:i:s",strtotime("+".(1)." months",$first_of_month));
+                    $next_bill_date = astpp_gmdate("Y-m-30 H:i:s",strtotime("+".(1)." months",$first_of_month));
                 }
                 else{
                     //Riya final new issue no 2738 Monthly billing 28 days billing issue.
-                    $next_bill_date = gmdate("Y-m-".$days_of_month ." H:i:s",strtotime("+".(1)." months",$first_of_month));
+                    $next_bill_date = astpp_gmdate("Y-m-".$days_of_month ." H:i:s",strtotime("+".(1)." months",$first_of_month));
                 }
             //end
             }
             
-            if($didinfo['billing_type'] == 0){
+            if(astpp_eq0($didinfo['billing_type'])){
                 //Riya  new issue no 2738 Monthly billing 28 days billing issue.
-                $next_bill_date = ($didinfo['billing_days'] == 0)?gmdate('Y-m-d H:i:s', strtotime('+10 years')):gmdate("Y-m-d H:i:s",strtotime("+".($didinfo['billing_days'])." days"));
+                $next_bill_date = (astpp_eq0($didinfo['billing_days']))?astpp_gmdate('Y-m-d H:i:s', strtotime('+10 years')):astpp_gmdate("Y-m-d H:i:s",strtotime("+".($didinfo['billing_days'])." days"));
             }
             if($didinfo['billing_type'] == 1){
                 //Riya  new issue no 2738 Monthly billing 28 days billing issue.
-                $next_bill_date = ($didinfo['billing_days'] == 0)?gmdate('Y-m-d H:i:s', strtotime('+10 years')):gmdate("Y-m-d H:i:s",strtotime("+".($didinfo['billing_days'])." days"));
+                $next_bill_date = (astpp_eq0($didinfo['billing_days']))?astpp_gmdate('Y-m-d H:i:s', strtotime('+10 years')):astpp_gmdate("Y-m-d H:i:s",strtotime("+".($didinfo['billing_days'])." days"));
             }   
             unset($didinfo['id']);
-            $final_array = array_merge($accountinfo,$didinfo);
+            $final_array = astpp_array_merge($accountinfo,$didinfo);
             $final_array['next_billing_date'] = $next_bill_date;
             $final_array['name'] =$final_array['number'];
             $final_array['category_name'] ="DID";
@@ -1469,8 +1470,8 @@ class Did_admin extends Account
             $final_array['quantity']=1;
             $final_array['price'] = $final_array['price'];
             $final_array['setup_fee'] = $final_array['setup_fee'];
-            $final_array['total_price']=($final_array['setup_fee']+$final_array['price'])*($final_array['quantity']);
-            $final_array['price']=($final_array['setup_fee']+$final_array['price']);
+            $final_array['total_price']=(astpp_n($final_array['setup_fee'])+astpp_n($final_array['price']))*(astpp_n($final_array['quantity']));
+            $final_array['price']=(astpp_n($final_array['setup_fee'])+astpp_n($final_array['price']));
             $this->common->mail_to_users ( 'product_purchase',$final_array);            
             return array("SUCCESS","DID Purchased Successfully.");
         }else{          
@@ -1499,7 +1500,7 @@ class Did_admin extends Account
                 'error' => $this->lang->line('did_not_found')
             ), 400);
         }
-        if($did_info != "" && ($did_info['accountid'] == 0 && $did_info['parent_id'] == 0) ){
+        if($did_info != "" && (astpp_eq0($did_info['accountid']) && astpp_eq0($did_info['parent_id'])) ){
          $this->response(array(
                 'status' => false,
                 'error' => $this->lang->line('did_not_assign')
@@ -1683,7 +1684,7 @@ class Did_admin extends Account
             $did_forward['user_not_registered'] = $this->postdata['user_not_registered'] != "" ? $this->postdata['user_not_registered'] : $did_info['user_not_registered'];
             $did_forward['no_answer'] = $this->postdata['no_answer'] != "" ? $this->postdata['no_answer'] : $did_info['no_answer'];
         }
-        if(($this->postdata['call_type'] == 0 || $this->postdata['call_type'] == 5) && $this->postdata['call_type_destination'] != "" && $this->postdata['call_type'] != ""){
+        if((astpp_eq0($this->postdata['call_type']) || $this->postdata['call_type'] == 5) && $this->postdata['call_type_destination'] != "" && $this->postdata['call_type'] != ""){
              $sip_call_type = (array)$this->db_model->getSelect('*','sip_devices',array("accountid"=>$did_info['accountid'],'status' => 0,"username"=>$this->postdata['call_type_destination']))->first_row();
              // Kinjal issue no 4591
               $did_forward['extensions']  = ($this->postdata['call_type_destination'] != "") ? ((!empty($sip_call_type) && $sip_call_type != "") ? $this->postdata['call_type_destination'] : $this->response(array(
@@ -1694,7 +1695,7 @@ class Did_admin extends Account
             $did_forward['extensions'] = $this->postdata['call_type_destination'] != "" ? $this->postdata['call_type_destination'] : $did_info['extensions'];
         }
         if($pbx_status != '1'){
-            if(($this->postdata['always'] == 0 || $this->postdata['always'] == 5) && $this->postdata['always_destination'] != "" && $this->postdata['always'] != ""){
+            if((astpp_eq0($this->postdata['always']) || $this->postdata['always'] == 5) && $this->postdata['always_destination'] != "" && $this->postdata['always'] != ""){
                 $sip_always = (array)$this->db_model->getSelect('*','sip_devices',array("accountid"=>$did_info['accountid'],'status' => 0,"username"=>$this->postdata['always_destination']))->first_row();
                 // Kinjal issue no 4591
                 $did_forward['always_destination']  = (!empty($sip_always) && $sip_always != "") ? $this->postdata['always_destination'] : $this->response(array(
@@ -1703,7 +1704,7 @@ class Did_admin extends Account
             }else{
                 $did_forward['always_destination'] = $this->postdata['always_destination'] != "" ? $this->postdata['always_destination'] : $did_info['always_destination'];
             }
-            if(($this->postdata['user_busy'] == 0 || $this->postdata['user_busy'] == 5) && $this->postdata['user_busy_destination'] != "" && $this->postdata['user_busy'] != ""){
+            if((astpp_eq0($this->postdata['user_busy']) || $this->postdata['user_busy'] == 5) && $this->postdata['user_busy_destination'] != "" && $this->postdata['user_busy'] != ""){
                 $sip_user_busy = $this->db_model->getSelect('*','sip_devices',array("accountid"=>$did_info['accountid'],'status' => 0,"username"=>$this->postdata['user_busy_destination']))->first_row();
                 // Kinjal issue no 4591
                 $did_forward['user_busy_destination']  = (!empty($sip_user_busy) && $sip_user_busy != "") ? $this->postdata['call_type_destination'] : $this->response(array(
@@ -1712,7 +1713,7 @@ class Did_admin extends Account
             }else{
                 $did_forward['user_busy_destination'] = $this->postdata['user_busy_destination'] != "" ? $this->postdata['user_busy_destination'] : $did_info['user_busy_destination'];
             }
-            if(($this->postdata['user_not_registered'] == 0 || $this->postdata['user_not_registered'] == 5) && $this->postdata['user_not_registered_destination'] != "" && $this->postdata['user_not_registered_destination'] != ""){
+            if((astpp_eq0($this->postdata['user_not_registered']) || $this->postdata['user_not_registered'] == 5) && $this->postdata['user_not_registered_destination'] != "" && $this->postdata['user_not_registered_destination'] != ""){
                 $sip_user_not_registered = $this->db_model->getSelect('*','sip_devices',array("accountid"=>$did_info['accountid'],'status' => 0,"username"=>$this->postdata['user_not_registered_destination']))->first_row();
                 // Kinjal issue no 4591
                 $did_forward['user_not_registered_destination']  = (!empty($sip_user_not_registered) && $sip_user_not_registered != "") ? $this->postdata['user_not_registered_destination'] : $this->response(array(
@@ -1721,7 +1722,7 @@ class Did_admin extends Account
             }else{
                 $did_forward['user_not_registered_destination'] = $this->postdata['user_not_registered_destination'] != "" ? $this->postdata['user_not_registered_destination'] : $did_info['user_not_registered_destination'];
             }
-            if(($this->postdata['no_answer'] == 0 || $this->postdata['no_answer'] == 5) && $this->postdata['no_answer_destination'] != "" && $this->postdata['no_answer'] != ""){
+            if((astpp_eq0($this->postdata['no_answer']) || $this->postdata['no_answer'] == 5) && $this->postdata['no_answer_destination'] != "" && $this->postdata['no_answer'] != ""){
                 $sip_no_answer = (array)$this->db_model->getSelect('*','sip_devices',array("accountid"=>$did_info['accountid'],'status' => 0,"username"=>$this->postdata['no_answer_destination']))->first_row();
                 // Kinjal issue no 4591
                 $did_forward['user_not_registered_destination']  = (!empty($sip_no_answer) && $sip_no_answer != "") ? $this->postdata['no_answer_destination'] : $this->response(array(

@@ -28,6 +28,7 @@
  * @author		ExpressionEngine Dev Team
  * @link		http://codeigniter.com/user_guide/libraries/trackback.html
  */
+#[\AllowDynamicProperties]
 class CI_Trackback {
 
 	var $time_format = 'local';
@@ -108,7 +109,7 @@ class CI_Trackback {
 
 		// Send Trackback(s)
 		$return = TRUE;
-		if (count($ping_url) > 0)
+		if (astpp_count($ping_url) > 0)
 		{
 			foreach ($ping_url as $url)
 			{
@@ -316,7 +317,7 @@ class CI_Trackback {
 		$urls = preg_split('/[,]/', $urls);
 
 		// Removes duplicates
-		$urls = array_unique($urls);
+		$urls = astpp_array_unique($urls);
 
 		array_walk($urls, array($this, 'validate_url'));
 
@@ -360,26 +361,26 @@ class CI_Trackback {
 		if (strpos($url, '?') !== FALSE)
 		{
 			$tb_array = explode('/', $url);
-			$tb_end   = $tb_array[count($tb_array) - 1];
+			$tb_end   = $tb_array[astpp_count($tb_array) - 1];
 
 			if ( ! is_numeric($tb_end))
 			{
-				$tb_end  = $tb_array[count($tb_array) - 2];
+				$tb_end  = $tb_array[astpp_count($tb_array) - 2];
 			}
 
 			$tb_array = explode('=', $tb_end);
-			$tb_id = $tb_array[count($tb_array) - 1];
+			$tb_id = $tb_array[astpp_count($tb_array) - 1];
 		}
 		else
 		{
 			$url = rtrim($url, '/');
 
 			$tb_array = explode('/', $url);
-			$tb_id = $tb_array[count($tb_array) - 1];
+			$tb_id = $tb_array[astpp_count($tb_array) - 1];
 
 			if ( ! is_numeric($tb_id))
 			{
-				$tb_id = $tb_array[count($tb_array) - 2];
+				$tb_id = $tb_array[astpp_count($tb_array) - 2];
 			}
 		}
 
@@ -484,16 +485,16 @@ class CI_Trackback {
 				$out .= $str[$i];
 			} else
 			{
-				if (count($temp) == 0)
+				if (astpp_count($temp) == 0)
 				{
 					$count = ($ordinal < 224) ? 2 : 3;
 				}
 
 				$temp[] = $ordinal;
 
-				if (count($temp) == $count)
+				if (astpp_count($temp) == $count)
 				{
-					$number = ($count == 3) ? (($temp['0'] % 16) * 4096) + (($temp['1'] % 64) * 64) + ($temp['2'] % 64) : (($temp['0'] % 32) * 64) + ($temp['1'] % 64);
+					$number = ($count == 3) ? ((astpp_n($temp['0']) % 16) * 4096) + ((astpp_n($temp['1']) % 64) * 64) + (astpp_n($temp['2']) % 64) : ((astpp_n($temp['0']) % 32) * 64) + (astpp_n($temp['1']) % 64);
 
 					$out .= '&#'.$number.';';
 					$count = 1;

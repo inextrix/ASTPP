@@ -26,6 +26,7 @@
  * @link		http://www.codeigniter.com/user_guide/libraries/javascript.html
  */
  
+#[\AllowDynamicProperties]
 class CI_Jquery extends CI_Javascript {
 
 	var $_javascript_folder = 'js';
@@ -177,7 +178,7 @@ class CI_Jquery extends CI_Javascript {
 	 * @param	string	- Javascript code for mouse out
 	 * @return	string
 	 */
-	function _hover($element = 'this', $over, $out)
+	function _hover($element, $over, $out)
 	{
 		$event = "\n\t$(".$this->_prep_element($element).").hover(\n\t\tfunction()\n\t\t{\n\t\t\t{$over}\n\t\t}, \n\t\tfunction()\n\t\t{\n\t\t\t{$out}\n\t\t});\n";
 
@@ -708,7 +709,7 @@ class CI_Jquery extends CI_Javascript {
 	 * @return	string
 	 */
 	
-	function _updater($container = 'this', $controller, $options = '')
+	function _updater($container, $controller, $options = '')
 	{	
 		$container = $this->_prep_element($container);
 		
@@ -730,7 +731,7 @@ class CI_Jquery extends CI_Javascript {
 		if ($options != '')
 		{
 			$request_options .= ", {";
-			$request_options .= (is_array($options)) ? "'".implode("', '", $options)."'" : "'".str_replace(":", "':'", $options)."'";
+			$request_options .= (is_array($options)) ? "'".astpp_implode("', '", $options)."'" : "'".str_replace(":", "':'", $options)."'";
 			$request_options .= "}";
 		}
 
@@ -867,14 +868,14 @@ class CI_Jquery extends CI_Javascript {
 	function sortable($element, $options = array())
 	{
 
-		if (count($options) > 0)
+		if (astpp_count($options) > 0)
 		{
 			$sort_options = array();
 			foreach ($options as $k=>$v)
 			{
 				$sort_options[] = "\n\t\t".$k.': '.$v."";
 			}
-			$sort_options = implode(",", $sort_options);
+			$sort_options = astpp_implode(",", $sort_options);
 		} else
 		{
 			$sort_options = '';
@@ -919,7 +920,7 @@ class CI_Jquery extends CI_Javascript {
 	{
 		if (is_array($js))
 		{
-			$js = implode("\n\t\t", $js);
+			$js = astpp_implode("\n\t\t", $js);
 
 		}
 
@@ -942,10 +943,10 @@ class CI_Jquery extends CI_Javascript {
 	function _compile($view_var = 'script_foot', $script_tags = TRUE)
 	{
 		// External references
-		$external_scripts = implode('', $this->jquery_code_for_load);
+		$external_scripts = astpp_implode('', $this->jquery_code_for_load);
 		$this->CI->load->vars(array('library_src' => $external_scripts));
 
-		if (count($this->jquery_code_for_compile) == 0)
+		if (astpp_count($this->jquery_code_for_compile) == 0)
 		{
 			// no inline references, let's just return
 			return;
@@ -953,7 +954,7 @@ class CI_Jquery extends CI_Javascript {
 
 		// Inline references
 		$script = '$(document).ready(function() {'."\n";
-		$script .= implode('', $this->jquery_code_for_compile);
+		$script .= astpp_implode('', $this->jquery_code_for_compile);
 		$script .= '});';
 		
 		$output = ($script_tags === FALSE) ? $script : $this->inline($script);
@@ -1056,7 +1057,7 @@ class CI_Jquery extends CI_Javascript {
 	 */	
 	function _validate_speed($speed)
 	{
-		if (in_array($speed, array('slow', 'normal', 'fast')))
+		if (astpp_in_array($speed, array('slow', 'normal', 'fast')))
 		{
 			$speed = '"'.$speed.'"';
 		} elseif (preg_match("/[^0-9]/", $speed))

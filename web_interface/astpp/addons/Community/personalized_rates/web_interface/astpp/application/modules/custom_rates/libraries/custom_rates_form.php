@@ -22,6 +22,7 @@
 // ##############################################################################
 if (! defined ( 'BASEPATH' ))
 	exit ( 'No direct script access allowed' );
+#[\AllowDynamicProperties]
 class custom_rates_form extends common {
 	function __construct($library_name = '') {
 		$this->CI = & get_instance ();
@@ -38,7 +39,7 @@ class custom_rates_form extends common {
 		$reseller_drp ='';
 		$account_field='';
 		if($account_info['type'] == -1 || $account_info['type'] == 2 ){	
-			if ($id > 0) {	
+			if (astpp_gt($id, 0)) {	
 				$account_info = $this->CI->session->userdata('accountinfo');
 				$reseller_drp = array(
 					gettext('Reseller'),
@@ -123,7 +124,7 @@ class custom_rates_form extends common {
 				);
 			}
 		}else{
-			if ($id > 0) {
+			if (astpp_gt($id, 0)) {
 				if($account_info['type'] == 1 ){
 					$account_drp = array(
 						gettext('Account'),

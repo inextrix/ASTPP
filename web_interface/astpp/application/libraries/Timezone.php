@@ -23,6 +23,7 @@
 if (! defined ( 'BASEPATH' )) {
 	exit ( 'No direct script access allowed' );
 }
+#[\AllowDynamicProperties]
 class Timezone {
 	function __construct() {
 		$this->CI = & get_instance ();
@@ -52,11 +53,11 @@ class Timezone {
 		$year = $date_time_array ['year'];
 		$timestamp = mktime ( $hours, $minutes, $seconds, $month, $day, $year );
 		
-		$timestamp = $timestamp + ($USER_GMT - $SERVER_GMT);
+		$timestamp = astpp_n($timestamp) + (astpp_n($USER_GMT) - astpp_n($SERVER_GMT));
 		if ($fulldate == 1) {
-			$date = date ( "Y-m-d H:i:s", $timestamp );
+			$date = astpp_date ( "Y-m-d H:i:s", $timestamp );
 		} else {
-			$date = date ( "Y-m-d", $timestamp );
+			$date = astpp_date ( "Y-m-d", $timestamp );
 		}
 		
 		return $date;
@@ -75,11 +76,11 @@ class Timezone {
 		$day = $date_time_array ['mday'];
 		$year = $date_time_array ['year'];
 		$timestamp = mktime ( $hours, $minutes, $seconds, $month, $day, $year );
-		$timestamp = $timestamp - ($USER_GMT);
+		$timestamp = astpp_n($timestamp) - (astpp_n($USER_GMT));
 		if($fulldate == 1) {
-			$date = date ( "Y-m-d H:i:s", $timestamp );
+			$date = astpp_date ( "Y-m-d H:i:s", $timestamp );
 		} else {
-			$date = date ( "Y-m-d", $timestamp );
+			$date = astpp_date ( "Y-m-d", $timestamp );
 		}
 		return $date;
 	}
@@ -99,12 +100,12 @@ class Timezone {
 		$day = $date_time_array ['mday'];
 		$year = $date_time_array ['year'];
 		$timestamp = mktime ( $hours, $minutes, $seconds, $month, $day, $year );
-		$timestamp = $timestamp - ($SERVER_GMT - $USER_GMT);
+		$timestamp = astpp_n($timestamp) - (astpp_n($SERVER_GMT) - astpp_n($USER_GMT));
 
 		if ($fulldate == 1) {
-			$date = date ( "Y-m-d H:i:s", $timestamp );
+			$date = astpp_date ( "Y-m-d H:i:s", $timestamp );
 		} else {
-			$date = date ( "Y-m-d", $timestamp );
+			$date = astpp_date ( "Y-m-d", $timestamp );
 		}
 		return $date;
 	}

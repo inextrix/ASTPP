@@ -72,7 +72,7 @@ if ( ! function_exists('form_open'))
 			$hidden[$CI->security->get_csrf_token_name()] = $CI->security->get_csrf_hash();
 		}
 
-		if (is_array($hidden) AND count($hidden) > 0)
+		if (is_array($hidden) AND astpp_count($hidden) > 0)
 		{
 			$form .= sprintf("<div style=\"display:none\">%s</div>", form_hidden($hidden));
 		}
@@ -129,7 +129,7 @@ if ( ! function_exists('form_dropdown_mini'))
 		}
 
 		// If no selected state was submitted we will attempt to set it automatically
-		if (count($selected) === 0)
+		if (astpp_count($selected) === 0)
 		{
 			// If the form name appears in the $_POST array we have a winner!
 			if (isset($_POST[$name]))
@@ -139,7 +139,7 @@ if ( ! function_exists('form_dropdown_mini'))
 		}
 
 		if ($extra != '') $extra = ' '.$extra;
-		$multiple = (count($selected) > 1 && strpos($extra, 'multiple') === FALSE) ? ' multiple="multiple"' : '';
+		$multiple = (astpp_count($selected) > 1 && strpos($extra, 'multiple') === FALSE) ? ' multiple="multiple"' : '';
 				if(is_array($name)){
 					 $str=null;
 					 foreach($name as $key=>$value){
@@ -172,7 +172,7 @@ if ( ! function_exists('form_dropdown_mini'))
 
 				foreach ($val as $optgroup_key => $optgroup_val)
 				{
-					$sel = (in_array($optgroup_key, $selected)) ? ' selected="selected"' : '';
+					$sel = (astpp_in_array($optgroup_key, $selected)) ? ' selected="selected"' : '';
 
 					$form .= '<option value="'.$optgroup_key.'"'.$sel.'>'.(string)$optgroup_val."</option>\n";
 				}
@@ -180,7 +180,7 @@ if ( ! function_exists('form_dropdown_mini'))
 				$form .= '</optgroup>'."\n";
 			} else
 			{
-				$sel = (in_array($key, $selected)) ? ' selected="selected"' : '';
+				$sel = (astpp_in_array($key, $selected)) ? ' selected="selected"' : '';
 
 				$form .= '<option value="'.$key.'"'.$sel.'>'.(string) $val."</option>\n";
 			}
@@ -445,7 +445,7 @@ if ( ! function_exists('form_dropdown'))
 		}
 
 		// If no selected state was submitted we will attempt to set it automatically
-		if (count($selected) === 0)
+		if (astpp_count($selected) === 0)
 		{
 			// If the form name appears in the $_POST array we have a winner!
 			if (isset($_POST[$name]))
@@ -455,7 +455,7 @@ if ( ! function_exists('form_dropdown'))
 		}
 
 		if ($extra != '') $extra = ' '.$extra;
-		$multiple = (count($selected) > 1 && strpos($extra, 'multiple') === FALSE) ? ' multiple="multiple"' : '';
+		$multiple = (astpp_count($selected) > 1 && strpos($extra, 'multiple') === FALSE) ? ' multiple="multiple"' : '';
 				if(is_array($name)){
 					 $str=null;
 					 foreach($name as $key=>$value){
@@ -488,7 +488,7 @@ if ( ! function_exists('form_dropdown'))
 
 				foreach ($val as $optgroup_key => $optgroup_val)
 				{
-					$sel = (in_array($optgroup_key, $selected)) ? ' selected="selected"' : '';
+					$sel = (astpp_in_array($optgroup_key, $selected)) ? ' selected="selected"' : '';
 
 					$form .= '<option value="'.$optgroup_key.'"'.$sel.'>'.(string)$optgroup_val."</option>\n";
 				}
@@ -496,7 +496,7 @@ if ( ! function_exists('form_dropdown'))
 				$form .= '</optgroup>'."\n";
 			} else
 			{
-				$sel = (in_array($key, $selected)) ? ' selected="selected"' : '';
+				$sel = (astpp_in_array($key, $selected)) ? ' selected="selected"' : '';
 
 				$form .= '<option value="'.$key.'"'.$sel.'>'.(string) $val."</option>\n";
 			}
@@ -521,7 +521,7 @@ if ( ! function_exists('form_dropdown_all'))
 		}
 
 		// If no selected state was submitted we will attempt to set it automatically
-		if (count($selected) === 0)
+		if (astpp_count($selected) === 0)
 		{
 
 			if (!empty($_POST)) {
@@ -536,7 +536,7 @@ if ( ! function_exists('form_dropdown_all'))
 		}
 		if ($extra != '') $extra = ' '.$extra;
 				$class= isset($name['class']) && !empty($name['class']) ? "col-md-12 form-control form-control-lg selectpicker $name[class]" :"col-md-12 form-control form-control-lg selectpicker";
-		$multiple = (count($selected) > 1 && strpos($extra, 'multiple') === FALSE) ? ' multiple="multiple"' : '';
+		$multiple = (astpp_count($selected) > 1 && strpos($extra, 'multiple') === FALSE) ? ' multiple="multiple"' : '';
 		if(is_array($name) && !isset($name["id"])){
 					$form = '<select name="'.$name['name'].'"'." class='$class selectpicker' data-live-search='true' ".$onchange.">\n";
 				}else if(is_array($name) && isset($name["id"])){
@@ -557,7 +557,7 @@ if ( ! function_exists('form_dropdown_all'))
 
 				foreach ($val as $optgroup_key => $optgroup_val)
 				{
-					$sel = (in_array($optgroup_key, $selected)) ? ' selected="selected"' : '';
+					$sel = (astpp_in_array($optgroup_key, $selected)) ? ' selected="selected"' : '';
 
 					$form .= '<option value="'.$optgroup_key.'"'.$sel.'>'.(string)$optgroup_val."</option>\n";
 				}
@@ -565,7 +565,7 @@ if ( ! function_exists('form_dropdown_all'))
 				$form .= '</optgroup>'."\n";
 			} else
 			{
-				$sel = (in_array($key, $selected)) ? ' selected="selected"' : '';
+				$sel = (astpp_in_array($key, $selected)) ? ' selected="selected"' : '';
 
 				$form .= '<option value="'.$key.'"'.$sel.'>'.(string) $val."</option>\n";
 			}
@@ -592,7 +592,7 @@ if ( ! function_exists('form_dropdown_all_search'))
 		}
 
 		// If no selected state was submitted we will attempt to set it automatically
-		if (count($selected) === 0)
+		if (astpp_count($selected) === 0)
 		{
 			// If the form name appears in the $_POST array we have a winner!
 			if (isset($_POST[$name]))
@@ -609,7 +609,7 @@ if ( ! function_exists('form_dropdown_all_search'))
 
 		$class= isset($name['class']) && !empty($name['class']) ? "col-md-12 form-control selectpicker form-control-lg $name[class]" :"col-md-12 form-control form-control-lg selectpicker";
 
-		$multiple = (count($selected) > 1 && strpos($extra, 'multiple') === FALSE) ? ' multiple="multiple"' : '';
+		$multiple = (astpp_count($selected) > 1 && strpos($extra, 'multiple') === FALSE) ? ' multiple="multiple"' : '';
 				/*
 		  ASTPP  3.0  For Search Display In
 		*/
@@ -640,7 +640,7 @@ if ( ! function_exists('form_dropdown_all_search'))
 
 				foreach ($val as $optgroup_key => $optgroup_val)
 				{
-					$sel = (in_array($optgroup_key, $selected)) ? ' selected="selected"' : '';
+					$sel = (astpp_in_array($optgroup_key, $selected)) ? ' selected="selected"' : '';
 
 					$form .= '<option value="'.$optgroup_key.'"'.$sel.'>'.(string)$optgroup_val."</option>\n";
 				}
@@ -648,7 +648,7 @@ if ( ! function_exists('form_dropdown_all_search'))
 				$form .= '</optgroup>'."\n";
 			} else
 			{
-				$sel = (in_array($key, $selected)) ? ' selected="selected"' : '';
+				$sel = (astpp_in_array($key, $selected)) ? ' selected="selected"' : '';
 
 				$form .= '<option value="'.$key.'"'.$sel.'>'.(string)$val."</option>\n";
 			}
@@ -671,7 +671,7 @@ if ( ! function_exists('form_dropdown_multiselect'))
 		}
 
 		// If no selected state was submitted we will attempt to set it automatically
-		if (count($selected) === 0)
+		if (astpp_count($selected) === 0)
 		{
 			// If the form name appears in the $_POST array we have a winner!
 			if (isset($_POST[$name]))
@@ -684,7 +684,7 @@ if ( ! function_exists('form_dropdown_multiselect'))
 			$extra = ' '.$extra;
 		}
 
-		$multiple = (count($selected) > 1 && strpos($extra, 'multiple') === FALSE) ? ' multiple="multiple"' : '';
+		$multiple = (astpp_count($selected) > 1 && strpos($extra, 'multiple') === FALSE) ? ' multiple="multiple"' : '';
 		$form = '<select name="'.$name.'"'." multiple='multiple' class='selectpicker select field multiselectable col-md-12 form-control form-control-lg' data-hide-disabled='true' data-actions-box='true'>\n";
 
 		foreach ($options as $key => $val)
@@ -697,7 +697,7 @@ if ( ! function_exists('form_dropdown_multiselect'))
 
 				foreach ($val as $optgroup_key => $optgroup_val)
 				{
-					$sel = (in_array($optgroup_key, $selected)) ? ' selected="selected"' : '';
+					$sel = (astpp_in_array($optgroup_key, $selected)) ? ' selected="selected"' : '';
 
 					$form .= '<option value="'.$optgroup_key.'"'.$sel.'>'.(string)$optgroup_val."</option>\n";
 				}
@@ -705,7 +705,7 @@ if ( ! function_exists('form_dropdown_multiselect'))
 				$form .= '</optgroup>'."\n";
 			} else
 			{
-				$sel = (in_array($key, $selected)) ? ' selected="selected"' : '';
+				$sel = (astpp_in_array($key, $selected)) ? ' selected="selected"' : '';
 
 				$form .= '<option value="'.$key.'"'.$sel.'>'.(string)$val."</option>\n";
 			}
@@ -753,7 +753,7 @@ if ( ! function_exists('form_checkbox'))
 
 		$defaults = array('class'=>'onoffswitch-checkbox', 'type' => 'checkbox', 'name' => (( ! is_array($data)) ? $data : ''), 'value' => $value);
 
-		if (is_array($data) AND array_key_exists('checked', $data))
+		if (is_array($data) AND astpp_array_key_exists('checked', $data))
 		{
 			$checked = $data['checked'];
 
@@ -932,7 +932,7 @@ if ( ! function_exists('form_label'))
 			$label .= " for=\"$id\"";
 		}
 
-		if (is_array($attributes) AND count($attributes) > 0)
+		if (is_array($attributes) AND astpp_count($attributes) > 0)
 		{
 			foreach ($attributes as $key => $val)
 			{
@@ -1055,7 +1055,7 @@ if ( ! function_exists('form_prep'))
 			return $str;
 		}
 
-		$str = htmlspecialchars($str);
+		$str = htmlspecialchars((string) $str); // PHP8: null argument
 
 		// In case htmlspecialchars misses these.
 		$str = str_replace(array("'", '"'), array("&#39;", "&quot;"), $str);
@@ -1124,7 +1124,7 @@ if ( ! function_exists('set_select'))
 		{
 			if ( ! isset($_POST[$field]))
 			{
-				if (count($_POST) === 0 AND $default == TRUE)
+				if (astpp_count($_POST) === 0 AND $default == TRUE)
 				{
 					return ' selected="selected"';
 				}
@@ -1135,7 +1135,7 @@ if ( ! function_exists('set_select'))
 
 			if (is_array($field))
 			{
-				if ( ! in_array($value, $field))
+				if ( ! astpp_in_array($value, $field))
 				{
 					return '';
 				}
@@ -1178,7 +1178,7 @@ if ( ! function_exists('set_checkbox'))
 		{
 			if ( ! isset($_POST[$field]))
 			{
-				if (count($_POST) === 0 AND $default == TRUE)
+				if (astpp_count($_POST) === 0 AND $default == TRUE)
 				{
 					return ' checked="checked"';
 				}
@@ -1189,7 +1189,7 @@ if ( ! function_exists('set_checkbox'))
 
 			if (is_array($field))
 			{
-				if ( ! in_array($value, $field))
+				if ( ! astpp_in_array($value, $field))
 				{
 					return '';
 				}
@@ -1232,7 +1232,7 @@ if ( ! function_exists('set_radio'))
 		{
 			if ( ! isset($_POST[$field]))
 			{
-				if (count($_POST) === 0 AND $default == TRUE)
+				if (astpp_count($_POST) === 0 AND $default == TRUE)
 				{
 					return ' checked="checked"';
 				}
@@ -1243,7 +1243,7 @@ if ( ! function_exists('set_radio'))
 
 			if (is_array($field))
 			{
-				if ( ! in_array($value, $field))
+				if ( ! astpp_in_array($value, $field))
 				{
 					return '';
 				}
@@ -1342,9 +1342,9 @@ if ( ! function_exists('_parse_form_attributes'))
 				}
 			}
 
-			if (count($attributes) > 0)
+			if (astpp_count($attributes) > 0)
 			{
-				$default = array_merge($default, $attributes);
+				$default = astpp_array_merge($default, $attributes);
 			}
 		}
 
@@ -1395,12 +1395,12 @@ if ( ! function_exists('_attributes_to_string'))
 		return ' '.$attributes;
 		}
 
-		if (is_object($attributes) AND count($attributes) > 0)
+		if (is_object($attributes) AND astpp_count($attributes) > 0)
 		{
 			$attributes = (array)$attributes;
 		}
 
-		if (is_array($attributes) AND count($attributes) > 0)
+		if (is_array($attributes) AND astpp_count($attributes) > 0)
 		{
 			$atts = '';
 
@@ -1471,7 +1471,7 @@ if ( ! function_exists('_get_validation_object'))
 
 if ( ! function_exists('form_countries'))
 {
-	function form_countries($name, $selected = FALSE, $attributes, $form_name = "")
+	function form_countries($name, $selected, $attributes, $form_name = "")
 	{
 		$country_list = Common_model::$global_config['country_list'];
 		$form = '<select name="'.$name.'"';
@@ -1512,7 +1512,7 @@ if ( ! function_exists('form_countries'))
 //=========================================
 if ( ! function_exists('form_languagelist'))
 {
-	function form_languagelist($name, $selected = FALSE, $attributes)
+	function form_languagelist($name, $selected, $attributes)
 	{
 		$language_list = Common_model::$global_config['language_list'];
 
@@ -1529,7 +1529,7 @@ if ( ! function_exists('form_languagelist'))
 		{
 			$form .= "\n".'<option value="'.(strtolower($key)).'"';
 
-			if ($key == $selected)
+			if (astpp_loose_eq($key, $selected)) // PHP8: PHP 7 comparison
 			{
 				$form .= ' selected>';
 			} else
@@ -1549,7 +1549,7 @@ if ( ! function_exists('form_languagelist'))
 //-----------------------------------------
 if ( ! function_exists('form_select_default'))
 {
-	function form_select_default($name, $data, $selected = "", $attributes, $form_name = "")
+	function form_select_default($name, $data, $selected, $attributes, $form_name = "")
 	{
 		$form = '<select name="'.$name.'"';
 
@@ -1568,7 +1568,7 @@ if ( ! function_exists('form_select_default'))
 		{
 			$form .= "\n".'<option value="'.$key.'"';
 
-			if ($key == $selected)
+			if (astpp_loose_eq($key, $selected)) // PHP8: PHP 7 comparison
 			{
 				$form .= ' selected>';
 			} else
@@ -1588,7 +1588,7 @@ if ( ! function_exists('form_select_default'))
 // ------------------------------------------------------------------------
 if ( ! function_exists('form_timezone'))
 {
-	function form_timezone($name, $selected = FALSE, $attributes)
+	function form_timezone($name, $selected, $attributes)
 	{
 		$CI = & get_instance();
 

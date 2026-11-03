@@ -28,6 +28,7 @@
  * @author		ExpressionEngine Dev Team
  * @link		http://codeigniter.com/user_guide/libraries/email.html
  */
+#[\AllowDynamicProperties]
 class CI_Email {
 
 	var	$useragent		= "CodeIgniter";
@@ -87,13 +88,13 @@ class CI_Email {
 	 */
 	public function __construct($config = array())
 	{
-		if (count($config) > 0)
+		if (astpp_count($config) > 0)
 		{
 			$this->initialize($config);
 		} else
 		{
 			$this->_smtp_auth = ($this->smtp_user == '' AND $this->smtp_pass == '') ? FALSE : TRUE;
-			$this->_safe_mode = ((boolean)@ini_get("safe_mode") === FALSE) ? FALSE : TRUE;
+			$this->_safe_mode = ((bool)@ini_get("safe_mode") === FALSE) ? FALSE : TRUE;
 		}
 
 		log_message('debug', "Email Class Initialized");
@@ -128,7 +129,7 @@ class CI_Email {
 		$this->clear();
 
 		$this->_smtp_auth = ($this->smtp_user == '' AND $this->smtp_pass == '') ? FALSE : TRUE;
-		$this->_safe_mode = ((boolean)@ini_get("safe_mode") === FALSE) ? FALSE : TRUE;
+		$this->_safe_mode = ((bool)@ini_get("safe_mode") === FALSE) ? FALSE : TRUE;
 
 		return $this;
 	}
@@ -268,7 +269,7 @@ class CI_Email {
 
 		if ($this->_get_protocol() != 'mail')
 		{
-			$this->_set_header('To', implode(", ", $to));
+			$this->_set_header('To', astpp_implode(", ", $to));
 		}
 
 		switch ($this->_get_protocol())
@@ -278,7 +279,7 @@ class CI_Email {
 			break;
 			case 'sendmail'	:
 			case 'mail'		:
-				$this->_recipients = implode(", ", $to);
+				$this->_recipients = astpp_implode(", ", $to);
 			break;
 		}
 
@@ -304,7 +305,7 @@ class CI_Email {
 			$this->validate_email($cc);
 		}
 
-		$this->_set_header('Cc', implode(", ", $cc));
+		$this->_set_header('Cc', astpp_implode(", ", $cc));
 
 		if ($this->_get_protocol() == "smtp")
 		{
@@ -340,12 +341,12 @@ class CI_Email {
 			$this->validate_email($bcc);
 		}
 
-		if (($this->_get_protocol() == "smtp") OR ($this->bcc_batch_mode && count($bcc) > $this->bcc_batch_size))
+		if (($this->_get_protocol() == "smtp") OR ($this->bcc_batch_mode && astpp_count($bcc) > $this->bcc_batch_size))
 		{
 			$this->_bcc_array = $bcc;
 		} else
 		{
-			$this->_set_header('Bcc', implode(", ", $bcc));
+			$this->_set_header('Bcc', astpp_implode(", ", $bcc));
 		}
 
 		return $this;
@@ -508,7 +509,7 @@ class CI_Email {
 	 */
 	public function set_protocol($protocol = 'mail')
 	{
-		$this->protocol = ( ! in_array($protocol, $this->_protocols, TRUE)) ? 'mail' : strtolower($protocol);
+		$this->protocol = ( ! astpp_in_array($protocol, $this->_protocols, TRUE)) ? 'mail' : strtolower($protocol);
 		return $this;
 	}
 
@@ -626,7 +627,7 @@ class CI_Email {
 	protected function _get_protocol($return = TRUE)
 	{
 		$this->protocol = strtolower($this->protocol);
-		$this->protocol = ( ! in_array($this->protocol, $this->_protocols, TRUE)) ? 'mail' : $this->protocol;
+		$this->protocol = ( ! astpp_in_array($this->protocol, $this->_protocols, TRUE)) ? 'mail' : $this->protocol;
 
 		if ($return == TRUE)
 		{
@@ -645,7 +646,7 @@ class CI_Email {
 	 */
 	protected function _get_encoding($return = TRUE)
 	{
-		$this->_encoding = ( ! in_array($this->_encoding, $this->_bit_depths)) ? '8bit' : $this->_encoding;
+		$this->_encoding = ( ! astpp_in_array($this->_encoding, $this->_bit_depths)) ? '8bit' : $this->_encoding;
 
 		foreach ($this->_base_charsets as $charset)
 		{
@@ -671,15 +672,15 @@ class CI_Email {
 	 */
 	protected function _get_content_type()
 	{
-		if ($this->mailtype == 'html' && count($this->_attach_name) == 0)
+		if ($this->mailtype == 'html' && astpp_count($this->_attach_name) == 0)
 		{
 			return 'html';
 		}
-		elseif ($this->mailtype == 'html' && count($this->_attach_name) > 0)
+		elseif ($this->mailtype == 'html' && astpp_count($this->_attach_name) > 0)
 		{
 			return 'html-attach';
 		}
-		elseif ($this->mailtype == 'text' && count($this->_attach_name) > 0)
+		elseif ($this->mailtype == 'text' && astpp_count($this->_attach_name) > 0)
 		{
 			return 'plain-attach';
 		}
@@ -701,8 +702,8 @@ class CI_Email {
 	{
 		$timezone = date("Z");
 		$operator = (strncmp($timezone, '-', 1) == 0) ? '-' : '+';
-		$timezone = abs($timezone);
-		$timezone = floor($timezone / 3600) * 100 + ($timezone % 3600) / 60;
+		$timezone = astpp_abs($timezone);
+		$timezone = astpp_floor(astpp_n($timezone) / 3600) * 100 + (astpp_n($timezone) % 3600) / 60;
 
 		return sprintf("%s %s%04d", date("D, j M Y H:i:s"), $operator, $timezone);
 	}
@@ -881,7 +882,7 @@ class CI_Email {
 		$unwrap = array();
 		if (preg_match_all("|(\{unwrap\}.+?\{/unwrap\})|s", $str, $matches))
 		{
-			for ($i = 0; $i < count($matches['0']); $i++)
+			for ($i = 0; $i < astpp_count($matches['0']); $i++)
 			{
 				$unwrap[] = $matches['1'][$i];
 				$str = str_replace($matches['1'][$i], "{{unwrapped".$i."}}", $str);
@@ -915,8 +916,8 @@ class CI_Email {
 				}
 
 				// Trim the word down
-				$temp .= substr($line, 0, $charlim - 1);
-				$line = substr($line, $charlim - 1);
+				$temp .= substr($line, 0, astpp_n($charlim) - 1);
+				$line = substr($line, astpp_n($charlim) - 1);
 			}
 
 			// If $temp contains data it means we had to split up an over-length
@@ -933,7 +934,7 @@ class CI_Email {
 		}
 
 		// Put our markers back
-		if (count($unwrap) > 0)
+		if (astpp_count($unwrap) > 0)
 		{
 			foreach ($unwrap as $key => $val)
 			{
@@ -957,7 +958,7 @@ class CI_Email {
 	{
 		$this->_set_header('X-Sender', $this->clean_email($this->_headers['From']));
 		$this->_set_header('X-Mailer', $this->useragent);
-		$this->_set_header('X-Priority', $this->_priorities[$this->priority - 1]);
+		$this->_set_header('X-Priority', $this->_priorities[astpp_n($this->priority) - 1]);
 		$this->_set_header('Message-ID', $this->_get_message_id());
 		$this->_set_header('Mime-Version', '1.0');
 	}
@@ -978,7 +979,7 @@ class CI_Email {
 			unset($this->_headers['Subject']);
 		}
 
-		reset($this->_headers);
+		astpp_reset($this->_headers);
 		$this->_header_str = "";
 
 		foreach ($this->_headers as $key => $val)
@@ -1128,7 +1129,7 @@ class CI_Email {
 
 		$z = 0;
 
-		for ($i = 0; $i < count($this->_attach_name); $i++)
+		for ($i = 0; $i < astpp_count($this->_attach_name); $i++)
 		{
 			$filename = $this->_attach_name[$i];
 			$basename = basename($filename);
@@ -1159,7 +1160,7 @@ class CI_Email {
 			fclose($fp);
 		}
 
-		$body .= implode($this->newline, $attachment).$this->newline."--".$this->_atc_boundary."--";
+		$body .= astpp_implode($this->newline, $attachment).$this->newline."--".$this->_atc_boundary."--";
 
 
 		if ($this->_get_protocol() == 'mail')
@@ -1234,7 +1235,7 @@ class CI_Email {
 				$ascii = ord($char);
 
 				// Convert spaces and tabs but only if it's the end of the line
-				if ($i == ($length - 1))
+				if ($i == (astpp_n($length) - 1))
 				{
 					$char = ($ascii == '32' OR $ascii == '9') ? $escape.sprintf('%02s', dechex($ascii)) : $char;
 				}
@@ -1307,7 +1308,7 @@ class CI_Email {
 			$ascii = ord($char);
 
 			// convert ALL non-printable ASCII characters and our specials
-			if ($ascii < 32 OR $ascii > 126 OR in_array($char, $convert))
+			if ($ascii < 32 OR $ascii > 126 OR astpp_in_array($char, $convert))
 			{
 				$char = '='.dechex($ascii);
 			}
@@ -1364,9 +1365,9 @@ class CI_Email {
 
 		$this->_build_headers();
 
-		if ($this->bcc_batch_mode AND count($this->_bcc_array) > 0)
+		if ($this->bcc_batch_mode AND astpp_count($this->_bcc_array) > 0)
 		{
-			if (count($this->_bcc_array) > $this->bcc_batch_size) {
+			if (astpp_count($this->_bcc_array) > $this->bcc_batch_size) {
 							return $this->batch_bcc_send();
 			}
 		}
@@ -1392,13 +1393,13 @@ class CI_Email {
 	 */
 	public function batch_bcc_send()
 	{
-		$float = $this->bcc_batch_size - 1;
+		$float = astpp_n($this->bcc_batch_size) - 1;
 
 		$set = "";
 
 		$chunk = array();
 
-		for ($i = 0; $i < count($this->_bcc_array); $i++)
+		for ($i = 0; $i < astpp_count($this->_bcc_array); $i++)
 		{
 			if (isset($this->_bcc_array[$i]))
 			{
@@ -1408,17 +1409,17 @@ class CI_Email {
 			if ($i == $float)
 			{
 				$chunk[] = substr($set, 1);
-				$float = $float + $this->bcc_batch_size;
+				$float = astpp_n($float) + astpp_n($this->bcc_batch_size);
 				$set = "";
 			}
 
-			if ($i == count($this->_bcc_array) - 1)
+			if ($i == astpp_count($this->_bcc_array) - 1)
 			{
 				$chunk[] = substr($set, 1);
 			}
 		}
 
-		for ($i = 0; $i < count($chunk); $i++)
+		for ($i = 0; $i < astpp_count($chunk); $i++)
 		{
 			unset($this->_headers['Bcc']);
 			unset($bcc);
@@ -1428,7 +1429,7 @@ class CI_Email {
 
 			if ($this->protocol != 'smtp')
 			{
-				$this->_set_header('Bcc', implode(", ", $bcc));
+				$this->_set_header('Bcc', astpp_implode(", ", $bcc));
 			} else
 			{
 				$this->_bcc_array = $bcc;
@@ -1577,7 +1578,7 @@ class CI_Email {
 			$status = $status >> 8 & 0xFF;
 		}
 
-		if ($status != 0)
+		if ((!astpp_eq0($status)))
 		{
 			$this->_set_error_message('lang:email_exit_status', $status);
 			$this->_set_error_message('lang:email_no_socket');
@@ -1613,7 +1614,7 @@ class CI_Email {
 			$this->_send_command('to', $val);
 		}
 
-		if (count($this->_cc_array) > 0)
+		if (astpp_count($this->_cc_array) > 0)
 		{
 			foreach ($this->_cc_array as $val)
 			{
@@ -1624,7 +1625,7 @@ class CI_Email {
 			}
 		}
 
-		if (count($this->_bcc_array) > 0)
+		if (astpp_count($this->_bcc_array) > 0)
 		{
 			foreach ($this->_bcc_array as $val)
 			{
@@ -1915,7 +1916,7 @@ class CI_Email {
 		if (strpos($this->_IP, ',') !== FALSE)
 		{
 			$x = explode(',', $this->_IP);
-			$this->_IP = end($x);
+			$this->_IP = astpp_end($x);
 		}
 
 		if ( ! preg_match("/^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$/", $this->_IP))
@@ -1942,7 +1943,7 @@ class CI_Email {
 	{
 		$msg = '';
 
-		if (count($this->_debug_msg) > 0)
+		if (astpp_count($this->_debug_msg) > 0)
 		{
 			foreach ($this->_debug_msg as $val)
 			{
@@ -1953,26 +1954,26 @@ class CI_Email {
 		$msg .= "<pre>".$this->_header_str."\n".htmlspecialchars($this->_subject)."\n".htmlspecialchars($this->_finalbody).'</pre>';
 		return $msg;
 	}
-	public function print_debugger_email($data = '',$log_path) {
+	public function print_debugger_email($data,$log_path) {
 		$msg = '';
-		if (array_key_exists("attachment",$data)) {
-			$attachment = implode(',',$data['attachment']);
+		if (astpp_array_key_exists("attachment",$data)) {
+			$attachment = astpp_implode(',',$data['attachment']);
 		} else {
 			$attachment = '';
 		}
 		$msg .= "Date : ".date("F j, Y, g:i a")."\n From :".$data['from']."\n To :".$data['to']."\n Subject :".$data['subject']."\n Attachment :".$attachment."\n";
 		$msg .= "Error : \n" ;
         if($this->_get_protocol() == "smtp") {
-			if (count($this->_debug_msg) > 0) {
+			if (astpp_count($this->_debug_msg) > 0) {
 			        foreach ($this->_debug_msg as $key=>$val)
 			        {
-				        if(in_array($key,array(1,2,3,4,5,6,7,8,9,10,11,12,15,16,17,18))){
+				        if(astpp_in_array($key,array(1,2,3,4,5,6,7,8,9,10,11,12,15,16,17,18))){
 				                $msg .= $val;
 				        }
 			        }
 			}
 		} else {
-        	if (count($this->_debug_msg) > 0) {
+        	if (astpp_count($this->_debug_msg) > 0) {
 			        foreach ($this->_debug_msg as $key=>$val) {
 				        $msg .= $val;
 			        }

@@ -26,6 +26,7 @@ if (! defined ( 'BASEPATH' ))
 /**
  * Dynamically build forms for display
  */
+#[\AllowDynamicProperties]
 class Global_locale {
 	function __construct($library_name = '') {
 		$this->CI = & get_instance ();

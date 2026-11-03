@@ -26,6 +26,7 @@
  * @author		ExpressionEngine Dev Team
  * @link		http://codeigniter.com/user_guide/libraries/security.html
  */
+#[\AllowDynamicProperties]
 class CI_Security {
 
 	/**
@@ -133,7 +134,7 @@ class CI_Security {
 	public function csrf_verify()
 	{
 		// If no POST data exists we will set the CSRF cookie
-		if (count($_POST) == 0)
+		if (astpp_count($_POST) == 0)
 		{
 			return $this->csrf_set_cookie();
 		}
@@ -174,7 +175,7 @@ class CI_Security {
 	 */
 	public function csrf_set_cookie()
 	{
-		$expire = time() + $this->_csrf_expire;
+		$expire = time() + astpp_n($this->_csrf_expire);
 		$secure_cookie = (config_item('cookie_secure') === TRUE) ? 1 : 0;
 
 		if ($secure_cookie)
@@ -270,7 +271,8 @@ class CI_Security {
 		 */
 		if (is_array($str))
 		{
-			while (list($key) = each($str))
+			// PHP8: each() was removed
+			foreach (astpp_array_keys($str) as $key)
 			{
 				$str[$key] = $this->xss_clean($str[$key]);
 			}
@@ -612,7 +614,7 @@ class CI_Security {
 			 * Adobe Photoshop puts XML metadata into JFIF images, 
 			 * including namespacing, so we have to allow this for images.
 			 */
-			unset($evil_attributes[array_search('xmlns', $evil_attributes)]);
+			unset($evil_attributes[astpp_array_search('xmlns', $evil_attributes)]);
 		}
 		
 		do {
@@ -620,7 +622,7 @@ class CI_Security {
 			$attribs = array();
 			
 			// find occurrences of illegal attribute strings without quotes
-			preg_match_all("/(".implode('|', $evil_attributes).")\s*=\s*([^\s]*)/is", $str, $matches, PREG_SET_ORDER);
+			preg_match_all("/(".astpp_implode('|', $evil_attributes).")\s*=\s*([^\s]*)/is", $str, $matches, PREG_SET_ORDER);
 			
 			foreach ($matches as $attr)
 			{
@@ -628,7 +630,7 @@ class CI_Security {
 			}
 			
 			// find occurrences of illegal attribute strings with quotes (042 and 047 are octal quotes)
-			preg_match_all("/(".implode('|', $evil_attributes).")\s*=\s*(\042|\047)([^\\2]*?)(\\2)/is", $str, $matches, PREG_SET_ORDER);
+			preg_match_all("/(".astpp_implode('|', $evil_attributes).")\s*=\s*(\042|\047)([^\\2]*?)(\\2)/is", $str, $matches, PREG_SET_ORDER);
 
 			foreach ($matches as $attr)
 			{
@@ -636,9 +638,9 @@ class CI_Security {
 			}
 
 			// replace illegal attribute strings that are inside an html tag
-			if (count($attribs) > 0)
+			if (astpp_count($attribs) > 0)
 			{
-				$str = preg_replace("/<(\/?[^><]+?)([^A-Za-z\-])(".implode('|', $attribs).")([\s><])([><]*)/i", '<$1$2$4$5', $str, -1, $count);
+				$str = preg_replace("/<(\/?[^><]+?)([^A-Za-z\-])(".astpp_implode('|', $attribs).")([\s><])([><]*)/i", '<$1$2$4$5', $str, -1, $count);
 			}
 			
 		} while ($count);

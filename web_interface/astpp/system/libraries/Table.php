@@ -28,6 +28,7 @@
  * @author		ExpressionEngine Dev Team
  * @link		http://codeigniter.com/user_guide/libraries/uri.html
  */
+#[\AllowDynamicProperties]
 class CI_Table {
 
 	var $rows = array();
@@ -95,7 +96,7 @@ class CI_Table {
 	 */
 	function make_columns($array = array(), $col_limit = 0)
 	{
-		if ( ! is_array($array) OR count($array) == 0)
+		if ( ! is_array($array) OR astpp_count($array) == 0)
 		{
 			return FALSE;
 		}
@@ -104,19 +105,19 @@ class CI_Table {
 		// will want headings from a one-dimensional array
 		$this->auto_heading = FALSE;
 
-		if ($col_limit == 0)
+		if (astpp_eq0($col_limit))
 		{
 			return $array;
 		}
 
 		$new = array();
-		while (count($array) > 0)
+		while (astpp_count($array) > 0)
 		{
 			$temp = array_splice($array, 0, $col_limit);
 
-			if (count($temp) < $col_limit)
+			if (astpp_count($temp) < $col_limit)
 			{
-				for ($i = count($temp); $i < $col_limit; $i++)
+				for ($i = astpp_count($temp); $i < $col_limit; $i++)
 				{
 					$temp[] = '&nbsp;';
 				}
@@ -177,7 +178,7 @@ class CI_Table {
 		// If there is no $args[0], skip this and treat as an associative array
 		// This can happen if there is only a single key, for example this is passed to table->generate
 		// array(array('foo'=>'bar'))
-		if (isset($args[0]) AND (count($args) == 1 && is_array($args[0])))
+		if (isset($args[0]) AND (astpp_count($args) == 1 && is_array($args[0])))
 		{
 			// args sent as indexed array
 			if ( ! isset($args[0]['data']))
@@ -241,13 +242,13 @@ class CI_Table {
 				$this->_set_from_object($table_data);
 			} elseif (is_array($table_data))
 			{
-				$set_heading = (count($this->heading) == 0 AND $this->auto_heading == FALSE) ? FALSE : TRUE;
+				$set_heading = (astpp_count($this->heading) == 0 AND $this->auto_heading == FALSE) ? FALSE : TRUE;
 				$this->_set_from_array($table_data, $set_heading);
 			}
 		}
 
 		// Is there anything to display?  No?  Smite them!
-		if (count($this->heading) == 0 AND count($this->rows) == 0)
+		if (astpp_count($this->heading) == 0 AND astpp_count($this->rows) == 0)
 		{
 			return 'Undefined table data';
 		}
@@ -272,7 +273,7 @@ class CI_Table {
 		}
 
 		// Is there a table heading to display?
-		if (count($this->heading) > 0)
+		if (astpp_count($this->heading) > 0)
 		{
 			$out .= $this->template['thead_open'];
 			$out .= $this->newline;
@@ -303,7 +304,7 @@ class CI_Table {
 		}
 
 		// Build the table rows
-		if (count($this->rows) > 0)
+		if (astpp_count($this->rows) > 0)
 		{
 			$out .= $this->template['tbody_open'];
 			$out .= $this->newline;
@@ -402,7 +403,7 @@ class CI_Table {
 		}
 
 		// First generate the headings from the table column names
-		if (count($this->heading) == 0)
+		if (astpp_count($this->heading) == 0)
 		{
 			if ( ! method_exists($query, 'list_fields'))
 			{
@@ -434,7 +435,7 @@ class CI_Table {
 	 */
 	function _set_from_array($data, $set_heading = TRUE)
 	{
-		if ( ! is_array($data) OR count($data) == 0)
+		if ( ! is_array($data) OR astpp_count($data) == 0)
 		{
 			return FALSE;
 		}
@@ -443,7 +444,7 @@ class CI_Table {
 		foreach ($data as $row)
 		{
 			// If a heading hasn't already been set we'll use the first row of the array as the heading
-			if ($i == 0 AND count($data) > 1 AND count($this->heading) == 0 AND $set_heading == TRUE)
+			if ($i == 0 AND astpp_count($data) > 1 AND astpp_count($this->heading) == 0 AND $set_heading == TRUE)
 			{
 				$this->heading = $this->_prep_args($row);
 			} else

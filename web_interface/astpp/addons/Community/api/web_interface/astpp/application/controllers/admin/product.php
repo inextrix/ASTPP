@@ -2,6 +2,7 @@
 
 require APPPATH . '/controllers/common/account.php';
 
+#[\AllowDynamicProperties]
 class Product extends Account
 {
 
@@ -36,7 +37,7 @@ class Product extends Account
         $this->api_log->write_log('Params : ', json_encode($this->postdata));
         if ($function != '') {
             $function = 'product_' . $function;
-            if (( int )method_exists($this, $function) > 0) {
+            if (astpp_gt(( int )method_exists($this, $function), 0)) {
                 $this->$function ();
             } else {
                 $this->response(array(
@@ -65,7 +66,7 @@ class Product extends Account
                 'status' => false,
                 'error' => $this->lang->line ('product_already_optin')  ), 400 );
             }
-            if($this->accountinfo['reseller_id'] > 0){
+            if(astpp_gt($this->accountinfo['reseller_id'], 0)){
                 $products_info = $this->db_model->getSelect("*", "products", array("id" => $this->postdata['product_id'], "status" => 0))->row_array();
                 if($products_info['product_category'] == 1 || $products_info['product_category'] == 2){
                 $this->db->where(array('product_id' => $this->postdata['product_id'],'is_owner' => 0));
@@ -83,8 +84,8 @@ class Product extends Account
                     'error' => $this->lang->line ('product_not_found' )  
                 ), 400 );
             }
-            if($product_data['can_resell'] == 0){
-                if($this->accountinfo['is_distributor'] == 0){
+            if(astpp_eq0($product_data['can_resell'])){
+                if(astpp_eq0($this->accountinfo['is_distributor'])){
                     $insert_array['setup_fee'] = isset($this->postdata['setup_fee']) && $this->postdata['setup_fee'] != "" ? $this->postdata['setup_fee'] : $product_data['setup_fee'];
                     $insert_array['price'] = isset($this->postdata['setup_fee']) && $this->postdata['price'] != "" ? $this->postdata['price'] : $product_data['price'];
                 }
@@ -94,7 +95,7 @@ class Product extends Account
                 }
                 $insert_array['product_id'] = $this->postdata['product_id'];
                 $insert_array['account_id'] = $this->accountinfo['id'];
-                $insert_array['reseller_id'] = $this->accountinfo['reseller_id'] > 0 ? $this->accountinfo['reseller_id'] : 0;
+                $insert_array['reseller_id'] = astpp_gt($this->accountinfo['reseller_id'], 0) ? $this->accountinfo['reseller_id'] : 0;
                 $insert_array['is_owner'] = 1;
                 $insert_array['is_optin'] = 0;
                 $insert_array['optin_date'] = gmdate("Y-m-d H:i:s");
@@ -244,7 +245,7 @@ class Product extends Account
         if(!empty($where)) {
             $this->db->where($where);
         }
-        $start = $this->postdata['start_limit']-1;
+        $start = astpp_n($this->postdata['start_limit'])-1;
         $limit = $this->postdata['end_limit'];
         $no_of_records = (int)$limit - (int)$start;
         $this->db->limit($no_of_records, $start);
@@ -297,7 +298,7 @@ class Product extends Account
                     $available_products[$key]['setup_fee'] = $this->common_model->to_calculate_currency($value['setup_fee'], '', $currency_id);
                     $available_products[$key]['price'] = $this->common_model->to_calculate_currency($value['price'], '', $currency_id);
                     $available_products[$key]['billing_type'] = $this->common->get_renewal_type_category_list('billing_type', 'billing_type', $value['billing_type']);
-                    $available_products[$key]['retired'] = $value['status'] == 0 ? "No" : "Yes";
+                    $available_products[$key]['retired'] = astpp_eq0($value['status']) ? "No" : "Yes";
                     unset($available_products[$key]['country_id'],$available_products[$key]['reseller_id']);
                 }
                 $this->response(array(
@@ -318,13 +319,13 @@ class Product extends Account
                 'error' => $this->lang->line('error_param_missing')
             ), 400);
         } else {
-            if ($this->postdata['start_limit'] <= 0 || $this->postdata['end_limit'] <= 0) {
+            if (astpp_le($this->postdata['start_limit'], 0) || astpp_le($this->postdata['end_limit'], 0)) {
                 $this->response(array(
                     'status' => false,
                     'error' => $this->lang->line('number_greater_zero')
                 ), 400);
             }
-            $start = $this->postdata['start_limit'] - 1;
+            $start = astpp_n($this->postdata['start_limit']) - 1;
             $limit = $this->postdata['end_limit'];
             $object_where_params = $this->postdata['object_where_params'];
             $where = '';
@@ -344,7 +345,7 @@ class Product extends Account
                 if ($categoryinfo->num_rows > 0) {
                     $categoryinfo = $categoryinfo->result_array()[0]['id'];
                 }
-                if ($this->accountinfo["reseller_id"] > 0) {
+                if (astpp_gt($this->accountinfo["reseller_id"], 0)) {
 
                     $this->db->where("product_id NOT IN (select CONCAT(product_id) from reseller_products where is_owner = 1 and is_optin = 0 and account_id = " . $this->accountinfo['id'] . " )");
                     $this->db->where("product_category IN (" . $categoryinfo . ")", NULL, false);
@@ -421,13 +422,13 @@ buycost,reseller_products.price,reseller_products.billing_type,(CASE WHEN resell
             if ($product_id != '') {
                 $where = $this->db->where("id IN (" . $this->postdata['product_id'] . ") ");
 
-                $product_id = $this->accountinfo ['reseller_id'] > 0 ? $this->accountinfo ['reseller_id'] : 0;
+                $product_id = astpp_gt($this->accountinfo ['reseller_id'], 0) ? $this->accountinfo ['reseller_id'] : 0;
                 $accountid = $this->accountinfo['type'] == 1 ? $this->accountinfo['id'] : 0;
                 if ($this->accountinfo['type'] == 1 || $this->accountinfo['type'] == 5) {
                     $where = $this->db->where("product_id IN (" . $this->postdata['product_id'] . ")");
                     $product_info = ( array )$this->db->get_where("reseller_products", $where)->result_array();
                     foreach ($product_info as $key => $value) {
-                        if ($value['is_owner'] == 0) {
+                        if (astpp_eq0($value['is_owner'])) {
                             $this->db->where("id", $value['product_id']);
                             $this->db->update("products", array("is_deleted" => 1));
                             $affected_rows = $this->db->affected_rows(); 
@@ -452,7 +453,7 @@ buycost,reseller_products.price,reseller_products.billing_type,(CASE WHEN resell
                     }
                 }
             }
-            if($affected_rows == 0){
+            if(astpp_eq0($affected_rows)){
                 $this->response(array(
                     'status' => false,
                     'error' => $this->lang->line('product_not_found')
@@ -566,14 +567,14 @@ buycost,reseller_products.price,reseller_products.billing_type,(CASE WHEN resell
         }
         $this->postdata['release_no_balance'] = $this->postdata['release_no_balance'] == "0" ? $this->postdata['release_no_balance'] : 1;
         $this->postdata['status'] = $this->postdata['status'] == "1" ? $this->postdata['status'] : 0;
-        $this->postdata['applicable_for'] = $this->postdata['applicable_for'] == "1" ? $this->postdata['applicable_for'] : $this->postdata['applicable_for'] == "0" ? $this->postdata['applicable_for'] : "1" ;
+        $this->postdata['applicable_for'] = ($this->postdata['applicable_for'] == "1" || $this->postdata['applicable_for'] == "0") ? $this->postdata['applicable_for'] : "1"; // PHP8: nested ternary
         if($this->postdata['apply_on_rategroups'] != ""){
             $explode_ids= explode(',',$this->postdata['apply_on_rategroups']);
             $this->db->where_in('id',$explode_ids);
             $available_rategroups = $this->db_model->getSelect("*", "pricelists", array("status" => 0, "reseller_id" => 0))->result_array();
             unset($this->postdata['apply_on_rategroups']);
             foreach ($available_rategroups as $key => $value) {
-                if(in_array($value['id'], $explode_ids)!=FALSE){
+                if(astpp_in_array($value['id'], $explode_ids)!=FALSE){
                     $this->postdata['apply_on_rategroups'] .= $value['id'].',';
                 }
             }

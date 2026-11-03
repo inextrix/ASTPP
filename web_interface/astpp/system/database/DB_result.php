@@ -28,6 +28,7 @@
  * @author		ExpressionEngine Dev Team
  * @link		http://codeigniter.com/user_guide/database/
  */
+#[\AllowDynamicProperties]
 class CI_DB_result {
 
 	var $conn_id = NULL;
@@ -68,7 +69,7 @@ class CI_DB_result {
 	 */
 	public function custom_result_object($class_name)
 	{
-		if (array_key_exists($class_name, $this->custom_result_object))
+		if (astpp_array_key_exists($class_name, $this->custom_result_object))
 		{
 			return $this->custom_result_object[$class_name];
 		}
@@ -108,7 +109,7 @@ class CI_DB_result {
 	 */
 	public function result_object()
 	{
-		if (count($this->result_object) > 0)
+		if (astpp_count($this->result_object) > 0)
 		{
 			return $this->result_object;
 		}
@@ -140,7 +141,7 @@ class CI_DB_result {
 	 */
 	public function result_array()
 	{
-		if (count($this->result_array) > 0)
+		if (astpp_count($this->result_array) > 0)
 		{
 			return $this->result_array;
 		}
@@ -183,7 +184,7 @@ class CI_DB_result {
 			}
 
 			// array_key_exists() instead of isset() to allow for MySQL NULL values
-			if (array_key_exists($n, $this->row_data))
+			if (astpp_array_key_exists($n, $this->row_data))
 			{
 				return $this->row_data[$n];
 			}
@@ -245,7 +246,7 @@ class CI_DB_result {
 	{
 		$result = $this->custom_result_object($type);
 
-		if (count($result) == 0)
+		if (astpp_count($result) == 0)
 		{
 			return $result;
 		}
@@ -268,7 +269,7 @@ class CI_DB_result {
 	{
 		$result = $this->result_object();
 
-		if (count($result) == 0)
+		if (astpp_count($result) == 0)
 		{
 			return $result;
 		}
@@ -293,7 +294,7 @@ class CI_DB_result {
 	{
 		$result = $this->result_array();
 
-		if (count($result) == 0)
+		if (astpp_count($result) == 0)
 		{
 			return $result;
 		}
@@ -319,7 +320,7 @@ class CI_DB_result {
 	{
 		$result = $this->result($type);
 
-		if (count($result) == 0)
+		if (astpp_count($result) == 0)
 		{
 			return $result;
 		}
@@ -338,11 +339,11 @@ class CI_DB_result {
 	{
 		$result = $this->result($type);
 
-		if (count($result) == 0)
+		if (astpp_count($result) == 0)
 		{
 			return $result;
 		}
-		return $result[count($result) - 1];
+		return $result[astpp_count($result) - 1];
 	}
 
 	// --------------------------------------------------------------------
@@ -357,12 +358,12 @@ class CI_DB_result {
 	{
 		$result = $this->result($type);
 
-		if (count($result) == 0)
+		if (astpp_count($result) == 0)
 		{
 			return $result;
 		}
 
-		if (isset($result[$this->current_row + 1]))
+		if (isset($result[astpp_n($this->current_row) + 1]))
 		{
 			++$this->current_row;
 		}
@@ -382,12 +383,12 @@ class CI_DB_result {
 	{
 		$result = $this->result($type);
 
-		if (count($result) == 0)
+		if (astpp_count($result) == 0)
 		{
 			return $result;
 		}
 
-		if (isset($result[$this->current_row - 1]))
+		if (isset($result[astpp_n($this->current_row) - 1]))
 		{
 			--$this->current_row;
 		}

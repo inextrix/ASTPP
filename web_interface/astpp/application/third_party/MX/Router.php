@@ -35,6 +35,7 @@ require dirname(__FILE__).'/Modules.php';
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  **/
+#[\AllowDynamicProperties]
 class MX_Router extends CI_Router
 {
 	protected $module;
@@ -45,7 +46,7 @@ class MX_Router extends CI_Router
 	
 	public function _validate_request($segments) {
 
-		if (count($segments) == 0) {
+		if (astpp_count($segments) == 0) {
 			return $segments;
 		}
 		
@@ -74,7 +75,7 @@ class MX_Router extends CI_Router
 		$ext = $this->config->item('controller_suffix').EXT;
 		
 		/* use module route if available */
-		if (isset($segments[0]) AND $routes = Modules::parse_routes($segments[0], implode('/', $segments))) {
+		if (isset($segments[0]) AND $routes = Modules::parse_routes($segments[0], astpp_implode('/', $segments))) {
 			$segments = $routes;
 		}
 	
@@ -92,7 +93,7 @@ class MX_Router extends CI_Router
 				
 				/* module sub-controller exists? */
 				if ($directory AND is_file($source.$directory.$ext)) {
-					return array_slice($segments, 1);
+					return astpp_array_slice($segments, 1);
 				}
 					
 				/* module sub-directory exists? */
@@ -103,12 +104,12 @@ class MX_Router extends CI_Router
 
 					/* module sub-directory controller exists? */
 					if (is_file($source.$directory.$ext)) {
-						return array_slice($segments, 1);
+						return astpp_array_slice($segments, 1);
 					}
 				
 					/* module sub-directory sub-controller exists? */
 					if ($controller AND is_file($source.$controller.$ext)) {
-						return array_slice($segments, 2);
+						return astpp_array_slice($segments, 2);
 					}
 				}
 				
@@ -127,7 +128,7 @@ class MX_Router extends CI_Router
 		/* application sub-directory controller exists? */
 		if ($directory AND is_file(APPPATH.'controllers/'.$module.'/'.$directory.$ext)) {
 			$this->directory = $module.'/';
-			return array_slice($segments, 1);
+			return astpp_array_slice($segments, 1);
 		}
 		
 		/* application sub-directory default controller exists? */

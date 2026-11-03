@@ -59,6 +59,7 @@
 	 * @link http://www.tcpdf.org
 	 * @license http://www.gnu.org/copyleft/lesser.html LGPL
 	 */
+#[\AllowDynamicProperties]
 class TCPDF2DBarcode {
 
 	/**

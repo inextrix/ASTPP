@@ -23,6 +23,7 @@
 // ##############################################################################
 if (! defined ( 'BASEPATH' ))
 	exit ( 'No direct script access allowed' );
+#[\AllowDynamicProperties]
 class Product_form {
 	function __construct($library_name = '') {
 		$this->CI = & get_instance ();
@@ -35,7 +36,7 @@ class Product_form {
 				) 
 		);
 		$accountinfo=$this->CI->session->userdata('accountinfo');
-		if($accountinfo['type'] == 1 && $accountinfo['is_distributor'] == 0 ){
+		if($accountinfo['type'] == 1 && astpp_eq0($accountinfo['is_distributor']) ){
 		$form [gettext ( 'Search' )] = array (
 				array (
 						gettext ( 'Name' ),
@@ -444,7 +445,7 @@ class Product_form {
 				) 
 		);
 		$accountinfo=$this->CI->session->userdata('accountinfo');
-		if($accountinfo['type'] == 1 && $accountinfo['is_distributor'] == 0 ){
+		if($accountinfo['type'] == 1 && astpp_eq0($accountinfo['is_distributor']) ){
 		$form [gettext ( 'Search' )] = array (
 				array (
 						gettext ( 'Name' ),
@@ -839,7 +840,7 @@ class Product_form {
 						"center" 
 				);
 		}
-		if(($this->CI->session->userdata ( 'logintype' ) == 1 || $this->CI->session->userdata ( 'logintype' ) == 5) && ($account_info['is_distributor'] == 0)){
+		if(($this->CI->session->userdata ( 'logintype' ) == 1 || $this->CI->session->userdata ( 'logintype' ) == 5) && (astpp_eq0($account_info['is_distributor']))){
 		$grid_field_arr = json_encode ( array (
 				array (
 						"<input type='checkbox' name='chkAll' class='ace checkall'/><label class='lbl'></label>",
@@ -1319,7 +1320,7 @@ class Product_form {
 		$account_info = $this->CI->session->userdata ( 'accountinfo' );
 		$currency_id = $account_info ['currency_id'];
 		$currency = $this->CI->common->get_field_name ( 'currency', 'currency', $currency_id );
-		if($account_info['reseller_id'] > 0 ){
+		if(astpp_gt($account_info['reseller_id'], 0) ){
 			$buy_cost =array (
 						gettext ( "Buy Cost" )." ($currency)",
 						"85",
@@ -1333,7 +1334,7 @@ class Product_form {
 					);
 
 
-		}else if($this->CI->session->userdata ( 'logintype' ) == 1 && $account_info['reseller_id'] == 0 ){
+		}else if($this->CI->session->userdata ( 'logintype' ) == 1 && astpp_eq0($account_info['reseller_id']) ){
 			$buy_cost =array (
 						gettext ( "Buy Cost" )." ($currency)",
 						"85",
@@ -1360,7 +1361,7 @@ class Product_form {
 
 
 		}
-		if(($this->CI->session->userdata ( 'logintype' ) == 1 || $this->CI->session->userdata ( 'logintype' ) == 5) && ($account_info['is_distributor'] == 0)){
+		if(($this->CI->session->userdata ( 'logintype' ) == 1 || $this->CI->session->userdata ( 'logintype' ) == 5) && (astpp_eq0($account_info['is_distributor']))){
 			$grid_field_arr = json_encode ( array (
 					
 					

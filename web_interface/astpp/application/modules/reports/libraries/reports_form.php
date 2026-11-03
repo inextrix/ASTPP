@@ -23,6 +23,7 @@
 if (! defined('BASEPATH'))
     exit('No direct script access allowed');
 
+#[\AllowDynamicProperties]
 class Reports_form extends common
 {
 
@@ -2538,7 +2539,7 @@ class Reports_form extends common
         } else {
             $loginid = "0";
         }
-        if ($logintype == 0 || $logintype == 3) {
+        if (astpp_eq0($logintype) || $logintype == 3) {
             $acc_arr = null;
         }
 

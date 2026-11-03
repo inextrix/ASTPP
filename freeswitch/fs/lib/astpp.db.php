@@ -20,6 +20,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 // ##############################################################################
+#[\AllowDynamicProperties]
 class db extends PDO {
 	private $error;
 	private $sql;
@@ -33,7 +34,7 @@ class db extends PDO {
 		$options = array (
 				PDO::ATTR_PERSISTENT => true,
 				PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-				PDO::MYSQL_ATTR_MULTI_STATEMENTS => false
+				(defined('Pdo\Mysql::ATTR_MULTI_STATEMENTS') ? \Pdo\Mysql::ATTR_MULTI_STATEMENTS : PDO::MYSQL_ATTR_MULTI_STATEMENTS) => false // PHP 8.5: PDO::MYSQL_* is deprecated
 		);
 		
 		try {
@@ -79,13 +80,13 @@ class db extends PDO {
 		try {
 			$pdostmt = $this->prepare ( $this->sql );
 			if ($pdostmt->execute ( $this->bind ) !== false) {
-				if (preg_match ( "/^(" . implode ( "|", array (
+				if (preg_match ( "/^(" . astpp_implode ( "|", array (
 						"select",
 						"describe",
 						"pragma" 
 				) ) . ") /i", $this->sql ))
 					return $pdostmt->fetchAll ( PDO::FETCH_ASSOC );
-				elseif (preg_match ( "/^(" . implode ( "|", array (
+				elseif (preg_match ( "/^(" . astpp_implode ( "|", array (
 						"delete",
 						"insert",
 						"update" 

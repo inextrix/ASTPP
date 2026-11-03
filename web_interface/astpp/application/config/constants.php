@@ -115,7 +115,7 @@ $a = scandir($dir);
 
 foreach($a as $key=>$val){
 
-	if($val!=='.' || $val!='..'){
+	if($val!=='.' && $val!=='..' && is_dir($dir."/".$val)){ // BUGFIX: condition was always true (also scanned files like index.html)
 		$function=str_replace(".php","",$val);
 		if(file_exists($dir."/".$val."/constants.php")){
 			include_once($dir."/".$val."/constants.php");

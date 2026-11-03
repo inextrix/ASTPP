@@ -19,6 +19,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>
 ############################################################################
+#[\AllowDynamicProperties]
 class ringgroup_model extends CI_Model {
     function __construct() {
         parent::__construct();
@@ -50,19 +51,19 @@ class ringgroup_model extends CI_Model {
         $j=1;
         for ($i = 1; $i <= 10; $i++) {
          if($add_array['strategy'] == 'simultaneous') {
-            if (array_key_exists('time_out_' . $i, $add_array)) {
+            if (astpp_array_key_exists('time_out_' . $i, $add_array)) {
                 
                 $add_array['time_out_' . $i] = $add_array['time_out_' . $i];
             }
-            if (array_key_exists('delay_' . $i, $add_array)) {
+            if (astpp_array_key_exists('delay_' . $i, $add_array)) {
                 
                 $add_array['delay_' . $i] = '1';
             }
-            if (array_key_exists('Promptdropdown_' . $i, $add_array)) {
+            if (astpp_array_key_exists('Promptdropdown_' . $i, $add_array)) {
                 
                 $add_array['Promptdropdown_' . $i] = '1';
             }
-            if (array_key_exists('extensions_type_' . $i, $add_array)) {
+            if (astpp_array_key_exists('extensions_type_' . $i, $add_array)) {
                 
                 if (isset($add_array['extensions_type_' . $i]) && $add_array['extensions_type_' . $i] != '') {
 
@@ -81,18 +82,18 @@ class ringgroup_model extends CI_Model {
         }
 
         if($add_array['strategy'] == 'sequence') {
-            if (array_key_exists('time_out_' . $i, $add_array)) {
+            if (astpp_array_key_exists('time_out_' . $i, $add_array)) {
                 
                 $add_array['time_out_' . $i] = $add_array['time_out_' . $i];
             }
-            if (array_key_exists('delay_' . $i, $add_array)) {
+            if (astpp_array_key_exists('delay_' . $i, $add_array)) {
                 
                 $add_array['delay_' . $i] = '1';
             }
-            if (array_key_exists('Promptdropdown_' . $i, $add_array)) {
+            if (astpp_array_key_exists('Promptdropdown_' . $i, $add_array)) {
                 $add_array['Promptdropdown_' . $i] = '1';
             }
-            if (array_key_exists('extensions_type_' . $i, $add_array)) {
+            if (astpp_array_key_exists('extensions_type_' . $i, $add_array)) {
                 if (isset($add_array['extensions_type_' . $i]) && $add_array['extensions_type_' . $i] != '') {
 
                     if ($add_array['extensions_type_' . $i] == "0") {
@@ -121,9 +122,9 @@ class ringgroup_model extends CI_Model {
      $account_id = $add_array['accountid'];
      $reseller_id = $accountinfo['id'];
  }
- if($accountinfo['type']== 0){
+ if(astpp_eq0($accountinfo['type'])){
      $account_id = $accountinfo['id']; 
-     $reseller_id = ($accountinfo['reseller_id'] > 0)?$accountinfo['reseller_id']:0;
+     $reseller_id = (astpp_gt($accountinfo['reseller_id'], 0))?$accountinfo['reseller_id']:0;
  }
  
  $final_arr=array(
@@ -162,18 +163,18 @@ function edit_ringgroup_list($add_array,$edit_id) {
    for ($i = 1; $i <= 25; $i++) {
 
     if($add_array['strategy'] == 'simultaneous') {
-        if (array_key_exists('time_out_' . $i, $add_array)) {
+        if (astpp_array_key_exists('time_out_' . $i, $add_array)) {
             
             $add_array['time_out_' . $i] = $add_array['time_out_' . $i];
         }
-        if (array_key_exists('delay_' . $i, $add_array)) {
+        if (astpp_array_key_exists('delay_' . $i, $add_array)) {
             
             $add_array['delay_' . $i] = '1';
         }
-        if (array_key_exists('Promptdropdown_' . $i, $add_array)) {
+        if (astpp_array_key_exists('Promptdropdown_' . $i, $add_array)) {
             $add_array['Promptdropdown_' . $i] = '1';
         }
-        if (array_key_exists('extensions_type_' . $i, $add_array)) {
+        if (astpp_array_key_exists('extensions_type_' . $i, $add_array)) {
             
             if (isset($add_array['extensions_type_' . $i]) && $add_array['extensions_type_' . $i] != '') {
 
@@ -192,18 +193,18 @@ function edit_ringgroup_list($add_array,$edit_id) {
     }
 
     if($add_array['strategy'] == 'sequence') {
-        if (array_key_exists('time_out_' . $i, $add_array)) {
+        if (astpp_array_key_exists('time_out_' . $i, $add_array)) {
             
             $add_array['time_out_' . $i] = $add_array['time_out_' . $i];
         }
-        if (array_key_exists('delay_' . $i, $add_array)) {
+        if (astpp_array_key_exists('delay_' . $i, $add_array)) {
             
             $add_array['delay_' . $i] = '1';
         }
-        if (array_key_exists('Promptdropdown_' . $i, $add_array)) {
+        if (astpp_array_key_exists('Promptdropdown_' . $i, $add_array)) {
             $add_array['Promptdropdown_' . $i] = '1';
         }
-        if (array_key_exists('extensions_type_' . $i, $add_array)) {
+        if (astpp_array_key_exists('extensions_type_' . $i, $add_array)) {
             
             if (isset($add_array['extensions_type_' . $i]) && $add_array['extensions_type_' . $i] != '') {
 
@@ -263,8 +264,8 @@ function edit_ringgroup($edit_id) {
     $ringgroup     = $ringgroup_res[0];
     $destinations  = json_decode($ringgroup['destinations'],true);
     unset($ringgroup['destinations']);
-    $ringgroup['count'] = count($destinations)/4;
-    $ringgroup=array_merge($ringgroup,isset($destinations) ?$destinations : array());
+    $ringgroup['count'] = astpp_count($destinations)/4;
+    $ringgroup=astpp_array_merge($ringgroup,isset($destinations) ?$destinations : array());
     return $ringgroup;
 }
 }

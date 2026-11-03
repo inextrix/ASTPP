@@ -69,7 +69,7 @@
  			<div class="col-md-2">
  				<select class="col-md-12 form-control form-control-lg selectpicker time_out_<?= $count ?>" data-size="6" data-live-search="true" name="time_out_<?= $count ?>" id= "time_out_<?= $count ?>">
  					<?php 
- 					for($i=0; $i<=90; $i+=5){
+ 					for($i=0; $i<=90; $i = astpp_n($i) + 5){
  						echo "<option value=".$i.">".$i."</option>";
  					}
  					?> 

@@ -133,7 +133,7 @@ if ( ! function_exists('ascii_to_entities'))
 					If the $temp array has a value but we have moved on, then it seems only
 					fair that we output that entity and restart $temp before continuing. -Paul
 				*/
-				if (count($temp) == 1)
+				if (astpp_count($temp) == 1)
 				{
 					$out  .= '&#'.array_shift($temp).';';
 					$count = 1;
@@ -142,16 +142,16 @@ if ( ! function_exists('ascii_to_entities'))
 				$out .= $str[$i];
 			} else
 			{
-				if (count($temp) == 0)
+				if (astpp_count($temp) == 0)
 				{
 					$count = ($ordinal < 224) ? 2 : 3;
 				}
 
 				$temp[] = $ordinal;
 
-				if (count($temp) == $count)
+				if (astpp_count($temp) == $count)
 				{
-					$number = ($count == 3) ? (($temp['0'] % 16) * 4096) + (($temp['1'] % 64) * 64) + ($temp['2'] % 64) : (($temp['0'] % 32) * 64) + ($temp['1'] % 64);
+					$number = ($count == 3) ? ((astpp_n($temp['0']) % 16) * 4096) + ((astpp_n($temp['1']) % 64) * 64) + (astpp_n($temp['2']) % 64) : ((astpp_n($temp['0']) % 32) * 64) + (astpp_n($temp['1']) % 64);
 
 					$out .= '&#'.$number.';';
 					$count = 1;
@@ -182,7 +182,7 @@ if ( ! function_exists('entities_to_ascii'))
 	{
 		if (preg_match_all('/\&#(\d+)\;/', $str, $matches))
 		{
-			for ($i = 0, $s = count($matches['0']); $i < $s; $i++)
+			for ($i = 0, $s = astpp_count($matches['0']); $i < $s; $i++)
 			{
 				$digits = $matches['1'][$i];
 
@@ -190,17 +190,17 @@ if ( ! function_exists('entities_to_ascii'))
 
 				if ($digits < 128)
 				{
-					$out .= chr($digits);
+					$out .= astpp_chr($digits);
 
 				} elseif ($digits < 2048)
 				{
-					$out .= chr(192 + (($digits - ($digits % 64)) / 64));
-					$out .= chr(128 + ($digits % 64));
+					$out .= astpp_chr(192 + ((astpp_n($digits) - (astpp_n($digits) % 64)) / 64));
+					$out .= astpp_chr(128 + (astpp_n($digits) % 64));
 				} else
 				{
-					$out .= chr(224 + (($digits - ($digits % 4096)) / 4096));
-					$out .= chr(128 + ((($digits % 4096) - ($digits % 64)) / 64));
-					$out .= chr(128 + ($digits % 64));
+					$out .= astpp_chr(224 + ((astpp_n($digits) - (astpp_n($digits) % 4096)) / 4096));
+					$out .= astpp_chr(128 + (((astpp_n($digits) % 4096) - (astpp_n($digits) % 64)) / 64));
+					$out .= astpp_chr(128 + (astpp_n($digits) % 64));
 				}
 
 				$str = str_replace($matches['0'][$i], $out, $str);
@@ -300,7 +300,7 @@ if ( ! function_exists('highlight_code'))
 		// Prior to PHP 5, the highligh function used icky <font> tags
 		// so we'll replace them with <span> tags.
 
-		if (abs(PHP_VERSION) < 5)
+		if (astpp_abs(PHP_VERSION) < 5)
 		{
 			$str = str_replace(array('<font ', '</font>'), array('<span ', '</span>'), $str);
 			$str = preg_replace('#color="(.*?)"#', 'style="color: \\1"', $str);
@@ -377,7 +377,7 @@ if ( ! function_exists('convert_accented_characters'))
 			return $str;
 		}
 
-		return preg_replace(array_keys($foreign_characters), array_values($foreign_characters), $str);
+		return preg_replace(astpp_array_keys($foreign_characters), astpp_array_values($foreign_characters), $str);
 	}
 }
 
@@ -418,7 +418,7 @@ if ( ! function_exists('word_wrap'))
 		$unwrap = array();
 		if (preg_match_all("|(\{unwrap\}.+?\{/unwrap\})|s", $str, $matches))
 		{
-			for ($i = 0; $i < count($matches['0']); $i++)
+			for ($i = 0; $i < astpp_count($matches['0']); $i++)
 			{
 				$unwrap[] = $matches['1'][$i];
 				$str = str_replace($matches['1'][$i], "{{unwrapped".$i."}}", $str);
@@ -452,8 +452,8 @@ if ( ! function_exists('word_wrap'))
 				}
 
 				// Trim the word down
-				$temp .= substr($line, 0, $charlim - 1);
-				$line = substr($line, $charlim - 1);
+				$temp .= substr($line, 0, astpp_n($charlim) - 1);
+				$line = substr($line, astpp_n($charlim) - 1);
 			}
 
 			// If $temp contains data it means we had to split up an over-length
@@ -470,7 +470,7 @@ if ( ! function_exists('word_wrap'))
 		}
 
 		// Put our markers back
-		if (count($unwrap) > 0)
+		if (astpp_count($unwrap) > 0)
 		{
 			foreach ($unwrap as $key => $val)
 			{
@@ -511,16 +511,16 @@ if ( ! function_exists('ellipsize'))
 			return $str;
 		}
 
-		$beg = substr($str, 0, floor($max_length * $position));
+		$beg = substr($str, 0, astpp_floor(astpp_n($max_length) * astpp_n($position)));
 
 		$position = ($position > 1) ? 1 : $position;
 
 		if ($position === 1)
 		{
-			$end = substr($str, 0, -($max_length - strlen($beg)));
+			$end = substr($str, 0, -(astpp_n($max_length) - strlen($beg)));
 		} else
 		{
-			$end = substr($str, -($max_length - strlen($beg)));
+			$end = substr($str, -(astpp_n($max_length) - strlen($beg)));
 		}
 
 		return $beg.$ellipsis.$end;

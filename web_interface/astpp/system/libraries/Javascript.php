@@ -26,6 +26,7 @@
  * @author		ExpressionEngine Dev Team
  * @link		http://codeigniter.com/user_guide/libraries/javascript.html
  */
+#[\AllowDynamicProperties]
 class CI_Javascript {
 
 	var $_javascript_location = 'js';
@@ -174,7 +175,7 @@ class CI_Javascript {
 	 * @param string $out
 	 * @return	string
 	 */
-	function hover($element = 'this', $over, $out)
+	function hover($element, $over, $out)
 	{
 		return $this->js->__hover($element, $over, $out);
 	}
@@ -799,7 +800,7 @@ class CI_Javascript {
 			}
 		}
 
-		$json = implode(',', $json);
+		$json = astpp_implode(',', $json);
 
 		return $_is_assoc ? "{".$json."}" : "[".$json."]";
 
@@ -818,7 +819,7 @@ class CI_Javascript {
 	 */
 	function _is_associative_array($arr)
 	{
-		foreach (array_keys($arr) as $key => $val)
+		foreach (astpp_array_keys($arr) as $key => $val)
 		{
 			if ($key !== $val)
 			{

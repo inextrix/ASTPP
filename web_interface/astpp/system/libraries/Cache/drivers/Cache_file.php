@@ -27,6 +27,7 @@
  * @link		
  */
 
+#[\AllowDynamicProperties]
 class CI_Cache_file extends CI_Driver {
 
 	protected $_cache_path;
@@ -62,7 +63,7 @@ class CI_Cache_file extends CI_Driver {
 		$data = read_file($this->_cache_path.$id);
 		$data = unserialize($data);
 		
-		if (time() > $data['time'] + $data['ttl'])
+		if (time() > astpp_n($data['time']) + astpp_n($data['ttl']))
 		{
 			unlink($this->_cache_path.$id);
 			return FALSE;
@@ -168,7 +169,7 @@ class CI_Cache_file extends CI_Driver {
 			}
 
 			return array(
-				'expire' 	=> $mtime + $data['ttl'],
+				'expire' 	=> astpp_n($mtime) + astpp_n($data['ttl']),
 				'mtime'		=> $mtime
 			);
 		}

@@ -1,6 +1,7 @@
 <?php
 defined('BASEPATH') or exit('No direct script access allowed');
 require APPPATH . '/controllers/common/account.php';
+#[\AllowDynamicProperties]
 class User_ip_map extends Account
 {
 	protected $postdata = "";
@@ -43,7 +44,7 @@ class User_ip_map extends Account
 		if ($function != '') {
 			$function = '_' . $function;
 		
-			if (( int ) method_exists ( $this, $function ) > 0) {
+			if (astpp_gt(( int ) method_exists ( $this, $function ), 0)) {
 				$this->$function ();
 			} else {
 				$this->response ( array (
@@ -61,7 +62,7 @@ class User_ip_map extends Account
 
 	function _user_ipmap_create() {
 		$postdata = $this->postdata;
-		if($this->accountinfo['allow_ip_management'] != 0){
+		if((!astpp_eq0($this->accountinfo['allow_ip_management']))){
 			$this->response ( array (
 				'status'  => false,
 				'error'    => $this->lang->line( "ipsetting_add_not_allowed" )

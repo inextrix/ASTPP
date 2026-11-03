@@ -97,7 +97,7 @@
                                                     <?php
                                                 foreach ($value as $sub_key => $sub_value) {
                                                     $selected = null;
-                                                    if (isset($session_info['accountid']) && $session_info['accountid'] > 0 && $sub_key == $session_info['accountid']) {
+                                                    if (isset($session_info['accountid']) && astpp_gt($session_info['accountid'], 0) && $sub_key == $session_info['accountid']) {
                                                         $selected = "selected";
                                                     }
                                                     ?>

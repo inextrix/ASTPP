@@ -67,7 +67,7 @@ if ( ! function_exists('smiley_js'))
 					}
 				}
 
-				$m = '{'.implode(',', $m).'}';
+				$m = '{'.astpp_implode(',', $m).'}';
 
 				$r .= <<<EOF
 				var smiley_map = {$m};

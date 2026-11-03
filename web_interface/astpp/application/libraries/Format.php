@@ -1,5 +1,6 @@
 <?php
 
+#[\AllowDynamicProperties]
 class Format {
 	
 	// Array to convert
@@ -131,12 +132,12 @@ class Format {
 		
 		// Multi-dimensional array
 		if (isset ( $data [0] ) && is_array ( $data [0] )) {
-			$headings = array_keys ( $data [0] );
+			$headings = astpp_array_keys ( $data [0] );
 		} 		
 
 		// Single array
 		else {
-			$headings = array_keys ( $data );
+			$headings = astpp_array_keys ( $data );
 			$data = array (
 					$data 
 			);
@@ -160,20 +161,20 @@ class Format {
 		
 		// Multi-dimensional array
 		if (isset ( $data [0] ) && is_array ( $data [0] )) {
-			$headings = array_keys ( $data [0] );
+			$headings = astpp_array_keys ( $data [0] );
 		} 		
 
 		// Single array
 		else {
-			$headings = array_keys ( $data );
+			$headings = astpp_array_keys ( $data );
 			$data = array (
 					$data 
 			);
 		}
 		
-		$output = implode ( ',', $headings ) . PHP_EOL;
+		$output = astpp_implode ( ',', $headings ) . PHP_EOL;
 		foreach ( $data as &$row ) {
-			$output .= '"' . implode ( '","', $row ) . '"' . PHP_EOL;
+			$output .= '"' . astpp_implode ( '","', $row ) . '"' . PHP_EOL;
 		}
 		
 		return $output;
@@ -211,8 +212,8 @@ class Format {
 			// The substr removes " from start and end
 			$data_fields = explode ( '","', trim ( substr ( $row, 1, - 1 ) ) );
 			
-			if (count ( $data_fields ) == count ( $headings )) {
-				$data [] = array_combine ( $headings, $data_fields );
+			if (astpp_count ( $data_fields ) == astpp_count ( $headings )) {
+				$data [] = astpp_array_combine ( $headings, $data_fields );
 			}
 		}
 		

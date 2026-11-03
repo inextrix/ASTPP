@@ -251,10 +251,10 @@ function PopupCenter(url, title, w, h) {
 	  ?>                
      <?php 
 		  $check_menu_key =  str_replace(' ','_',strtolower($menu_key));
-		  if($this->session->userdata('userlevel_logintype') == '-1' || $this->session->userdata('userlevel_logintype') == '0' || $this->session->userdata('userlevel_logintype') == '3' || in_array($check_menu_key, $menu_permission_info) || in_array($check_menu_key, $allow_module)){
+		  if($this->session->userdata('userlevel_logintype') == '-1' || $this->session->userdata('userlevel_logintype') == '0' || $this->session->userdata('userlevel_logintype') == '3' || astpp_in_array($check_menu_key, $menu_permission_info) || astpp_in_array($check_menu_key, $allow_module)){
 
-			if(common_model::$global_config['system_config']['opensips']== 0 &&  $menu_key !='SIP Opensips'){
-				if($acc_info['type'] == 0 && $menu_key!="Configuration"){
+			if(astpp_eq0(common_model::$global_config['system_config']['opensips']) &&  $menu_key !='SIP Opensips'){
+				if(astpp_eq0($acc_info['type']) && $menu_key!="Configuration"){
 					echo '<li class="nav-item dropdown customer_menu text-center flex-fill"><a class="nav-link dropdown-toggle" role="button" href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">'.gettext($menu_key).'<span class="sr-only">(current)</span></a>';
 				}else{
 					
@@ -262,7 +262,7 @@ function PopupCenter(url, title, w, h) {
 							echo '<li class="nav-item dropdown"><a class="nav-link dropdown-toggle" role="button" href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">'.gettext($menu_key).'<span class="sr-only">(current)</span></a>';
 					}else{
 						if(($this->session->userdata('userlevel_logintype') == '2')){
-							if (in_array($check_menu_key, $menu_permission_info)){
+							if (astpp_in_array($check_menu_key, $menu_permission_info)){
 								echo '<li class="nav-item dropdown"><a class="nav-link dropdown-toggle" role="button" href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">'.gettext($menu_key).'<span class="sr-only">(current)</span></a>';
 							}
 						}else{
@@ -272,7 +272,7 @@ function PopupCenter(url, title, w, h) {
 				}
 			}
 			if(common_model::$global_config['system_config']['opensips']== 1 &&  $menu_key != 'Opensips'){
-				if($acc_info['type'] == 0 && $menu_key!="Configuration"){
+				if(astpp_eq0($acc_info['type']) && $menu_key!="Configuration"){
 					echo '<li class="nav-item dropdown customer_menu text-center flex-fill"><a class="nav-link dropdown-toggle" role="button" href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">'.gettext($menu_key).'<span class="sr-only">(current)</span></a>';  
 				}else{
 					
@@ -280,7 +280,7 @@ function PopupCenter(url, title, w, h) {
 							echo '<li class="nav-item dropdown"><a class="nav-link dropdown-toggle" role="button" href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">'.gettext($menu_key).'<span class="sr-only">(current)</span></a>';
 					}else{
 						if(($this->session->userdata('userlevel_logintype') == '2')){
-							if (in_array($check_menu_key, $menu_permission_info)){
+							if (astpp_in_array($check_menu_key, $menu_permission_info)){
 								echo '<li class="nav-item dropdown"><a class="nav-link dropdown-toggle" role="button" href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">'.gettext($menu_key).'<span class="sr-only">(current)</span></a>';
 							}
 						}else{
@@ -301,12 +301,12 @@ function PopupCenter(url, title, w, h) {
 								
                             <? foreach($sub_menu_values as $sub_key => $sub_menu_lables){
 								$module_url = explode('/',$sub_menu_lables['module_url']);
-								if(!empty($module_url) && !empty($module_url[0]) && isset($permissioninfo[$module_url[0]][$module_url[1]])  || $this->session->userdata('userlevel_logintype') == '-1' || $this->session->userdata('userlevel_logintype') == '0' || $this->session->userdata('userlevel_logintype') == '3' || in_array($module_url[1], $allow_menu_url)){
+								if(!empty($module_url) && !empty($module_url[0]) && isset($permissioninfo[$module_url[0]][$module_url[1]])  || $this->session->userdata('userlevel_logintype') == '-1' || $this->session->userdata('userlevel_logintype') == '0' || $this->session->userdata('userlevel_logintype') == '3' || astpp_in_array($module_url[1], $allow_menu_url)){
 
 
 		
-		if((common_model::$global_config['system_config']['paypal_status']== 1 && strtolower($sub_menu_lables["menu_label"]) =='recharge')|| (common_model::$global_config['system_config']['enterprise']== 0 &&  $sub_menu_lables["menu_label"] =='Opensips devices')  || (common_model::$global_config['system_config']['enterprise']== 0 && $sub_menu_lables["menu_label"] =='Opensips')  || (common_model::$global_config['system_config']['opensips']== 1
-    &&  $sub_menu_lables["menu_label"] =='Dispatcher list') || (common_model::$global_config['system_config']['opensips']== 1 &&  $sub_menu_lables["menu_label"] =='Opensips devices') || (common_model::$global_config['system_config']['opensips']== 1 &&  $sub_menu_lables["menu_label"] =='Opensips') || (common_model::$global_config['system_config']['enterprise']== 1 && common_model::$global_config['system_config']['opensips']== 0 &&  $sub_menu_lables["menu_label"] =='SIP Devices') || (($acc_info['type'] == '3' || $acc_info['type'] == '0') && $acc_info['allow_ip_management'] == '1' && strtolower($sub_menu_lables["menu_label"]) == 'ip settings')){
+		if((common_model::$global_config['system_config']['paypal_status']== 1 && strtolower($sub_menu_lables["menu_label"]) =='recharge')|| (astpp_eq0(common_model::$global_config['system_config']['enterprise']) &&  $sub_menu_lables["menu_label"] =='Opensips devices')  || (astpp_eq0(common_model::$global_config['system_config']['enterprise']) && $sub_menu_lables["menu_label"] =='Opensips')  || (common_model::$global_config['system_config']['opensips']== 1
+    &&  $sub_menu_lables["menu_label"] =='Dispatcher list') || (common_model::$global_config['system_config']['opensips']== 1 &&  $sub_menu_lables["menu_label"] =='Opensips devices') || (common_model::$global_config['system_config']['opensips']== 1 &&  $sub_menu_lables["menu_label"] =='Opensips') || (common_model::$global_config['system_config']['enterprise']== 1 && astpp_eq0(common_model::$global_config['system_config']['opensips']) &&  $sub_menu_lables["menu_label"] =='SIP Devices') || (($acc_info['type'] == '3' || $acc_info['type'] == '0') && $acc_info['allow_ip_management'] == '1' && strtolower($sub_menu_lables["menu_label"]) == 'ip settings')){
 								}else{
 									?>
 								<?php
@@ -328,9 +328,9 @@ function PopupCenter(url, title, w, h) {
                             <?php 
                         }else{
 				  $check_sub_module_key =  str_replace(' ','_',strtolower($sub_menu_key));
-				  if($this->session->userdata('userlevel_logintype') == '-1' || $this->session->userdata('userlevel_logintype') == '0' || $this->session->userdata('userlevel_logintype') == '3' || in_array($check_sub_module_key, $sub_module_permission_info)){
+				  if($this->session->userdata('userlevel_logintype') == '-1' || $this->session->userdata('userlevel_logintype') == '0' || $this->session->userdata('userlevel_logintype') == '3' || astpp_in_array($check_sub_module_key, $sub_module_permission_info)){
 
-				if(common_model::$global_config['system_config']['opensips']==0 && $menu_key !='System Configuration'){
+				if(astpp_eq0(common_model::$global_config['system_config']['opensips']) && $menu_key !='System Configuration'){
 				 ?>    
 				   <li class="dropdown-submenu"><a class="dropdown-item dropdown-toggle" href="#"><span><?= gettext($sub_menu_key);?></span></a>
 				<? } if(common_model::$global_config['system_config']['opensips']==1 && $sub_menu_key!="Customers") {
@@ -341,7 +341,7 @@ function PopupCenter(url, title, w, h) {
 				if(common_model::$global_config['system_config']['opensips']==1 && $sub_menu_key=="Customers") {?>
 				    <li class="dropdown-submenu"><a class="dropdown-item dropdown-toggle" href="<?php echo base_url(); ?>accounts/customer_list/"><span><?= gettext($sub_menu_key);?></span></a>
 				<?php }
-				if(($acc_info['type']==3 || $acc_info['type']== 0) && $acc_info['allow_ip_management']== 1 && strtolower($sub_menu_lables["menu_label"]) !='ip settings' && $sub_menu_key!="Support Ticket"){ ?>
+				if(($acc_info['type']==3 || astpp_eq0($acc_info['type'])) && $acc_info['allow_ip_management']== 1 && strtolower($sub_menu_lables["menu_label"]) !='ip settings' && $sub_menu_key!="Support Ticket"){ ?>
 				    <li class="dropdown-submenu bbbb"><a class="nav-link dropdown-toggle dropdown-item" href="#"><span><?= gettext($sub_menu_key);?></span></a>
 					<? }
 				}else{ ?>
@@ -354,9 +354,9 @@ function PopupCenter(url, title, w, h) {
                                 <? foreach($sub_menu_values as $sub_menu_lables){ 
 									$module_url = explode('/',$sub_menu_lables['module_url']);
 
-                                    if(isset($permissioninfo[$module_url[0]][$module_url[1]]) || $this->session->userdata('userlevel_logintype') == '-1' || $this->session->userdata('userlevel_logintype') == '0' || $this->session->userdata('userlevel_logintype') == '3' || in_array($module_url[1], $allow_menu_url)){
+                                    if(isset($permissioninfo[$module_url[0]][$module_url[1]]) || $this->session->userdata('userlevel_logintype') == '-1' || $this->session->userdata('userlevel_logintype') == '0' || $this->session->userdata('userlevel_logintype') == '3' || astpp_in_array($module_url[1], $allow_menu_url)){
 					 if($sub_menu_lables['menu_label'] != 'Configuration'){
-				  if(common_model::$global_config['system_config']['opensips']==0 ){
+				  if(astpp_eq0(common_model::$global_config['system_config']['opensips']) ){
 				  	
 					  ?>
 				      <li><a class="dropdown-item" href="<?php echo base_url().$sub_menu_lables["module_url"];?>"><?php echo gettext($sub_menu_lables["menu_label"]);?></a></li>
@@ -396,17 +396,17 @@ function PopupCenter(url, title, w, h) {
 				if($this->session->userdata('logintype')!=2 && $this->session->userdata('logintype')!=4){
 					$result=(array)$this->db->get_where('accounts',array("id"=>$acc_info['id']),1)->first_row();
 			$variable =$result['posttoexternal']==1 ? 'Credit' : gettext('Bal');  
-			$amount=$result['posttoexternal']==1 ? $result['credit_limit']-$result['balance'] :$result['balance'];
+			$amount=$result['posttoexternal']==1 ? astpp_n($result['credit_limit'])-astpp_n($result['balance']) :$result['balance'];
 
 			
 						$value= $this->common_model->calculate_currency($amount,'','',true);
-						if($value >0){
+						if(astpp_gt($value, 0)){
 							$color='#397A13';
 						}
-						if($value < 0){
+						if(astpp_lt($value, 0)){
 							$color='#EE0E43';
 						}
-						if($value == 0){
+						if(astpp_eq0($value)){
 							$color='#1A1919';
 						}
 						$balance_str = '<span style="color:'.$color.'; font-size: 10px;"><b>('.$variable.' : '.$value.')</b></span>';

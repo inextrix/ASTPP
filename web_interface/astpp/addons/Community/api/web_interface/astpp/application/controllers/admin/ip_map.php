@@ -1,5 +1,6 @@
 <?php
 require APPPATH . '/controllers/common/account.php';
+#[\AllowDynamicProperties]
 class Ip_map extends Account {
 
 	public $postdata = '';
@@ -44,7 +45,7 @@ class Ip_map extends Account {
 		if ($function != '') {
 			$function = '_' . $function;
 		
-			if (( int ) method_exists ( $this, $function ) > 0) {
+			if (astpp_gt(( int ) method_exists ( $this, $function ), 0)) {
 				$this->$function ();
 			} else {
 				$this->response ( array (
@@ -91,7 +92,7 @@ class Ip_map extends Account {
 					}
 				}
 		}
-		$start = $this->postdata['start_limit']-1;
+		$start = astpp_n($this->postdata['start_limit'])-1;
 		$limit = $this->postdata['end_limit'];
 		$no_of_records = (int)$limit - (int)$start;
 		if($this->accountinfo['type'] == '1'){
@@ -175,7 +176,7 @@ class Ip_map extends Account {
         if($this->accountinfo['type'] != '1'){
         	if(isset($post_array['reseller_id']) || ! empty($post_array['reseller_id'])) {
         		$this->db->where("type IN (0,3) ");
-	        	if($post_array['reseller_id'] > 0 ){
+	        	if(astpp_gt($post_array['reseller_id'], 0) ){
 	        		$post_data['reseller_id'] = $this->common->get_field_name('id','accounts', array('reseller_id' => $post_array['reseller_id'],'id' => $post_array['accountid']));
 	        	}else{
 	        		$post_data['reseller_id'] = $this->common->get_field_name('id','accounts', array('reseller_id' => 0,'id' => $post_array['accountid'],'deleted' => 0));

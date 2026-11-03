@@ -64,7 +64,7 @@
                 <?php
                 $i = 1;
 
-                if (isset($taxesList) && is_array($taxesList) && count($taxesList) > 0) {
+                if (isset($taxesList) && is_array($taxesList) && astpp_count($taxesList) > 0) {
                     echo "<table>";
                     foreach ($taxesList as $values) {
                         if ($i == 1)
@@ -75,13 +75,13 @@
 								value="<?= $values->id; ?>"
 								<?
 
-if (in_array($values->id, $tax_ids)) {
+if (astpp_in_array($values->id, $tax_ids)) {
                             echo "checked";
                         }
                         ?> /> <?= $values->taxes_description; ?></label><br />
 						</td>
                   <?php
-                        if ($i % 3 == 0) {
+                        if (astpp_n($i) % 3 == 0) {
                             echo "</tr>";
                             $i = 1;
                         } else {

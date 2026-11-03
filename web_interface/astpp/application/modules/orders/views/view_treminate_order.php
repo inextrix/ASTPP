@@ -44,7 +44,7 @@
 </script>
 <?php
 $accountinfo = $this->session->userdata("accountinfo");
-if ($accountinfo['type'] == 0 || $accountinfo['type'] == 3) {
+if (astpp_eq0($accountinfo['type']) || $accountinfo['type'] == 3) {
     $order_terminate_url = "/user/user_orders_termination/";
 } else {
     $order_terminate_url = "/orders/orders_users_terminate/";

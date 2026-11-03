@@ -36,6 +36,7 @@ if ( ! class_exists('CI_Xmlrpc'))
  * @author		ExpressionEngine Dev Team
  * @link		http://codeigniter.com/user_guide/libraries/xmlrpc.html
  */
+#[\AllowDynamicProperties]
 class CI_Xmlrpcs extends CI_Xmlrpc
 {
 	var $methods = array(); //array of methods mapped to function names and signatures
@@ -55,7 +56,7 @@ class CI_Xmlrpcs extends CI_Xmlrpc
 
 		if (isset($config['functions']) && is_array($config['functions']))
 		{
-			$this->methods = array_merge($this->methods, $config['functions']);
+			$this->methods = astpp_array_merge($this->methods, $config['functions']);
 		}
 
 		log_message('debug', "XML-RPC Server Class Initialized");
@@ -74,7 +75,7 @@ class CI_Xmlrpcs extends CI_Xmlrpc
 	{
 		if (isset($config['functions']) && is_array($config['functions']))
 		{
-			$this->methods = array_merge($this->methods, $config['functions']);
+			$this->methods = astpp_array_merge($this->methods, $config['functions']);
 		}
 
 		if (isset($config['debug']))
@@ -216,22 +217,22 @@ class CI_Xmlrpcs extends CI_Xmlrpc
 		{
 			// return XML error as a faultCode
 			$r = new XML_RPC_Response(0,
-			$this->xmlrpcerrxml + xml_get_error_code($parser),
+			astpp_n($this->xmlrpcerrxml) + astpp_n(xml_get_error_code($parser)),
 			sprintf('XML error: %s at line %d',
 				xml_error_string(xml_get_error_code($parser)),
 				xml_get_current_line_number($parser)));
-			xml_parser_free($parser);
+			PHP_VERSION_ID < 80000 && xml_parser_free($parser);
 		} elseif ($parser_object->xh[$parser]['isf'])
 		{
 			return new XML_RPC_Response(0, $this->xmlrpcerr['invalid_return'], $this->xmlrpcstr['invalid_return']);
 		} else
 		{
-			xml_parser_free($parser);
+			PHP_VERSION_ID < 80000 && xml_parser_free($parser);
 
 			$m = new XML_RPC_Message($parser_object->xh[$parser]['method']);
 			$plist = '';
 
-			for ($i = 0; $i < count($parser_object->xh[$parser]['params']); $i++)
+			for ($i = 0; $i < astpp_count($parser_object->xh[$parser]['params']); $i++)
 			{
 				if ($this->debug === TRUE)
 				{
@@ -327,21 +328,21 @@ class CI_Xmlrpcs extends CI_Xmlrpc
 		if (isset($this->methods[$methName]['signature']))
 		{
 			$sig = $this->methods[$methName]['signature'];
-			for ($i = 0; $i < count($sig); $i++)
+			for ($i = 0; $i < astpp_count($sig); $i++)
 			{
 				$current_sig = $sig[$i];
 
-				if (count($current_sig) == count($m->params) + 1)
+				if (astpp_count($current_sig) == astpp_count($m->params) + 1)
 				{
-					for ($n = 0; $n < count($m->params); $n++)
+					for ($n = 0; $n < astpp_count($m->params); $n++)
 					{
 						$p = $m->params[$n];
 						$pt = ($p->kindOf() == 'scalar') ? $p->scalarval() : $p->kindOf();
 
-						if ($pt != $current_sig[$n + 1])
+						if ($pt != $current_sig[astpp_n($n) + 1])
 						{
-							$pno = $n + 1;
-							$wanted = $current_sig[$n + 1];
+							$pno = astpp_n($n) + 1;
+							$wanted = $current_sig[astpp_n($n) + 1];
 
 							return new XML_RPC_Response(0,
 								$this->xmlrpcerr['incorrect_params'],
@@ -432,11 +433,11 @@ class CI_Xmlrpcs extends CI_Xmlrpc
 				$sigs = array();
 				$signature = $this->methods[$method_name]['signature'];
 
-				for ($i = 0; $i < count($signature); $i++)
+				for ($i = 0; $i < astpp_count($signature); $i++)
 				{
 					$cursig = array();
 					$inSig = $signature[$i];
-					for ($j = 0; $j < count($inSig); $j++)
+					for ($j = 0; $j < astpp_count($inSig); $j++)
 					{
 						$cursig[] = new XML_RPC_Values($inSig[$j], 'string');
 					}
@@ -505,14 +506,14 @@ class CI_Xmlrpcs extends CI_Xmlrpc
 			$m = new XML_RPC_Message($value[0]);
 			$plist = '';
 
-			for ($i = 0; $i < count($value[1]); $i++)
+			for ($i = 0; $i < astpp_count($value[1]); $i++)
 			{
 				$m->addParam(new XML_RPC_Values($value[1][$i], 'string'));
 			}
 
 			$attempt = $this->_execute($m);
 
-			if ($attempt->faultCode() != 0)
+			if ((!astpp_eq0($attempt->faultCode())))
 			{
 				return $attempt;
 			}
@@ -562,7 +563,7 @@ class CI_Xmlrpcs extends CI_Xmlrpc
 			return $this->multicall_error('nomethod');
 		}
 
-		list($scalar_type, $scalar_value) = each($methName->me);
+		$scalar_type = astpp_key($methName->me); $scalar_value = astpp_current($methName->me); // PHP8: was each()
 		$scalar_type = $scalar_type == $this->xmlrpcI4 ? $this->xmlrpcInt : $scalar_type;
 
 		if ($methName->kindOf() != 'scalar' OR $scalar_type != 'string')
@@ -579,8 +580,8 @@ class CI_Xmlrpcs extends CI_Xmlrpc
 			return $this->multicall_error('notarray');
 		}
 
-		list($a, $b) = each($params->me);
-		$numParams = count($b);
+		$a = astpp_key($params->me); $b = astpp_current($params->me); // PHP8: was each()
+		$numParams = astpp_count($b);
 
 		$msg = new XML_RPC_Message($scalar_value);
 		for ($i = 0; $i < $numParams; $i++)
@@ -590,7 +591,7 @@ class CI_Xmlrpcs extends CI_Xmlrpc
 
 		$result = $this->_execute($msg);
 
-		if ($result->faultCode() != 0)
+		if ((!astpp_eq0($result->faultCode())))
 		{
 			return $this->multicall_error($result);
 		}

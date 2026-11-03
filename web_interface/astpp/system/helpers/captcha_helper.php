@@ -95,7 +95,7 @@ if ( ! function_exists('create_captcha'))
 				$name = str_replace(".jpg", "", $filename);
 				$name =	intval($name);
 				$now  = intval($now);
-				if (($name + $expiration) < $now)
+				if ((astpp_n($name) + astpp_n($expiration)) < $now)
 				{
 					@unlink($img_path.$filename);
 				}
@@ -126,9 +126,9 @@ if ( ! function_exists('create_captcha'))
 		// -----------------------------------
 
 		$length	= strlen($word);
-		$angle = ($length >= 6) ? rand(-($length - 6), ($length - 6)) : 0;
-		$x_axis	= rand(6, (360 / $length) - 16);
-		$y_axis = ($angle >= 0) ? rand($img_height, $img_width) : rand(6, $img_height);
+		$angle = ($length >= 6) ? rand(-(astpp_n($length) - 6), (astpp_n($length) - 6)) : 0;
+		$x_axis	= rand(6, (astpp_div(360, $length)) - 16);
+		$y_axis = (astpp_ge($angle, 0)) ? rand($img_height, $img_width) : rand(6, $img_height);
 
 		// -----------------------------------
 		// Create image
@@ -169,18 +169,18 @@ if ( ! function_exists('create_captcha'))
 		$circles	= 20;
 		$points		= 32;
 
-		for ($i = 0; $i < ($circles * $points) - 1; $i++)
+		for ($i = 0; $i < (astpp_n($circles) * astpp_n($points)) - 1; $i++)
 		{
-			$theta = $theta + $thetac;
-			$rad = $radius * ($i / $points);
-			$x = ($rad * cos($theta)) + $x_axis;
-			$y = ($rad * sin($theta)) + $y_axis;
-			$theta = $theta + $thetac;
-			$rad1 = $radius * (($i + 1) / $points);
-			$x1 = ($rad1 * cos($theta)) + $x_axis;
-			$y1 = ($rad1 * sin($theta)) + $y_axis;
-			imageline($im, $x, $y, $x1, $y1, $grid_color);
-			$theta = $theta - $thetac;
+			$theta = astpp_n($theta) + astpp_n($thetac);
+			$rad = astpp_n($radius) * (astpp_div($i, $points));
+			$x = (astpp_n($rad) * cos($theta)) + astpp_n($x_axis);
+			$y = (astpp_n($rad) * sin($theta)) + astpp_n($y_axis);
+			$theta = astpp_n($theta) + astpp_n($thetac);
+			$rad1 = astpp_n($radius) * (astpp_div(astpp_n($i) + 1, $points));
+			$x1 = (astpp_n($rad1) * cos($theta)) + astpp_n($x_axis);
+			$y1 = (astpp_n($rad1) * sin($theta)) + astpp_n($y_axis);
+			imageline($im, (int) $x, (int) $y, (int) $x1, (int) $y1, $grid_color); // PHP8: float -> int is deprecated (PHP 7 truncated too)
+			$theta = astpp_n($theta) - astpp_n($thetac);
 		}
 
 		// -----------------------------------
@@ -192,28 +192,28 @@ if ( ! function_exists('create_captcha'))
 		if ($use_font == FALSE)
 		{
 			$font_size = 5;
-			$x = rand(0, $img_width / ($length / 3));
+			$x = rand(0, (int) astpp_div($img_width, astpp_n($length) / 3)); // PHP8: float -> int is deprecated (PHP 7 truncated too)
 			$y = 0;
 		} else
 		{
 			$font_size = 16;
-			$x = rand(0, $img_width / ($length / 1.5));
-			$y = $font_size + 2;
+			$x = rand(0, (int) astpp_div($img_width, astpp_n($length) / 1.5)); // PHP8: float -> int is deprecated (PHP 7 truncated too)
+			$y = astpp_n($font_size) + 2;
 		}
 
 		for ($i = 0; $i < strlen($word); $i++)
 		{
 			if ($use_font == FALSE)
 			{
-				$y = rand(0, $img_height / 2);
+				$y = rand(0, astpp_n($img_height) / 2);
 				imagestring($im, $font_size, $x, $y, substr($word, $i, 1), $text_color);
-				$x += ($font_size * 2);
+				$x = astpp_n($x) + astpp_n(astpp_n($font_size) * 2);
 			}
 			else
 			{
-				$y = rand($img_height / 2, $img_height - 3);
+				$y = rand(astpp_n($img_height) / 2, astpp_n($img_height) - 3);
 				imagettftext($im, $font_size, $angle, $x, $y, $text_color, $font_path, substr($word, $i, 1));
-				$x += $font_size;
+				$x = astpp_n($x) + astpp_n($font_size);
 			}
 		}
 
@@ -222,7 +222,7 @@ if ( ! function_exists('create_captcha'))
 		//  Create the border
 		// -----------------------------------
 
-		imagerectangle($im, 0, 0, $img_width - 1, $img_height - 1, $border_color);
+		imagerectangle($im, 0, 0, astpp_n($img_width) - 1, astpp_n($img_height) - 1, $border_color);
 
 		// -----------------------------------
 		//  Generate the image
@@ -234,7 +234,7 @@ if ( ! function_exists('create_captcha'))
 
 		$img = "<img class=\"w-100\" src=\"$img_url$img_name\" style=\"border:0;\" alt=\" \" />";
 
-		ImageDestroy($im);
+		PHP_VERSION_ID < 80000 && ImageDestroy($im);
 
 		return array('word' => $word, 'time' => $now, 'image' => $img);
 	}

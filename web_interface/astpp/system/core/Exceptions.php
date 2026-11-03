@@ -26,6 +26,7 @@
  * @author		ExpressionEngine Dev Team
  * @link		http://codeigniter.com/user_guide/libraries/exceptions.html
  */
+#[\AllowDynamicProperties]
 class CI_Exceptions {
 	var $action;
 	var $severity;
@@ -59,7 +60,7 @@ class CI_Exceptions {
 						E_USER_ERROR		=>	'User Error',
 						E_USER_WARNING		=>	'User Warning',
 						E_USER_NOTICE		=>	'User Notice',
-						E_STRICT			=>	'Runtime Notice'
+						2048			=>	'Runtime Notice' // PHP8.4: E_STRICT constant deprecated
 					);
 
 
@@ -140,9 +141,9 @@ class CI_Exceptions {
 	{
 		set_status_header($status_code);
 
-		$message = '<p>'.implode('</p><p>', ( ! is_array($message)) ? array($message) : $message).'</p>';
+		$message = '<p>'.astpp_implode('</p><p>', ( ! is_array($message)) ? array($message) : $message).'</p>';
 
-		if (ob_get_level() > $this->ob_level + 1)
+		if (ob_get_level() > astpp_n($this->ob_level) + 1)
 		{
 			ob_end_flush();
 		}
@@ -175,10 +176,10 @@ class CI_Exceptions {
 		if (FALSE !== strpos($filepath, '/'))
 		{
 			$x = explode('/', $filepath);
-			$filepath = $x[count($x) - 2].'/'.end($x);
+			$filepath = $x[astpp_count($x) - 2].'/'.astpp_end($x);
 		}
 
-		if (ob_get_level() > $this->ob_level + 1)
+		if (ob_get_level() > astpp_n($this->ob_level) + 1)
 		{
 			ob_end_flush();
 		}

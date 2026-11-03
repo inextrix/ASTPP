@@ -23,6 +23,7 @@
 if (! defined('BASEPATH'))
     exit('No direct script access allowed');
 
+#[\AllowDynamicProperties]
 class Taxes_form extends common
 {
 
@@ -33,8 +34,8 @@ class Taxes_form extends common
 
     function get_taxes_form_fields($id = '')
     {
-        $readable = $id > 0 ? 'disabled' : '';
-        if ($id > 0) {
+        $readable = astpp_gt($id, 0) ? 'disabled' : '';
+        if (astpp_gt($id, 0)) {
             if ($this->CI->session->userdata("logintype") == '1') {
                 $reseller_drp = null;
             } else {

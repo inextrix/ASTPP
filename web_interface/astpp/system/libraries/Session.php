@@ -26,6 +26,7 @@
  * @author		ExpressionEngine Dev Team
  * @link		http://codeigniter.com/user_guide/libraries/sessions.html
  */
+#[\AllowDynamicProperties]
 class CI_Session {
 
 	var $sess_encrypt_cookie = FALSE;
@@ -95,7 +96,7 @@ class CI_Session {
 
 		// Set the session length. If the session expiration is
 		// set to zero we'll set the expiration two years from now.
-		if ($this->sess_expiration == 0)
+		if (astpp_eq0($this->sess_expiration))
 		{
 			$this->sess_expiration = (60 * 60 * 24 * 365 * 2);
 		}
@@ -175,7 +176,7 @@ class CI_Session {
 		}
 
 		// Is the session current?
-		if (($session['last_activity'] + $this->sess_expiration) < $this->now)
+		if ((astpp_n($session['last_activity']) + astpp_n($this->sess_expiration)) < $this->now)
 		{
 			$this->sess_destroy();
 			return FALSE;
@@ -274,7 +275,7 @@ class CI_Session {
 
 		// Did we find any custom data?  If not, we turn the empty array into a string
 		// since there's no reason to serialize and store an empty array in the DB
-		if (count($custom_userdata) === 0)
+		if (astpp_count($custom_userdata) === 0)
 		{
 			$custom_userdata = '';
 		} else
@@ -342,7 +343,7 @@ class CI_Session {
 	function sess_update()
 	{
 		// We only update the session every five minutes by default
-		if (($this->userdata['last_activity'] + $this->sess_time_to_update) >= $this->now)
+		if ((astpp_n($this->userdata['last_activity']) + astpp_n($this->sess_time_to_update)) >= $this->now)
 		{
 			return;
 		}
@@ -410,7 +411,7 @@ class CI_Session {
 					$this->sess_cookie_name,
 					addslashes(serialize(array())),
 					array(
-						'expires' => ($this->now - 31500000),
+						'expires' => (astpp_n($this->now) - 31500000),
 						'path' => $this->cookie_path,
 						'domain' => $this->cookie_domain,
 						'secure' => $this->_cookie_secure(),
@@ -465,7 +466,7 @@ class CI_Session {
 			$newdata = array($newdata => $newval);
 		}
 
-		if (count($newdata) > 0)
+		if (astpp_count($newdata) > 0)
 		{
 			foreach ($newdata as $key => $val)
 			{
@@ -497,7 +498,7 @@ class CI_Session {
 			$newdata = array($newdata => '');
 		}
 
-		if (count($newdata) > 0)
+		if (astpp_count($newdata) > 0)
 		{
 			foreach ($newdata as $key => $val)
 			{
@@ -526,7 +527,7 @@ class CI_Session {
 			$newdata = array($newdata => $newval);
 		}
 
-		if (count($newdata) > 0)
+		if (astpp_count($newdata) > 0)
 		{
 			foreach ($newdata as $key => $val)
 			{
@@ -588,7 +589,7 @@ class CI_Session {
 		foreach ($userdata as $name => $value)
 		{
 			$parts = explode(':new:', $name);
-			if (is_array($parts) && count($parts) === 2)
+			if (is_array($parts) && astpp_count($parts) === 2)
 			{
 				$new_name = $this->flashdata_key.':old:'.$parts[1];
 				$this->set_userdata($new_name, $value);
@@ -632,7 +633,7 @@ class CI_Session {
 		if (strtolower($this->time_reference) == 'gmt')
 		{
 			$now = time();
-			$time = mktime(gmdate("H", $now), gmdate("i", $now), gmdate("s", $now), gmdate("m", $now), gmdate("d", $now), gmdate("Y", $now));
+			$time = mktime(astpp_gmdate("H", $now), astpp_gmdate("i", $now), astpp_gmdate("s", $now), astpp_gmdate("m", $now), astpp_gmdate("d", $now), astpp_gmdate("Y", $now));
 		} else
 		{
 			$time = time();
@@ -668,7 +669,7 @@ class CI_Session {
 			$cookie_data = $cookie_data.md5($cookie_data.$this->encryption_key);
 		}
 
-		$expire = ($this->sess_expire_on_close === TRUE) ? 0 : $this->sess_expiration + time();
+		$expire = ($this->sess_expire_on_close === TRUE) ? 0 : astpp_n($this->sess_expiration) + time();
 
 		// Set the cookie
 		// Secure (HTTPS), HttpOnly and SameSite flags (options array: PHP >= 7.3)
@@ -789,8 +790,8 @@ class CI_Session {
 		// rand()/mt_rand()/array_rand()/str_shuffle() value was predictable from the time.
 		if (random_int(0, 99) < $this->gc_probability)
 		{
-			$expire = $this->now - $this->sess_expiration;
-                        $expire = $expire - 60*60*12*1;
+			$expire = astpp_n($this->now) - astpp_n($this->sess_expiration);
+                        $expire = astpp_n($expire) - 60*60*12*1;
 			$this->CI->db->where("last_activity < {$expire}");
 			$this->CI->db->delete($this->sess_table_name);
 

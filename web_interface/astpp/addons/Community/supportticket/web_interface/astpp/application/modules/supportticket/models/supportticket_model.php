@@ -20,6 +20,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###############################################################################
+#[\AllowDynamicProperties]
 class supportticket_model extends CI_Model {
 
 	function __construct() {
@@ -34,7 +35,7 @@ class supportticket_model extends CI_Model {
 		$department_arr =array();
 		if ($accountinfo['type'] == 1 || $accountinfo['type'] == 5) {
 			$this->db->where('reseller_id',$accountinfo['id']);
-		}else if($accountinfo['type'] == 0 || $accountinfo['type'] == '3'){
+		}else if(astpp_eq0($accountinfo['type']) || $accountinfo['type'] == '3'){
 			$where = array(
 				"accountid"=>$accountinfo['id'],
 				"status"=>"0"
@@ -84,7 +85,7 @@ class supportticket_model extends CI_Model {
 			$str_close_flag = $parent_info. "1";
 		}
 		if ($this->session->userdata('logintype') == '-1' || $this->session->userdata('logintype') == 2) {
-			if($data['account_id'] != 0){		
+			if((!astpp_eq0($data['account_id']))){		
 				$account_data=(array)$this->db->get_where('accounts',array("id"=>$data['account_id']))->first_row();
 			}
 		}
@@ -159,7 +160,7 @@ class supportticket_model extends CI_Model {
 			}
 		}
 	}
-	$to_email_address_array=array_merge($email_arr,$admin_email_arr,$sub_admin_email_arr,$additional_email_arr);
+	$to_email_address_array=astpp_array_merge($email_arr,$admin_email_arr,$sub_admin_email_arr,$additional_email_arr);
 /*echo '<pre>';
 print_r($to_email_address_array);
  exit;*/ 
@@ -266,7 +267,7 @@ print_r($to_email_address_array);
 	$auto_message = str_replace("#DEPARTMENT#",$department_data['name']." (".$department_data['email_id'].")" ,$auto_message);	
 	
 
-	if($data['priority'] == 0){
+	if(astpp_eq0($data['priority'])){
 		$priorty="High";
 	}else if($data['priority'] == 1){
 		$priorty="Normal";
@@ -318,7 +319,7 @@ print_r($to_email_address_array);
 
 	return true;
 	}
-function get_ticket_type_message($select = "", $table = "", $call_type) {
+function get_ticket_type_message($select, $table, $call_type) {
 		 
         $call_type_array = array('0' => "Open", "1"=>"Answered", '2' =>  "Customer-Reply", '3' => "On-hold", '4'=>"Progress",'5'=>"Close");
         return $call_type_array[$call_type];
@@ -500,7 +501,7 @@ function get_ticket_type_message($select = "", $table = "", $call_type) {
 			$where = explode ( ',', $where );
 		}
 		$select1 = explode ( ',', $select );
-		for($i = 0; $i < count ( $where ); $i ++) {
+		for($i = 0; $i < astpp_count ( $where ); $i ++) {
 			$where_in = array (
 					"id" => $where [$i] 
 			);

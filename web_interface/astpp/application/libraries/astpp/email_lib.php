@@ -23,6 +23,7 @@
 if (! defined ( 'BASEPATH' ))
 	exit ( 'No direct script access allowed' );
 
+#[\AllowDynamicProperties]
 class email_lib {
 	protected $CI; 
 	public $email = '';
@@ -62,7 +63,7 @@ class email_lib {
 			$smtp_status = 0;
 		}
 		// ASTPPCOM-873 Ashish start
-		$resellerID = $resellerID > 0 ? $resellerID : 1;
+		$resellerID = astpp_gt($resellerID, 0) ? $resellerID : 1;
 		$where1 = array ('accountid' => $resellerID);
 		$query1 = $this->CI->db_model->getSelect ( "*", 'invoice_conf', $where1 )->first_row();
 		// ASTPPCOM-873 Ashish End
@@ -77,7 +78,7 @@ class email_lib {
 				$this->smtp_host = $query[0]['smtp_host'];
 				$this->smtp_port = $query[0]['smtp_port'];
 				$this->smtp_user = $query[0]['smtp_user'];
-				if($smtp_status == 0){
+				if(astpp_eq0($smtp_status)){
 					$this->smtp_pass = $query[0]['smtp_password'];			
 				}
 			}
@@ -315,7 +316,7 @@ class email_lib {
 		$this->send_notifications_sms($template_type,$details,$detail_type,$attachment = '',$resend,$mass_mail,$brodcast,$history_id='');
 	}
 
-	function send_notifications_sms($template_type, $details, $detail_type = '', $attachment = '', $resend = 0, $mass_mail = 0, $brodcast = 0 , $history_id) {
+	function send_notifications_sms($template_type, $details, $detail_type, $attachment, $resend, $mass_mail, $brodcast, $history_id) {
 
 		$this->get_sms_settings ();
 		if (!$this->email) {
@@ -348,12 +349,12 @@ class email_lib {
 	function send_notifications_email($template_type, $details, $detail_type = '', $attachment = '', $resend = 0, $mass_mail = 0, $brodcast = 0) {
 
 		$history_id = "";
-		if (array_key_exists("history_id",$details)) {
+		if (astpp_array_key_exists("history_id",$details)) {
 			$history_id = $details ['history_id'];
 		}
 		// ASTPPCOM-924 Start
 		$smtpData = $this->get_email_settings ($resellerID,$details);
-		if (!$this->email && $this ->smtp == 0) {
+		if (!$this->email && astpp_eq0($this ->smtp)) {
 		// ASTPPCOM-924 END
 			if (! $resend) {
 				$this->build_template ( $template_type, $details, $detail_type );
@@ -459,7 +460,7 @@ class email_lib {
             $result = curl_exec($ch);
 		}	
 	}
-	function push_alert_notifications($template_type, $details, $detail_type = '', $attachment = '', $resend = 0, $mass_mail = 0, $brodcast = 0 , $history_id) {
+	function push_alert_notifications($template_type, $details, $detail_type, $attachment, $resend, $mass_mail, $brodcast, $history_id) {
 		return true;
 		
 	}

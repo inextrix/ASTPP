@@ -285,7 +285,7 @@ function isNumberKey(evt){
 
 foreach ($countrycode_array as $key => $countrycode_info) :
                 $selected_value = '';
-                if ($country_id == $key) {
+                if (astpp_loose_eq($country_id, $key)) { /* PHP8 */
                     $selected_value = "selected=selected";
                 }
                 ?>
@@ -367,7 +367,7 @@ if (isset($error['account_email']) && $error['account_email']) {
 						</div>
 					</div>
 				</div>
-				<?php if(Common_model::$global_config['system_config']['captcha_for_login_in_forgot_password'] == 0){ ?>
+				<?php if(astpp_eq0(Common_model::$global_config['system_config']['captcha_for_login_in_forgot_password'])){ ?>
 				<div class="col-md-12 form-group p-0">
 				<?php echo $captcha['image']; ?>				
 			</div>
@@ -388,7 +388,7 @@ if (isset($error['captcha_err']) && $error['captcha_err']) {
 
 				</div>
 								<!--Dhaval issue 539 CLONE - Signup - terms of use -->
-							<?php if(Common_model::$global_config['system_config']['status'] == 0){ ?>
+							<?php if(astpp_eq0(Common_model::$global_config['system_config']['status'])){ ?>
 				<div class="modal fade bd-example-modal-lg" id="myModal1" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
 	<div class="modal-dialog modal-lg">
 		<div class="modal-content">

@@ -255,7 +255,7 @@ function increment_string($str, $separator = '_', $first = 1)
 {
 	preg_match('/(.+)'.$separator.'([0-9]+)$/', $str, $match);
 
-	return isset($match[2]) ? $match[1].$separator.($match[2] + 1) : $str.$separator.$first;
+	return isset($match[2]) ? $match[1].$separator.(astpp_n($match[2]) + 1) : $str.$separator.$first;
 }
 
 // ------------------------------------------------------------------------
@@ -275,13 +275,13 @@ if ( ! function_exists('alternator'))
 	{
 		static $i;
 
-		if (func_num_args() == 0)
+		if (astpp_eq0(func_num_args()))
 		{
 			$i = 0;
 			return '';
 		}
 		$args = func_get_args();
-		return $args[($i++ % count($args))];
+		return $args[(astpp_n($i++) % astpp_count($args))];
 	}
 }
 
@@ -299,7 +299,7 @@ if ( ! function_exists('repeater'))
 {
 	function repeater($data, $num = 1)
 	{
-		return (($num > 0) ? str_repeat($data, $num) : '');
+		return ((astpp_gt($num, 0)) ? astpp_str_repeat($data, $num) : '');
 	}
 }
 

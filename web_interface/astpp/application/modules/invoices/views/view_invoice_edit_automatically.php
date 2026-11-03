@@ -199,13 +199,13 @@ function isNumber(evt, element) {
 										</tr>
 										<tr>
 											<td><b><?php echo gettext('From Date')?>  :</b><span
-												style="color: #a09d9d;"> <?php echo date('Y-m-d', strtotime($invoices['from_date'])) ; ?></span>
+												style="color: #a09d9d;"> <?php echo astpp_date('Y-m-d', strtotime($invoices['from_date'])) ; ?></span>
 											</td>
 										</tr>
 										<tr>
 											<td><b><?php echo gettext('Due Date')?> : </b><span
 												style="color: #a09d9d;"><?php
-            echo date('Y-m-d', strtotime($invoices['due_date']));
+            echo astpp_date('Y-m-d', strtotime($invoices['due_date']));
             ?></span></td>
 										</tr>
 									</table>
@@ -272,7 +272,7 @@ foreach ($invoice_details as $value) {
 }
 
 for ($i = 1; $i <= $row_count; $i ++) {
-    if (isset($get_data['invoice_amount_' . $i]) && $get_data['invoice_amount_' . $i] > 0) { // HP:
+    if (isset($get_data['invoice_amount_' . $i]) && astpp_gt($get_data['invoice_amount_' . $i], 0)) { // HP:
         $invoice_amt = $this->common->currency_decimal($this->common_model->calculate_currency($get_data['invoice_amount_' . $i]));
     } else {
         $invoice_amt = '';
@@ -312,7 +312,7 @@ if (isset($taxes_to_accounts) && ! empty($taxes_to_accounts)) {
     $total_tax = 0;
     $tax = 0;
     foreach ($taxes_to_accounts as $tax_val) {
-        $total_tax += $tax_val['debit'];
+        $total_tax = astpp_n($total_tax) + astpp_n($tax_val['debit']);
 
         ?>
 	<input type="hidden" id="total_tax_id_<?= $tax; ?>"
@@ -337,9 +337,9 @@ if (isset($taxes_to_accounts) && ! empty($taxes_to_accounts)) {
 	<tr style='background-color: #375c7c; color: #fff; height: 30px;'>
 								<td colspan="2" style="text-align: right;"><?php echo gettext('Total Due')?>:&nbsp;
 		</td>
-		<?php  if($total_tax > 0){ ?>
+		<?php  if(astpp_gt($total_tax, 0)){ ?>
 		<td style="text-align: right; padding: 0 10px;"><div
-										id='amount_val_final' name='amount_val_final'><?= $this->common->currency_decimal($total_credit_sum + $total_tax ); ?></div>
+										id='amount_val_final' name='amount_val_final'><?= $this->common->currency_decimal(astpp_n($total_credit_sum) + astpp_n($total_tax) ); ?></div>
 		<?php }else{ ?>
 		
 								

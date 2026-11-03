@@ -28,6 +28,7 @@
  * @author		ExpressionEngine Dev Team
  * @link		http://codeigniter.com/user_guide/libraries/uri.html
  */
+#[\AllowDynamicProperties]
 class CI_Unit_test {
 
 	var $active					= TRUE;
@@ -92,7 +93,7 @@ class CI_Unit_test {
 			return FALSE;
 		}
 
-		if (in_array($expected, array('is_object', 'is_string', 'is_bool', 'is_true', 'is_false', 'is_int', 'is_numeric', 'is_float', 'is_double', 'is_array', 'is_null'), TRUE))
+		if (astpp_in_array($expected, array('is_object', 'is_string', 'is_bool', 'is_true', 'is_false', 'is_int', 'is_numeric', 'is_float', 'is_double', 'is_array', 'is_null'), TRUE))
 		{
 			$expected = str_replace('is_float', 'is_double', $expected);
 			$result = ($expected($test)) ? TRUE : FALSE;
@@ -137,7 +138,7 @@ class CI_Unit_test {
 	 */
 	function report($result = array())
 	{
-		if (count($result) == 0)
+		if (astpp_count($result) == 0)
 		{
 			$result = $this->result();
 		}
@@ -224,7 +225,7 @@ class CI_Unit_test {
 		$CI = & get_instance();
 		$CI->load->language('unit_test');
 
-		if (count($results) == 0)
+		if (astpp_count($results) == 0)
 		{
 			$results = $this->results;
 		}
@@ -235,7 +236,7 @@ class CI_Unit_test {
 			$temp = array();
 			foreach ($result as $key => $val)
 			{
-				if ( ! in_array($key, $this->_test_items_visible))
+				if ( ! astpp_in_array($key, $this->_test_items_visible))
 				{
 					continue;
 				}

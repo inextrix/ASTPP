@@ -21,6 +21,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 // ##############################################################################
+#[\AllowDynamicProperties]
 class Taxes_model extends CI_Model
 {
 
@@ -92,7 +93,7 @@ class Taxes_model extends CI_Model
             }
             $this->db->where('id', $tax_row['id']);
             $this->db->update('system', array(
-                'value' => implode(',', $remaining)
+                'value' => astpp_implode(',', $remaining)
             ));
         }
         return $this->db->delete("taxes", array(

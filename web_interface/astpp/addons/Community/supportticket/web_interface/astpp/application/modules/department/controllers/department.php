@@ -20,6 +20,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###############################################################################
+#[\AllowDynamicProperties]
 class Department extends CI_Controller {
     function __construct() {
         parent::__construct();
@@ -115,7 +116,7 @@ class Department extends CI_Controller {
 		}
 		if(isset($data['additional_email_address']) && $data['additional_email_address'] != '' && $data['additional_email_address'] != ',,,,'){
 			$data['email_id_new']= explode(',',$data['additional_email_address']);
-			$additional_count= count($data['email_id_new']);
+			$additional_count= astpp_count($data['email_id_new']);
 			for($i=0 ; $i < $additional_count ; $i++){
 				$data['email_id_new'][$i]= $data['email_id_new'][$i];
 			}
@@ -135,7 +136,7 @@ class Department extends CI_Controller {
 			$admin_id= array();
 		}
 		if(isset($add_array['admin_user_id']) && !empty($add_array['admin_user_id'])){
-			$add_array['admin_id_list'] = implode(',',$add_array['admin_user_id']);
+			$add_array['admin_id_list'] = astpp_implode(',',$add_array['admin_user_id']);
 			unset($add_array['admin_user_id']);
 		}
 		foreach($admin_id as $key=>$val){
@@ -152,7 +153,7 @@ class Department extends CI_Controller {
 		unset($add_array['email_id_new5']);
 	   //$this->form_validation->set_rules('name', 'Name', 'trim|required|xss_clean');
        
-		if (isset($add_array['id']) && $add_array['id'] != '' && $add_array['id']>0) {
+		if (isset($add_array['id']) && $add_array['id'] != '' && astpp_gt($add_array['id'], 0)) {
 			 $data['form'] = $this->form->build_form($this->department_form->get_department_form_fields_edit(), $add_array);
 			$data['page_title'] = gettext('Edit Department');
             		if ($this->form_validation->run() == FALSE) {

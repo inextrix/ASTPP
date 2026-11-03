@@ -26,6 +26,7 @@
  * @author		ExpressionEngine Dev Team
  * @link		http://codeigniter.com/user_guide/libraries/form_validation.html
  */
+#[\AllowDynamicProperties]
 class CI_Form_validation {
 
 	protected $CI;
@@ -76,7 +77,7 @@ class CI_Form_validation {
 	public function set_rules($field, $label = '', $rules = '')
 	{
 		// No reason to set rules if we have no POST data
-		if (count($_POST) == 0)
+		if (astpp_count($_POST) == 0)
 		{
 			return $this;
 		}
@@ -119,9 +120,9 @@ class CI_Form_validation {
 			// Note: Due to a bug in current() that affects some versions
 			// of PHP we can not pass function call directly into it
 			$x = explode('[', $field);
-			$indexes[] = current($x);
+			$indexes[] = astpp_current($x);
 
-			for ($i = 0; $i < count($matches['0']); $i++)
+			for ($i = 0; $i < astpp_count($matches['0']); $i++)
 			{
 				if ($matches['1'][$i] != '')
 				{
@@ -170,7 +171,7 @@ class CI_Form_validation {
 			$lang = array($lang => $val);
 		}
 
-		$this->_error_messages = array_merge($this->_error_messages, $lang);
+		$this->_error_messages = astpp_array_merge($this->_error_messages, $lang);
 
 		return $this;
 	}
@@ -228,7 +229,7 @@ class CI_Form_validation {
 		public function error_string_custom($prefix = '', $suffix = '')
 	{
 		// No errrors, validation passes!
-		if (count($this->_error_array) === 0)
+		if (astpp_count($this->_error_array) === 0)
 		{
 			return '';
 		}
@@ -272,7 +273,7 @@ class CI_Form_validation {
 	public function error_string($prefix = '', $suffix = '')
 	{
 		// No errrors, validation passes!
-		if (count($this->_error_array) === 0)
+		if (astpp_count($this->_error_array) === 0)
 		{
 			return '';
 		}
@@ -313,17 +314,17 @@ class CI_Form_validation {
 	public function run($group = '')
 	{
 		// Do we even have any data to process?  Mm?
-		if (count($_POST) == 0)
+		if (astpp_count($_POST) == 0)
 		{
 			return FALSE;
 		}
 
 		// Does the _field_data array containing the validation rules exist?
 		// If not, we look to see if they were assigned via a config file
-		if (count($this->_field_data) == 0)
+		if (astpp_count($this->_field_data) == 0)
 		{
 			// No validation rules?  We're done...
-			if (count($this->_config_rules) == 0)
+			if (astpp_count($this->_config_rules) == 0)
 			{
 				return FALSE;
 			}
@@ -340,7 +341,7 @@ class CI_Form_validation {
 			}
 
 			// We're we able to set the rules correctly?
-			if (count($this->_field_data) == 0)
+			if (astpp_count($this->_field_data) == 0)
 			{
 				log_message('debug', "Unable to find validation rules");
 				return FALSE;
@@ -372,9 +373,9 @@ class CI_Form_validation {
 		}
 
 		// Did we end up with any errors?
-		$total_errors = count($this->_error_array);
+		$total_errors = astpp_count($this->_error_array);
 
-		if ($total_errors > 0)
+		if (astpp_gt($total_errors, 0))
 		{
 			$this->_safe_form_data = TRUE;
 		}
@@ -383,7 +384,7 @@ class CI_Form_validation {
 		$this->_reset_post_array();
 
 		// No errors, validation passes!
-		if ($total_errors == 0)
+		if (astpp_eq0($total_errors))
 		{
 			return TRUE;
 		}
@@ -411,7 +412,7 @@ class CI_Form_validation {
 			{
 				if (isset($array[$keys[$i]]))
 				{
-					$array = $this->_reduce_array($array[$keys[$i]], $keys, ($i + 1));
+					$array = $this->_reduce_array($array[$keys[$i]], $keys, (astpp_n($i) + 1));
 				}
 				else
 				{
@@ -453,9 +454,9 @@ class CI_Form_validation {
 					$post_ref = & $_POST;
 
 					// before we assign values, make a reference to the right POST key
-					if (count($row['keys']) == 1)
+					if (astpp_count($row['keys']) == 1)
 					{
-						$post_ref = & $post_ref[current($row['keys'])];
+						$post_ref = & $post_ref[astpp_current($row['keys'])];
 					}
 					else
 					{
@@ -515,10 +516,10 @@ class CI_Form_validation {
 
 		// If the field is blank, but NOT required, no further tests are necessary
 		$callback = FALSE;
-		if (( ! in_array('required', $rules) AND ! in_array('dropdown', $rules)) AND is_null($postdata))
+		if (( ! astpp_in_array('required', $rules) AND ! astpp_in_array('dropdown', $rules)) AND is_null($postdata))
 		{
 			// Before we bail out, does the rule contain a callback?
-			if (preg_match("/(callback_\w+(\[.*?\])?)/", implode(' ', $rules), $match))
+			if (preg_match("/(callback_\w+(\[.*?\])?)/", astpp_implode(' ', $rules), $match))
 			{
 				$callback = TRUE;
 				$rules = (array('1' => $match[1]));
@@ -532,12 +533,12 @@ class CI_Form_validation {
 		// Isset Test. Typically this rule will only apply to checkboxes.
 		if (is_null($postdata) AND $callback == FALSE)
 		{
-			if (in_array('isset', $rules, TRUE) OR in_array('required', $rules) OR in_array('dropdown', $rules))
+			if (astpp_in_array('isset', $rules, TRUE) OR astpp_in_array('required', $rules) OR astpp_in_array('dropdown', $rules))
 			{
 
 				// Set the message type
 
-				$type = (in_array('required', $rules)) ? 'required' : ((in_array('dropdown', $rules)) ? 'dropdown' : 'isset');
+				$type = (astpp_in_array('required', $rules)) ? 'required' : ((astpp_in_array('dropdown', $rules)) ? 'dropdown' : 'isset');
 				if ( ! isset($this->_error_messages[$type]))
 				{
 					if (FALSE === ($line = $this->CI->lang->line($type)))
@@ -628,7 +629,7 @@ class CI_Form_validation {
 				}
 
 				// If the field isn't required and we just processed a callback we'll move on...
-				if ( ! in_array('required', $rules, TRUE) AND $result !== FALSE)
+				if ( ! astpp_in_array('required', $rules, TRUE) AND $result !== FALSE)
 				{
 					continue;
 				}
@@ -788,7 +789,7 @@ class CI_Form_validation {
 	{
 		if ( ! isset($this->_field_data[$field]) OR ! isset($this->_field_data[$field]['postdata']))
 		{
-			if ($default === TRUE AND count($this->_field_data) === 0)
+			if ($default === TRUE AND astpp_count($this->_field_data) === 0)
 			{
 				return ' selected="selected"';
 			}
@@ -799,7 +800,7 @@ class CI_Form_validation {
 
 		if (is_array($field))
 		{
-			if ( ! in_array($value, $field))
+			if ( ! astpp_in_array($value, $field))
 			{
 				return '';
 			}
@@ -831,7 +832,7 @@ class CI_Form_validation {
 	{
 		if ( ! isset($this->_field_data[$field]) OR ! isset($this->_field_data[$field]['postdata']))
 		{
-			if ($default === TRUE AND count($this->_field_data) === 0)
+			if ($default === TRUE AND astpp_count($this->_field_data) === 0)
 			{
 				return ' checked="checked"';
 			}
@@ -842,7 +843,7 @@ class CI_Form_validation {
 
 		if (is_array($field))
 		{
-			if ( ! in_array($value, $field))
+			if ( ! astpp_in_array($value, $field))
 			{
 				return '';
 			}
@@ -874,7 +875,7 @@ class CI_Form_validation {
 	{
 		if ( ! isset($this->_field_data[$field]) OR ! isset($this->_field_data[$field]['postdata']))
 		{
-			if ($default === TRUE AND count($this->_field_data) === 0)
+			if ($default === TRUE AND astpp_count($this->_field_data) === 0)
 			{
 				return ' checked="checked"';
 			}
@@ -885,7 +886,7 @@ class CI_Form_validation {
 
 		if (is_array($field))
 		{
-			if ( ! in_array($value, $field))
+			if ( ! astpp_in_array($value, $field))
 			{
 				return '';
 			}
@@ -1310,7 +1311,7 @@ class CI_Form_validation {
 			$count=$data[1];
 			$total=0;
 			for($i=1;$i<=$count;$i++){
-				$total+=$_POST[$name.$i];
+				$total = astpp_n($total) + astpp_n($_POST[$name.$i]);
 
 			}
 			
@@ -1355,7 +1356,7 @@ class CI_Form_validation {
 			return FALSE;
 		}
 
-		if ($str == 0)
+		if (astpp_eq0($str))
 		{
 			return FALSE;
 		}
@@ -1598,7 +1599,7 @@ class CI_Form_validation {
 				}
 				$id = (int) $this->CI->input->post('id');
 			}
-			if ($id > 0) {
+			if (astpp_gt($id, 0)) {
 				$row = $this->CI->db->select('number, email')->get_where('accounts', array('id' => $id))->row_array();
 				if (! empty($row)) {
 					$personal[] = $row['number'];

@@ -46,7 +46,7 @@ if ( ! function_exists('now'))
 		if (strtolower($CI->config->item('time_reference')) == 'gmt')
 		{
 			$now = time();
-			$system_time = mktime(gmdate("H", $now), gmdate("i", $now), gmdate("s", $now), gmdate("m", $now), gmdate("d", $now), gmdate("Y", $now));
+			$system_time = mktime(astpp_gmdate("H", $now), astpp_gmdate("i", $now), astpp_gmdate("s", $now), astpp_gmdate("m", $now), astpp_gmdate("d", $now), astpp_gmdate("Y", $now));
 
 			if (strlen($system_time) < 10)
 			{
@@ -94,7 +94,7 @@ if ( ! function_exists('mdate'))
 		}
 
 		$datestr = str_replace('%\\', '', preg_replace("/([a-z]+?){1}/i", "\\\\\\1", $datestr));
-		return date($datestr, $time);
+		return astpp_date($datestr, $time);
 	}
 }
 
@@ -170,76 +170,76 @@ if ( ! function_exists('timespan'))
 			$seconds = 1;
 		} else
 		{
-			$seconds = $time - $seconds;
+			$seconds = astpp_n($time) - astpp_n($seconds);
 		}
 
 		$str = '';
-		$years = floor($seconds / 31536000);
+		$years = astpp_floor(astpp_n($seconds) / 31536000);
 
-		if ($years > 0)
+		if (astpp_gt($years, 0))
 		{
 			$str .= $years.' '.$CI->lang->line((($years > 1) ? 'date_years' : 'date_year')).', ';
 		}
 
-		$seconds -= $years * 31536000;
-		$months = floor($seconds / 2628000);
+		$seconds = astpp_n($seconds) - astpp_n(astpp_n($years) * 31536000);
+		$months = astpp_floor(astpp_n($seconds) / 2628000);
 
-		if ($years > 0 OR $months > 0)
+		if (astpp_gt($years, 0) OR astpp_gt($months, 0))
 		{
-			if ($months > 0)
+			if (astpp_gt($months, 0))
 			{
 				$str .= $months.' '.$CI->lang->line((($months > 1) ? 'date_months' : 'date_month')).', ';
 			}
 
-			$seconds -= $months * 2628000;
+			$seconds = astpp_n($seconds) - astpp_n(astpp_n($months) * 2628000);
 		}
 
-		$weeks = floor($seconds / 604800);
+		$weeks = astpp_floor(astpp_n($seconds) / 604800);
 
-		if ($years > 0 OR $months > 0 OR $weeks > 0)
+		if (astpp_gt($years, 0) OR astpp_gt($months, 0) OR astpp_gt($weeks, 0))
 		{
-			if ($weeks > 0)
+			if (astpp_gt($weeks, 0))
 			{
 				$str .= $weeks.' '.$CI->lang->line((($weeks > 1) ? 'date_weeks' : 'date_week')).', ';
 			}
 
-			$seconds -= $weeks * 604800;
+			$seconds = astpp_n($seconds) - astpp_n(astpp_n($weeks) * 604800);
 		}
 
-		$days = floor($seconds / 86400);
+		$days = astpp_floor(astpp_n($seconds) / 86400);
 
-		if ($months > 0 OR $weeks > 0 OR $days > 0)
+		if (astpp_gt($months, 0) OR astpp_gt($weeks, 0) OR astpp_gt($days, 0))
 		{
-			if ($days > 0)
+			if (astpp_gt($days, 0))
 			{
 				$str .= $days.' '.$CI->lang->line((($days > 1) ? 'date_days' : 'date_day')).', ';
 			}
 
-			$seconds -= $days * 86400;
+			$seconds = astpp_n($seconds) - astpp_n(astpp_n($days) * 86400);
 		}
 
-		$hours = floor($seconds / 3600);
+		$hours = astpp_floor(astpp_n($seconds) / 3600);
 
-		if ($days > 0 OR $hours > 0)
+		if (astpp_gt($days, 0) OR astpp_gt($hours, 0))
 		{
-			if ($hours > 0)
+			if (astpp_gt($hours, 0))
 			{
 				$str .= $hours.' '.$CI->lang->line((($hours > 1) ? 'date_hours' : 'date_hour')).', ';
 			}
 
-			$seconds -= $hours * 3600;
+			$seconds = astpp_n($seconds) - astpp_n(astpp_n($hours) * 3600);
 		}
 
-		$minutes = floor($seconds / 60);
+		$minutes = astpp_floor(astpp_n($seconds) / 60);
 
-		if ($days > 0 OR $hours > 0 OR $minutes > 0)
+		if (astpp_gt($days, 0) OR astpp_gt($hours, 0) OR astpp_gt($minutes, 0))
 		{
-			if ($minutes > 0)
+			if (astpp_gt($minutes, 0))
 			{
 				$str .= $minutes.' '.$CI->lang->line((($minutes > 1) ? 'date_minutes' : 'date_minute')).', ';
 			}
 
-			$seconds -= $minutes * 60;
+			$seconds = astpp_n($seconds) - astpp_n(astpp_n($minutes) * 60);
 		}
 
 		if ($str == '')
@@ -280,14 +280,14 @@ if ( ! function_exists('days_in_month'))
 
 		if ($month == 2)
 		{
-			if ($year % 400 == 0 OR ($year % 4 == 0 AND $year % 100 != 0))
+			if (astpp_n($year) % 400 == 0 OR (astpp_n($year) % 4 == 0 AND astpp_n($year) % 100 != 0))
 			{
 				return 29;
 			}
 		}
 
 		$days_in_month = array(31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31);
-		return $days_in_month[$month - 1];
+		return $days_in_month[astpp_n($month) - 1];
 	}
 }
 
@@ -308,7 +308,7 @@ if ( ! function_exists('local_to_gmt'))
 					$time = time();
 		}
 
-		return mktime(gmdate("H", $time), gmdate("i", $time), gmdate("s", $time), gmdate("m", $time), gmdate("d", $time), gmdate("Y", $time));
+		return mktime(astpp_gmdate("H", $time), astpp_gmdate("i", $time), astpp_gmdate("s", $time), astpp_gmdate("m", $time), astpp_gmdate("d", $time), astpp_gmdate("Y", $time));
 	}
 }
 
@@ -336,11 +336,11 @@ if ( ! function_exists('gmt_to_local'))
 			return now();
 		}
 
-		$time += timezones($timezone) * 3600;
+		$time = astpp_n($time) + astpp_n(astpp_n(timezones($timezone)) * 3600);
 
 		if ($dst == TRUE)
 		{
-			$time += 3600;
+			$time = astpp_n($time) + 3600;
 		}
 
 		return $time;
@@ -397,24 +397,24 @@ if ( ! function_exists('unix_to_human'))
 {
 	function unix_to_human($time = '', $seconds = FALSE, $fmt = 'us')
 	{
-		$r = date('Y', $time).'-'.date('m', $time).'-'.date('d', $time).' ';
+		$r = astpp_date('Y', $time).'-'.astpp_date('m', $time).'-'.astpp_date('d', $time).' ';
 
 		if ($fmt == 'us')
 		{
-			$r .= date('h', $time).':'.date('i', $time);
+			$r .= astpp_date('h', $time).':'.astpp_date('i', $time);
 		} else
 		{
-			$r .= date('H', $time).':'.date('i', $time);
+			$r .= astpp_date('H', $time).':'.astpp_date('i', $time);
 		}
 
 		if ($seconds)
 		{
-			$r .= ':'.date('s', $time);
+			$r .= ':'.astpp_date('s', $time);
 		}
 
 		if ($fmt == 'us')
 		{
-			$r .= ' '.date('A', $time);
+			$r .= ' '.astpp_date('A', $time);
 		}
 
 		return $r;
@@ -477,7 +477,7 @@ if ( ! function_exists('human_to_unix'))
 			$ampm = strtolower($split['2']);
 
 			if (substr($ampm, 0, 1) == 'p' AND $hour < 12)
-				$hour = $hour + 12;
+				$hour = astpp_n($hour) + 12;
 
 			if (substr($ampm, 0, 1) == 'a' AND $hour == 12)
 				$hour = '00';
@@ -525,7 +525,7 @@ if ( ! function_exists('timezone_menu'))
 
 		foreach (timezones() as $key => $val)
 		{
-			$selected = ($default == $key) ? " selected='selected'" : '';
+			$selected = (astpp_loose_eq($default, $key)) ? /* PHP8 */ " selected='selected'" : '';
 			$menu .= "<option value='{$key}'{$selected}>".$CI->lang->line($key)."</option>\n";
 		}
 

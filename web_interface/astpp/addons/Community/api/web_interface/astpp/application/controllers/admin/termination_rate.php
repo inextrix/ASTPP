@@ -1,6 +1,7 @@
 <?php
 
 require APPPATH . '/controllers/common/account.php';
+#[\AllowDynamicProperties]
 class Termination_rate extends Account {
 	
 	protected $postdata = "";
@@ -48,7 +49,7 @@ class Termination_rate extends Account {
 		if ($function != '') {
 
 			$function = '_' . $function;
-			if (( int ) method_exists ( $this, $function ) > 0) {
+			if (astpp_gt(( int ) method_exists ( $this, $function ), 0)) {
 				$this->$function ();
 			} else {
 				$this->response ( array (
@@ -161,10 +162,10 @@ class Termination_rate extends Account {
 		if(!empty($where)) {
 			$this->db->where($where);
 		}
-		$start = $this->postdata['start_limit']-1;
+		$start = astpp_n($this->postdata['start_limit'])-1;
 		$limit = $this->postdata['end_limit'];
 		$no_of_records = (int)$limit - (int)$start;
-		$this->db->order_by('id', DESC);
+		$this->db->order_by('id', 'DESC');
 		$available_termination_rate = $this->db->limit($no_of_records, $start)
 			-> select('*')
 			->from('outbound_routes')

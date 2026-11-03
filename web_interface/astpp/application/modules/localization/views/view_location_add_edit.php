@@ -143,7 +143,7 @@
 											class="col-md-12 form-control selectpicker form-control-lg mr-4 country_id col-md-3"
 											data-live-search="true">
 											<option value="0"
-												<?php if(isset($details) && ($details['status'] == 0)){?>
+												<?php if(isset($details) && (astpp_eq0($details['status']))){?>
 												selected="select" <?php } ?>><?php echo gettext("Active")?></option>
 											<option value="1"
 												<?php if(isset($details) && ($details['status'] == 1)){?>

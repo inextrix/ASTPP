@@ -29,6 +29,7 @@
  * @author		EllisLab Dev Team
  * @link
  */
+#[\AllowDynamicProperties]
 class CI_Driver_Library {
 
 	protected $valid_drivers = array();
@@ -50,7 +51,7 @@ class CI_Driver_Library {
 		$lib_name = ucfirst(strtolower(str_replace('CI_', '', $this->lib_name)));
 		$driver_name = strtolower(str_replace('CI_', '', $child_class));
 
-		if (in_array($driver_name, array_map('strtolower', $this->valid_drivers)))
+		if (astpp_in_array($driver_name, astpp_array_map('strtolower', $this->valid_drivers)))
 		{
 			// check and see if the driver is in a separate file
 			if ( ! class_exists($child_class))
@@ -108,6 +109,7 @@ class CI_Driver_Library {
  * @author		EllisLab Dev Team
  * @link
  */
+#[\AllowDynamicProperties]
 class CI_Driver {
 	protected $parent;
 
@@ -174,7 +176,7 @@ class CI_Driver {
 	 */
 	public function __call($method, $args = array())
 	{
-		if (in_array($method, $this->methods))
+		if (astpp_in_array($method, $this->methods))
 		{
 			return call_user_func_array(array($this->parent, $method), $args);
 		}
@@ -196,7 +198,7 @@ class CI_Driver {
 	 */
 	public function __get($var)
 	{
-		if (in_array($var, $this->properties))
+		if (astpp_in_array($var, $this->properties))
 		{
 			return $this->parent->{$var};
 		}
@@ -215,7 +217,7 @@ class CI_Driver {
 	 */
 	public function __set($var, $val)
 	{
-		if (in_array($var, $this->properties))
+		if (astpp_in_array($var, $this->properties))
 		{
 			$this->parent->{$var} = $val;
 		}

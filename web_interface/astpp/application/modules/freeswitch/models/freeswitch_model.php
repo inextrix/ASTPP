@@ -21,6 +21,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 // #############################################################################
+#[\AllowDynamicProperties]
 class Freeswitch_model extends CI_Model
 {
 
@@ -156,7 +157,7 @@ class Freeswitch_model extends CI_Model
             'effective_caller_id_number' => $add_array['effective_caller_id_number']
         );
         $log_type = $this->session->userdata("logintype");
-        if ($log_type == 0 || $log_type == 3 || $log_type == 1) {
+        if (astpp_eq0($log_type) || $log_type == 3 || $log_type == 1) {
             $add_array['sip_profile_id'] = $this->common->get_field_name('id', 'sip_profiles', array(
                 'name' => 'default'
             ));

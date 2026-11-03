@@ -23,6 +23,7 @@
 if (! defined ( 'BASEPATH' ))
 	exit ( 'No direct script access allowed' );
 
+#[\AllowDynamicProperties]
 class Form {
 	protected $CI; 
 	protected $fields = array (); 
@@ -51,7 +52,7 @@ class Form {
 	function check_permissions() { 
 		if ($this->CI->session->userdata ( 'user_login' ) == TRUE) {
 			$module_info = unserialize ( $this->CI->session->userdata ( "permited_modules" ) );
-			if ($this->CI->session->userdata ( 'userlevel_logintype' ) != 0 && $this->CI->session->userdata ( 'userlevel_logintype' ) != 3) {
+			if ((!astpp_eq0($this->CI->session->userdata ( 'userlevel_logintype' ))) && $this->CI->session->userdata ( 'userlevel_logintype' ) != 3) {
 				$module_info [] = 'dashboard';
 			}
 			$url = $this->CI->uri->uri_string;
@@ -116,10 +117,10 @@ class Form {
 			   }
 			}
 			// ASTPPCOM-941 Start
-			if (in_array ( $module [0], $module_info ) || (isset($url_explode[3]) && $url_explode[3] == 'dashboard') || (isset($url_explode[3]) && $url_explode[3] == 'login_activity') || (isset($url_explode[3]) && $url_explode[4] == 'systems_list') ) {
+			if (astpp_in_array ( $module [0], $module_info ) || (isset($url_explode[3]) && $url_explode[3] == 'dashboard') || (isset($url_explode[3]) && $url_explode[3] == 'login_activity') || (isset($url_explode[3]) && $url_explode[4] == 'systems_list') ) {
 			// ASTPPCOM-941 END
 
-				if ($this->CI->session->userdata ( 'userlevel_logintype' ) == 0 && $module [0] == 'customer' && isset ( $url_array [1] ) && $url_array [1] != 'customer_transfer') {
+				if (astpp_eq0($this->CI->session->userdata ( 'userlevel_logintype' )) && $module [0] == 'customer' && isset ( $url_array [1] ) && $url_array [1] != 'customer_transfer') {
 					redirect ( base_url () . 'user/user/' );
 				} else {
 					return true;
@@ -127,7 +128,7 @@ class Form {
 			} else { 
 				$this->CI->load->library('astpp/permission');
 				$this->CI->session->set_userdata ( 'astpp_errormsg', 'You do not have permission to access this module..!' );
-				$url= $this->CI->session->userdata ( 'userlevel_logintype' ) ==0 ? 'user/user/' : "dashboard/";
+				$url= astpp_eq0($this->CI->session->userdata ( 'userlevel_logintype' )) ? 'user/user/' : "dashboard/";
 
 				$this->CI->permission->permission_redirect_url($url);
 			}
@@ -166,10 +167,10 @@ class Form {
 			$form_contents .= form_button ( gettext ( $additiopnal_button ) );
 		}
 		$i = 0;
-		if(count ( $fields_array )>1 && count ( $fields_array )<3){
+		if(astpp_count ( $fields_array )>1 && astpp_count ( $fields_array )<3){
 			$form_contents .= '<div class="card-two card-columns">';
 		}else{
-			if(count ( $fields_array )==1){
+			if(astpp_count ( $fields_array )==1){
 				$form_contents .= '<div class="card-one card-columns">';
 			}else{	
 					$form_contents .= '<div class="card-columns">';
@@ -211,8 +212,8 @@ class Form {
 							}
 						}
 						if (! empty ( $validation_arr )) {
-							$fieldvalue [0] = in_array ( 'required', $validation_arr ) ? $fieldvalue [0] . "<span style='color:black;'> *</span>" : $fieldvalue [0];
-							$fieldvalue [0] = in_array ( 'dropdown', $validation_arr ) ? $fieldvalue [0] . "<span style='color:black;'> *</span>" : $fieldvalue [0];
+							$fieldvalue [0] = astpp_in_array ( 'required', $validation_arr ) ? $fieldvalue [0] . "<span style='color:black;'> *</span>" : $fieldvalue [0];
+							$fieldvalue [0] = astpp_in_array ( 'dropdown', $validation_arr ) ? $fieldvalue [0] . "<span style='color:black;'> *</span>" : $fieldvalue [0];
 						}
 						if(is_array($fieldvalue [1])){
 							$form_names= $form_name."_".$fieldvalue [1]['name'];
@@ -548,7 +549,7 @@ class Form {
 					$form_contents .= form_checkbox ( $fieldvalue [1], $fieldvalue [3] ['value'], $fieldvalue [3] ['checked'] );
 				}
 				$form_contents .= '</div>';
-				if ($i % 5 == 0) {
+				if (astpp_n($i) % 5 == 0) {
 					$form_contents .= '</li>';
 					$i = 0;
 				}
@@ -675,7 +676,7 @@ class Form {
 					$form_contents .= form_checkbox ( $fieldvalue [1], $fieldvalue [3] ['value'], $fieldvalue [3] ['checked'] );
 				}
 				$form_contents .= '</div>';
-				if ($i % 5 == 0) {
+				if (astpp_n($i) % 5 == 0) {
 					$form_contents .= '</li>';
 					$i = 0;
 				}
@@ -708,8 +709,8 @@ class Form {
 		
 		$json_data ["json_paging"] ['total'] = $config ['total_rows'];
 		$perpage = $config ['per_page'];
-		$start = ($page_no - 1) * $perpage;
-		if ($start < 0)
+		$start = (astpp_n($page_no) - 1) * astpp_n($perpage);
+		if (astpp_lt($start, 0))
 			$start = 0;
 		$json_data ["paging"] ['start'] = $start;
 		$json_data ["paging"] ['page_no'] = $perpage;
@@ -731,7 +732,7 @@ class Form {
 
 			$logintype = $this->CI->session->userdata('logintype');
 
-			$Actionkey = array_search (gettext('Action'),array_column ( $grid_fields, 0 ) );
+			$Actionkey = astpp_array_search (gettext('Action'),array_column ( $grid_fields, 0 ) );
 			// if ($Actionkey == '') {
 			// 	$Actionkey = array_search ('action',array_column ( $grid_fields, 0 ) );
 			// }
@@ -765,7 +766,7 @@ class Form {
 					$acctype = (isset ( $row ["posttoexternal"] ) && $row ["posttoexternal"] != '') ? "<span class='badge badge-dark float-left ml-1 mt-1'>" . $this->CI->{$this->lib_class}->get_account_type ( "", "", $row ["posttoexternal"] ) . "</span>" : "";
 				}
 				$reseller_id = $default_reseller_id;
-				if($default_reseller_id  == 0){
+				if(astpp_eq0($default_reseller_id)){
 						$reseller_id = isset($row['reseller_id']) ? $row['reseller_id'] : $reseller_id;
 				}
 				foreach ( $grid_fields as $field_key => $field_arr ) {
@@ -797,7 +798,7 @@ class Form {
 							
 						}
 						
-						if(isset($field_arr[6]) && !empty($field_arr[6]) && is_array($field_arr[6]) && $field_arr[6][0]== 'EDITABLE' && ((isset($permissioninfo[$module_name][$sub_module_name][$field_arr[6][1]]) && $permissioninfo[$module_name][$sub_module_name][$field_arr[6][1]] == 0 and $permissioninfo['login_type'] != '-1' and $permissioninfo['login_type'] != '3')  or ($permissioninfo['login_type'] == '-1' ) or ($permissioninfo['login_type'] == '3'))){
+						if(isset($field_arr[6]) && !empty($field_arr[6]) && is_array($field_arr[6]) && $field_arr[6][0]== 'EDITABLE' && ((isset($permissioninfo[$module_name][$sub_module_name][$field_arr[6][1]]) && astpp_eq0($permissioninfo[$module_name][$sub_module_name][$field_arr[6][1]]) and $permissioninfo['login_type'] != '-1' and $permissioninfo['login_type'] != '3')  or ($permissioninfo['login_type'] == '-1' ) or ($permissioninfo['login_type'] == '3'))){
 									
 
 									$button_name = strtoupper($field_arr[6][1]);
@@ -807,7 +808,7 @@ class Form {
 									}
 									
 						 
-						}else if(array_search("EDITABLE", $field_arr) && (isset($permissioninfo[$module_name][$sub_module_name]['edit']) && $permissioninfo[$module_name][$sub_module_name]['edit'] == 0 or $permissioninfo['login_type'] == '-1' or $permissioninfo['login_type'] == '3' or $permissioninfo['login_type'] == '0') ){
+						}else if(astpp_array_search("EDITABLE", $field_arr) && (isset($permissioninfo[$module_name][$sub_module_name]['edit']) && astpp_eq0($permissioninfo[$module_name][$sub_module_name]['edit']) or $permissioninfo['login_type'] == '-1' or $permissioninfo['login_type'] == '3' or $permissioninfo['login_type'] == '0') ){
 									
 							$fieldstr = $this->CI->{$this->lib_class}->build_custome_edit_button ( $ActionArr [5]->EDIT, $row [$field_arr [2]], $row ["id"] );
 							$jsn_tmp [$field_key] = $acctype != '' ? $fieldstr . $acctype : $fieldstr;
@@ -854,7 +855,7 @@ class Form {
 		foreach ( $query as $row ) {
 			foreach ( $grid_fields as $field_key => $field_arr ) {
 				$row_id = isset ( $row ['id'] ) ? $row ["id"] : '';
-				$Actionkey = array_search ( 'Action', $this->CI->{$this->lib_class}->array_column ( $grid_fields, 0 ) );
+				$Actionkey = astpp_array_search ( 'Action', $this->CI->{$this->lib_class}->array_column ( $grid_fields, 0 ) );
 				
 				if ($field_arr [2] != "") {
 					if ($field_arr [3] != "") {
@@ -880,10 +881,10 @@ class Form {
 						}
 						$row [$field_arr [2]] = $jsn_tmp [$field_key];
 					}
-					if (array_search ( "EDITABLE", $field_arr )) {
+					if (astpp_array_search ( "EDITABLE", $field_arr )) {
 						$ActionArr = $grid_fields [$Actionkey];
 						if ($ActionArr [5]->EDIT->url == "accounts/customer_edit/" || $ActionArr [5]->EDIT->url == "accounts/provider_edit/") {
-							$ActionArr [5]->EDIT->url = $row ['type'] == 0 ? "accounts/customer_edit/" : "accounts/provider_edit/";
+							$ActionArr [5]->EDIT->url = astpp_eq0($row ['type']) ? "accounts/customer_edit/" : "accounts/provider_edit/";
 						}
 						if ($ActionArr [5]->EDIT->url == "accounts/admin_edit/" || $ActionArr [5]->EDIT->url == "accounts/subadmin_edit/") {
 							$ActionArr [5]->EDIT->url = $row ['type'] == 4 ? "accounts/subadmin_edit/" : "accounts/admin_edit/";
@@ -982,7 +983,7 @@ class Form {
                     $form_contents.= form_checkbox($fieldvalue[1], $fieldvalue[3]['value'], $fieldvalue[3]['checked']);
                 }
                 $form_contents.= '</div>';
-                if ($i % 5 == 0) {
+                if (astpp_n($i) % 5 == 0) {
                     $form_contents.= '</li>';
                     $i = 0;
                 }

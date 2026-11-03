@@ -20,6 +20,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 // ##############################################################################
+#[\AllowDynamicProperties]
 class Pbx_Feature extends CI_Controller {
 	function __construct() {
 		parent::__construct ();
@@ -45,7 +46,7 @@ class Pbx_Feature extends CI_Controller {
     function pbx_destination_change($call_type_code="", $did_id="", $extensions=""){
         $accountinfo=$this->session->userdata('accountinfo');
         $accountid = $this->common->get_field_name("accountid","dids",array("id"=>$did_id));
-        if($accountid==0){
+        if(astpp_eq0($accountid)){
             $whr=array();
         }
         else{
@@ -76,7 +77,7 @@ class Pbx_Feature extends CI_Controller {
         $accountinfo=$this->session->userdata('accountinfo');
         $accountid =  $accountinfo['id'];//$this->common->get_field_name("accountid","dids",array("id"=>$did_id));
         //echo $accountid;exit;
-        if($accountid==0){
+        if(astpp_eq0($accountid)){
             $whr=array();
         }
         else{

@@ -20,6 +20,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 // ##############################################################################
+#[\AllowDynamicProperties]
 class Lowbalance extends CI_Controller {
 	function __construct() {
 		parent::__construct ();
@@ -49,7 +50,7 @@ class Lowbalance extends CI_Controller {
 				$account_data = $query->result_array ();
 
 				foreach ( $account_data as $data_key => $accountinfo ) {
-					if (($accountinfo ['posttoexternal'] == 0 && ($accountinfo ["balance"] <= $accountinfo ["notify_credit_limit"])) || ($accountinfo ['posttoexternal'] == 1 && ($accountinfo ["credit_limit"] - $accountinfo ["balance"]) <= $accountinfo ["notify_credit_limit"])) {
+					if ((astpp_eq0($accountinfo ['posttoexternal']) && ($accountinfo ["balance"] <= $accountinfo ["notify_credit_limit"])) || ($accountinfo ['posttoexternal'] == 1 && (astpp_n($accountinfo ["credit_limit"]) - astpp_n($accountinfo ["balance"])) <= $accountinfo ["notify_credit_limit"])) {
 							$this->common->mail_to_users ( "low_balance", $accountinfo );
 					}
 				}

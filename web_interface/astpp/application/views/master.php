@@ -56,7 +56,7 @@ if (strpos($url, 'customer_cdrs') != true) {
                         $sub_module_name= $url_explode[4];
 
                         $logintype = $this->session->userdata('logintype');
-                        if((isset($permissioninfo[$module_name][$sub_module_name]['batch_update']) && $permissioninfo[$module_name][$sub_module_name]['batch_update'] == 0) or $permissioninfo['login_type'] == '-1' or $permissioninfo['login_type'] == '0' or $permissioninfo['login_type'] == '3' ){
+                        if((isset($permissioninfo[$module_name][$sub_module_name]['batch_update']) && astpp_eq0($permissioninfo[$module_name][$sub_module_name]['batch_update'])) or $permissioninfo['login_type'] == '-1' or $permissioninfo['login_type'] == '0' or $permissioninfo['login_type'] == '3' ){
 
 
 
@@ -78,7 +78,7 @@ if (strpos($url, 'customer_cdrs') != true) {
                         <?php 
                         }
                         // ASTPPCOM-941 END
-                        if((isset($permissioninfo[$module_name][$sub_module_name]['search']) && $permissioninfo[$module_name][$sub_module_name]['search'] == 0) or $permissioninfo['login_type'] == '-1' or $permissioninfo['login_type'] == '0' or $permissioninfo['login_type'] == '3' ){
+                        if((isset($permissioninfo[$module_name][$sub_module_name]['search']) && astpp_eq0($permissioninfo[$module_name][$sub_module_name]['search'])) or $permissioninfo['login_type'] == '-1' or $permissioninfo['login_type'] == '0' or $permissioninfo['login_type'] == '3' ){
                                 ?>
 
 	                <div id="show_search" class="float-right btn btn-warning py-1"><i class="fa fa-search"></i> <?php  ?></div>

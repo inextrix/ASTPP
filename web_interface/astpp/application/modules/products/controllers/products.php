@@ -20,6 +20,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 // ##############################################################################
+#[\AllowDynamicProperties]
 class Products extends MX_Controller {
 	var $ProductCategory;	
 	function __construct() {
@@ -37,7 +38,7 @@ class Products extends MX_Controller {
 		$accountinfo=$this->session->userdata('accountinfo');
 		$paypal_permission =(array)$this->db_model->getSelect ( "paypal_permission", "accounts", array ('id' => $accountinfo ['id']) )->first_row();
 		
-		if($accountinfo['type'] == 0 && $paypal_permission['paypal_permission'] == 1){
+		if(astpp_eq0($accountinfo['type']) && $paypal_permission['paypal_permission'] == 1){
 				$this->session->set_flashdata('astpp_danger_alert',gettext("Your TopUp permission has been disabled please contact to your administrator"));
 				redirect ( base_url () . 'dashboard' );
 		}
@@ -148,7 +149,7 @@ class Products extends MX_Controller {
 				$did_info = $this->db_model->getSelect ( "*", " dids", array ('number' => $product_info['name']));
 				if($did_info->num_rows > 0){
 					$did_info = ( array ) $did_info->first_row ();	
-					$product_info = array_merge($product_info,$did_info);
+					$product_info = astpp_array_merge($product_info,$did_info);
 				}
 			}else{
 				$product_info = ( array ) $add_array->first_row ();
@@ -159,14 +160,14 @@ class Products extends MX_Controller {
 			$category = $this->common->get_field_name("name","category",array("id"=>$product_info['product_category']));
 
 			if($accountinfo ['type'] == 1){
-			 	if($accountinfo ['reseller_id'] > 0 ){
+			 	if(astpp_gt($accountinfo ['reseller_id'], 0) ){
 					$optin_product = $this->db_model->getSelect ( "*", " reseller_products", array ('product_id'=>$edit_id,'reseller_products.account_id'=>$accountinfo['id'],'reseller_products.reseller_id'=>$accountinfo['reseller_id']));
 				}else{
 					$optin_product = $this->db_model->getSelect ( "*", " reseller_products", array ('product_id' => $edit_id,'reseller_products.account_id'=>$accountinfo['id']));
 				}
 				if($optin_product->num_rows > 0){
 					$data['optin_product'] = ( array ) $optin_product->first_row ();
-					if($data['optin_product']['is_optin'] == 0){ 
+					if(astpp_eq0($data['optin_product']['is_optin'])){ 
 						$this->products_reseller_edit($data['product_info'],$data['optin_product'],$category);
 				}else{
 					$data['accountinfo']=$accountinfo;
@@ -381,7 +382,7 @@ class Products extends MX_Controller {
 		$productinfo['product_id'] = $product_id;
 		$accountinfo = $this->session->userdata ( "accountinfo" );
 		$reseller_id = $accountinfo ['type'] == 1 ? $accountinfo ['id'] : 0;
-		if($productinfo['apply_on_existing_account'] == 0 && $productinfo['release_no_balance'] == 1 && (isset($productinfo['product_rate_group']) && $productinfo['product_rate_group'] > 0 )){      
+		if(astpp_eq0($productinfo['apply_on_existing_account']) && $productinfo['release_no_balance'] == 1 && (isset($productinfo['product_rate_group']) && astpp_gt($productinfo['product_rate_group'], 0) )){      
 			$this->db->select("*");
 			$this->db->from("accounts");
 			$this->db->where(array("status"=>0,"deleted"=>0,"type"=>0,"reseller_id"=>$reseller_id));
@@ -396,19 +397,19 @@ class Products extends MX_Controller {
 					$last_id = $this->order->confirm_order($productinfo,$account['id'],$accountinfo);
 					if($customer_data->num_rows > 0){
 						$customer_data = $customer_data->result_array()[0];
-						if((isset($productinfo['email_notify']) && $productinfo['email_notify']  == 1) && $last_id > 0){
+						if((isset($productinfo['email_notify']) && $productinfo['email_notify']  == 1) && astpp_gt($last_id, 0)){
 							$productinfo['product_category'] = ($productinfo['product_category'] == 1) ? "PACKAGE" : (($productinfo['product_category'] == 2)  ? "SUBSCRIPTION" : "DID");
-							$productinfo['next_billing_date'] = ($productinfo['billing_days'] == 0)?gmdate('Y-m-d 23:59:59', strtotime('+10 years')):gmdate("Y-m-d 23:59:59",strtotime("+".($productinfo['billing_days']-1)." days"));
-							$final_array = array_merge($customer_data,$productinfo);
+							$productinfo['next_billing_date'] = (astpp_eq0($productinfo['billing_days']))?astpp_gmdate('Y-m-d 23:59:59', strtotime('+10 years')):astpp_gmdate("Y-m-d 23:59:59",strtotime("+".(astpp_n($productinfo['billing_days'])-1)." days"));
+							$final_array = astpp_array_merge($customer_data,$productinfo);
 							if(isset($productinfo['product_category']) && $productinfo['product_category']==2){
 								$final_array['quantity']=isset($productinfo['quantity'])?$productinfo['quantity']:1;
 							}else{
 								$final_array['quantity']=1;
 							}
 							$final_array['category_name']=$productinfo['product_category'];
-							$final_array['price']=($productinfo['setup_fee']+$productinfo['price']);
-							$final_array['total_price']=($productinfo['setup_fee']+$productinfo['price'])*($final_array['quantity']);
-							$final_array['total_price_amount']=($productinfo['setup_fee']+$productinfo['price']);
+							$final_array['price']=(astpp_n($productinfo['setup_fee'])+astpp_n($productinfo['price']));
+							$final_array['total_price']=(astpp_n($productinfo['setup_fee'])+astpp_n($productinfo['price']))*(astpp_n($final_array['quantity']));
+							$final_array['total_price_amount']=(astpp_n($productinfo['setup_fee'])+astpp_n($productinfo['price']));
 						}
 					}
 				}
@@ -416,8 +417,8 @@ class Products extends MX_Controller {
 			}
 			return true;
 	     }else{ 
-	    	 if($productinfo['apply_on_existing_account'] == 0 && $productinfo['release_no_balance'] == 0 && (isset($productinfo['product_rate_group']) && $productinfo['product_rate_group'] > 0 )){
-		    $total_amt = $productinfo['price'] + $productinfo['setup_fee'];
+	    	 if(astpp_eq0($productinfo['apply_on_existing_account']) && astpp_eq0($productinfo['release_no_balance']) && (isset($productinfo['product_rate_group']) && astpp_gt($productinfo['product_rate_group'], 0) )){
+		    $total_amt = astpp_n($productinfo['price']) + astpp_n($productinfo['setup_fee']);
 		        $this->db->select("*");
 			$this->db->from("accounts");
 			$this->db->where(array("status"=>0,"deleted"=>0,"type"=>0,"reseller_id"=>$reseller_id));
@@ -434,24 +435,24 @@ class Products extends MX_Controller {
 						$customer_data = $customer_data->result_array()[0];		   
 					 }
 
-					$account_balance = $account['posttoexternal'] == 1 ? $account ['credit_limit'] - ($account ['balance']) : $account ['balance'];
+					$account_balance = $account['posttoexternal'] == 1 ? astpp_n($account ['credit_limit']) - (astpp_n($account ['balance'])) : $account ['balance'];
 						if($account_balance >= $total_amt ){
 							$productinfo['payment_by'] = "Account Balance";
 							$last_id =$this->order->confirm_order($productinfo,$account['id'],$accountinfo);
 
-							if(!empty($customer_data) && isset($productinfo['email_notify'] ) && $productinfo['email_notify'] ==1  && $last_id  > 0 ){
+							if(!empty($customer_data) && isset($productinfo['email_notify'] ) && $productinfo['email_notify'] ==1  && astpp_gt($last_id, 0) ){
 								   $productinfo['product_category'] = ($productinfo['product_category'] == 1) ? "PACKAGE" : (($productinfo['product_category'] == 2)  ? "SUBSCRIPTION" : "DID");
-								  $productinfo['next_billing_date'] = ($productinfo['billing_days'] = 0)?gmdate('Y-m-d 23:59:59', strtotime('+10 years')):gmdate("Y-m-d 23:59:59",strtotime("+".($productinfo['billing_days']-1)." days"));
-								$final_array = array_merge($customer_data,$productinfo);
+								  $productinfo['next_billing_date'] = ($productinfo['billing_days'] = 0)?astpp_gmdate('Y-m-d 23:59:59', strtotime('+10 years')):astpp_gmdate("Y-m-d 23:59:59",strtotime("+".(astpp_n($productinfo['billing_days'])-1)." days"));
+								$final_array = astpp_array_merge($customer_data,$productinfo);
 								if(isset($productinfo['product_category']) && $productinfo['product_category']==2){
 								$final_array['quantity']=isset($productinfo['quantity'])?$productinfo['quantity']:1;
 								}else{
 									$final_array['quantity']=1;
 								}
 								$final_array['category_name']=$productinfo['product_category'];
-								$final_array['price']=($productinfo['setup_fee']+$productinfo['price']);
-								$final_array['total_price']=($productinfo['setup_fee']+$productinfo['price'])*($final_array['quantity']);
-								$final_array['total_price_amount']=($productinfo['setup_fee']+$productinfo['price']);
+								$final_array['price']=(astpp_n($productinfo['setup_fee'])+astpp_n($productinfo['price']));
+								$final_array['total_price']=(astpp_n($productinfo['setup_fee'])+astpp_n($productinfo['price']))*(astpp_n($final_array['quantity']));
+								$final_array['total_price_amount']=(astpp_n($productinfo['setup_fee'])+astpp_n($productinfo['price']));
 								$this->common->mail_to_users("product_purchase",$final_array);
 							}
 				
@@ -474,7 +475,7 @@ class Products extends MX_Controller {
 		}else{
 			$last_id =$this->product_model->add_product($add_array,$SearchArr);
 
-			if($add_array['apply_on_existing_account'] == 0){
+			if(astpp_eq0($add_array['apply_on_existing_account'])){
 				$this->assign_product_to_exiting_account($add_array,$last_id);
 			}
 			$this->session->set_flashdata ( 'astpp_errormsg', gettext('Package created successfully!'));
@@ -604,7 +605,7 @@ class Products extends MX_Controller {
 		if($ids != ''){
 			$where = "id IN ($ids)";
 			$accountinfo = $this->session->userdata ( "accountinfo" );
-			$reseller_id = $accountinfo ['reseller_id'] >0 ? $accountinfo ['reseller_id'] : 0;
+			$reseller_id = astpp_gt($accountinfo ['reseller_id'], 0) ? $accountinfo ['reseller_id'] : 0;
 			$accountid = $accountinfo ['type'] == 1 ? $accountinfo ['id'] : 0;
 			if ($this->session->userdata ( 'logintype' ) == 1 || $this->session->userdata ( 'logintype' ) == 5) {	
 				// get_where() got the DB object as condition, so the rows of all resellers were read,
@@ -613,7 +614,7 @@ class Products extends MX_Controller {
 				$this->db->where("product_id IN (".$ids.")", NULL, FALSE);
 				$product_info = ( array ) $this->db->get_where( "reseller_products", array("account_id" => $accountid) )->result_array();
 				foreach ($product_info as $key => $value) {
-					if ($value['is_owner']==  0 ) {
+					if (astpp_eq0($value['is_owner']) ) {
 						
 							$this->db->where ("id",$value['product_id']);
 							$this->db->update("products",array("is_deleted"=>1));
@@ -840,7 +841,7 @@ class Products extends MX_Controller {
 			$accountinfo = $this->session->userdata ( "accountinfo" );
 			// price, period and minutes come from the offer (the form shows them read-only)
 			$order_id =$this->order->confirm_order($ProductData,$account_id,$accountinfo);
-			if (! ($order_id > 0)) {
+			if (! (astpp_gt($order_id, 0))) {
 				$this->session->set_flashdata ( 'astpp_notification', gettext('Invalid price, quantity or product!'));
 				redirect ( base_url () . 'products/products_list/' );
 			}
@@ -865,7 +866,7 @@ class Products extends MX_Controller {
 		$accountinfo = $this->session->userdata ( "accountinfo" );
 		$data ['page_title'] = gettext ( 'Create Product' );
 		$data['currency'] = $this->common->get_field_name("currency","currency",array("id"=>$accountinfo['currency_id']));
-		if($accountinfo['reseller_id'] > 0){
+		if(astpp_gt($accountinfo['reseller_id'], 0)){
 			$temp_where = '(`reseller_products`.`account_id` = '.$accountinfo['reseller_id'].' AND `reseller_products`.`is_optin` = 0 OR `reseller_products`.`account_id` = '.$accountinfo['reseller_id'].' AND `reseller_products`.`is_owner` = 0)';
 			$this->db->where($temp_where);
 			$product_info  = $this->db_model->getJionQuery('products',' products.id,products.name,products.product_category,products.buy_cost,products.country_id,products.commission,reseller_products.price,reseller_products.billing_type,reseller_products.billing_days,reseller_products.setup_fee,reseller_products.free_minutes,products.status,products.last_modified_date,reseller_products.product_id',array('reseller_products.product_id'=>$productid), 'reseller_products','products.id=reseller_products.product_id', 'inner', '' ,'','DESC','products.id');
@@ -884,8 +885,8 @@ class Products extends MX_Controller {
 		$add_array = $this->input->post();
 		$productid= $this->input->post('productid');
 		$accountinfo = $this->session->userdata ( "accountinfo" );
-			if($productid != '' &&  $productid != 0){
-				if($accountinfo['reseller_id'] > 0){
+			if($productid != '' &&  (!astpp_eq0($productid))){
+				if(astpp_gt($accountinfo['reseller_id'], 0)){
 					$temp_where = '(`reseller_products`.`account_id` = '.$accountinfo['reseller_id'].' AND `reseller_products`.`is_optin` = 0 OR `reseller_products`.`account_id` = '.$accountinfo['reseller_id'].' AND `reseller_products`.`is_owner` = 0)';
 					$this->db->where($temp_where);
 					$product_info  = $this->db_model->getJionQuery('products',' products.id,products.name,products.product_category,reseller_products.buy_cost,products.commission,reseller_products.price,reseller_products.billing_type,reseller_products.billing_days,reseller_products.setup_fee,reseller_products.free_minutes,products.status,products.last_modified_date,reseller_products.product_id',array('reseller_products.product_id'=>$productid), 'reseller_products','products.id=reseller_products.product_id', 'inner', '' ,'','DESC','products.id');
@@ -903,7 +904,7 @@ class Products extends MX_Controller {
 					$add_array['commission'] = $product_info['commission'];
 					$add_array['free_minutes'] = $product_info['free_minutes'];
 					$add_array['buy_cost'] = $offer['price'];
-					if($accountinfo['is_distributor'] == 0){
+					if(astpp_eq0($accountinfo['is_distributor'])){
 						$price = isset($add_array['price']) ? order::amount($add_array['price']) : (float) $offer['price'];
 						$setup_fee = isset($add_array['setup_fee']) ? order::amount($add_array['setup_fee']) : (float) $offer['setup_fee'];
 						if ($price === false || $setup_fee === false) {

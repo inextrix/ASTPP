@@ -82,7 +82,7 @@
 
 <section class="slice color-three pb-4">
 	<div id="floating-label" class="w-section inverse p-4">
-		<?php if(isset($logtype) && ($logtype == 0 || $logtype == 3)){ ?>
+		<?php if(isset($logtype) && (astpp_eq0($logtype) || $logtype == 3)){ ?>
 			<form method="POST" action="<?= base_url() ?>user/user_did_forward_save/" enctype="multipart/form-data" id="did_forward" name="did_forward">    
 			<?php } else{ ?>
 				<form method="POST" action="<?= base_url() ?>did/did_forward_save/" enctype="multipart/form-data" id="did_forward" name="did_forward">   
@@ -104,7 +104,7 @@
 						<input type='text' name='extensions' id="extensions_id" value= "<?php echo $extensions;  ?>" class="col-md-12 form-control form-control-lg extensions_set">
 					</div>
 					<div class="col-md-1 pr-0">
-						<?php if($call_type_vm_flag == 0){ ?>
+						<?php if(astpp_eq0($call_type_vm_flag)){ ?>
 							<input type="hidden" name="call_type_vm_flag" value="1" />
 							<input type="checkbox" name="call_type_vm_flag" value="0" checked />
 						<?php } else{ ?>
