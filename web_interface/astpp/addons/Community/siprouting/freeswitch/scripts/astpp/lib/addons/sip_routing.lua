@@ -152,7 +152,7 @@ function custom_inbound_0(xml,didinfo,userinfo,config,xml_did_rates,callerid_arr
 	common_chan_var = "{sip_invite_params=user=LOCAL,sip_from_uri="..didinfo['extensions'].."@${domain_name}}"
 		for i = 1, #destination_str do
 			if notify then notify(xml,destination_str[i]) end
-			bridge_str = bridge_str.."[leg_timeout="..didinfo['leg_timeout'].."]user/"..destination_str[i].."@"..params:getHeader("variable_sip_to_host")..(params:getHeader("variable_sip_to_port") and ":"..params:getHeader("variable_sip_to_port") or "") --//HP: 
+			bridge_str = bridge_str.."[leg_timeout="..didinfo['leg_timeout'].."]user/"..destination_str[i].."@"..params:getHeader("variable_sip_to_host")..(params:getHeader("variable_sip_to_port") and ":"..params:getHeader("variable_sip_to_port") or "") --//HP:
 			if i <= #deli_str then
 				bridge_str = bridge_str..deli_str[i]
 			end
