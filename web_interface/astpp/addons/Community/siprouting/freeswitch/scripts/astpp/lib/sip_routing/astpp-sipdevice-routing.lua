@@ -83,7 +83,7 @@ if session:ready() then
 	end
 
 	if(routing_destination ~= '' and permission_flag ~= '' and tonumber(permission_flag) == 0) then
-		bridge = "{ignore_early_media=true,sip_h_P-did_number="..did_number..",sip_h_P-call_type='custom_forward',sip_h_P-Accountcode="..userinfo_id.."}user/"..routing_destination.."@"..variable_sip_to_host..":"..variable_sip_to_port
+		bridge = "{ignore_early_media=true,sip_h_P-did_number="..did_number..",sip_h_P-call_type='custom_forward',sip_h_P-Accountcode="..userinfo_id.."}user/"..routing_destination.."@"..variable_sip_to_host..((variable_sip_to_port and variable_sip_to_port ~= "") and ":"..variable_sip_to_port or "")
 		session:execute("bridge", bridge)
 	end
 	if last_disposition ~= "SUCCESS" then

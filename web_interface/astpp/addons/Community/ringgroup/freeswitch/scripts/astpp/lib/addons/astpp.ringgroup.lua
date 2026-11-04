@@ -1,9 +1,9 @@
 function custom_inbound_7(xml,didinfo,userinfo,config,xml_did_rates,callerid_array,livecall_data)
-	if did_pbx_info then did_pbx_info(xml,didinfo,userinfo,config,xml_did_rates,callerid_array) end
+    if did_pbx_info then did_pbx_info(xml,didinfo,userinfo,config,xml_did_rates,callerid_array) end
 end
 
 function check_local_call(destination_number)
-	local query = db_sql("SELECT sip_devices.id as sip_id,sip_devices.username as username,accounts.number as accountcode,sip_devices.accountid as accountid,accounts.did_cid_translation as did_cid_translation,sip_devices.codec as sip_codec FROM "..TBL_SIP_DEVICES.." as sip_devices,"..TBL_USERS.." as  accounts WHERE accounts.status=0 AND accounts.deleted=0 AND accounts.id=sip_devices.accountid AND sip_devices.username = ?s limit 1", destination_number);
+    local query = db_sql("SELECT sip_devices.id as sip_id,sip_devices.username as username,accounts.number as accountcode,sip_devices.accountid as accountid,accounts.did_cid_translation as did_cid_translation,sip_devices.codec as sip_codec FROM "..TBL_SIP_DEVICES.." as sip_devices,"..TBL_USERS.." as  accounts WHERE accounts.status=0 AND accounts.deleted=0 AND accounts.id=sip_devices.accountid AND sip_devices.username = ?s limit 1", destination_number);
    
     Logger.debug("[CHECK_LOCAL_CALL] Query :" .. query)
     assert (dbh:query(query, function(u)
@@ -17,56 +17,56 @@ function get_trim_value (s)
 end
 
 function get_ringgroup(rgroupid)
-	local ringgroup_arr;
-	local query = db_sql("SELECT id as ringgroup_id,name as ringgroup_name,strategy as ringgroup_strategy,destinations as ringgroup_destinations,description as ringgroup_description from pbx_ringgroup WHERE id = ?i and status = 0 LIMIT 1", rgroupid);
-	Logger.debug("[Functions] [GET RING GROUP INFO] Query :" .. query)
-	assert (dbh:query(query, function(u)
-		ringgroup_arr = u
-	end))  
-	return ringgroup_arr
+    local ringgroup_arr;
+    local query = db_sql("SELECT id as ringgroup_id,name as ringgroup_name,strategy as ringgroup_strategy,destinations as ringgroup_destinations,description as ringgroup_description from pbx_ringgroup WHERE id = ?i and status = 0 LIMIT 1", rgroupid);
+    Logger.debug("[Functions] [GET RING GROUP INFO] Query :" .. query)
+    assert (dbh:query(query, function(u)
+        ringgroup_arr = u
+    end))  
+    return ringgroup_arr
 end
 
 function fail_cdrs_pbx(xml,callerid_array,userinfo,destination_number)
-	hangup_cause = "NO_ROUTE_DESTINATION";
-	local sound_path = "/usr/share/freeswitch/sounds/en/us/callie/"
-	audio_file = sound_path ..  "astpp-badphone.wav";
-	local callstart = os.date("!%Y-%m-%d %H:%M:%S")
-	if (callerid_array['original_cid_name'] ~= '' and callerid_array['original_cid_name'] ~= '<null>')  then
-		table.insert(xml, [[<action application="set" data="original_caller_id_name=]]..callerid_array['original_cid_name']..[["/>]]);
-	end
-	if (callerid_array['cid_number'] ~= '' and callerid_array['cid_number'] ~= '<null>')  then
-		table.insert(xml, [[<action application="set" data="original_caller_id_number=]]..callerid_array['original_cid_name']..[["/>]]);
-	end
-	table.insert(xml, [[<action application="set" data="error_cdr=1"/>]]);
-	table.insert(xml, [[<action application="set" data="callstart=]]..callstart..[["/>]]);
-	table.insert(xml, [[<action application="set" data="account_id=]]..userinfo['id']..[["/>]]);
-	local parent_id=get_parentid(userinfo['id']);
-	if(parent_id~=nil and parent_id~="") then
-		table.insert(xml, [[<action application="set" data="parent_id=]]..parent_id..[["/>]]);
-	end
-	table.insert(xml, [[<action application="set" data="call_direction=inbound"/>]]);
-	table.insert(xml, [[<action application="playback" data="]]..audio_file..[["/>]]);
-	table.insert(xml, [[<action application="set" data="sip_ignore_remote_cause=true"/>]]);        
-	table.insert(xml, [[<action application="set" data="call_processed=internal"/>]]);
-	table.insert(xml, [[<action application="set" data="effective_destination_number=]]..destination_number..[["/>]]); 
-	table.insert(xml, [[<action application="set" data="last_bridge_hangup_cause=]]..hangup_cause..[["/>]]);        
-	table.insert(xml, [[<action application="hangup" data="]]..hangup_cause..[["/>]]);   
-	table.insert(xml, [[<action application="set" data="sip_ignore_remote_cause=true"/>]]);        
-	table.insert(xml, [[<action application="playback" data="]]..audio_file..[["/>]]);
-	table.insert(xml, [[<action application="hangup" data="]]..hangup_cause..[["/>]]); 
+    hangup_cause = "NO_ROUTE_DESTINATION";
+    local sound_path = "/usr/share/freeswitch/sounds/en/us/callie/"
+    audio_file = sound_path ..  "astpp-badphone.wav";
+    local callstart = os.date("!%Y-%m-%d %H:%M:%S")
+    if (callerid_array['original_cid_name'] ~= '' and callerid_array['original_cid_name'] ~= '<null>')  then
+        table.insert(xml, [[<action application="set" data="original_caller_id_name=]]..callerid_array['original_cid_name']..[["/>]]);
+    end
+    if (callerid_array['cid_number'] ~= '' and callerid_array['cid_number'] ~= '<null>')  then
+        table.insert(xml, [[<action application="set" data="original_caller_id_number=]]..callerid_array['original_cid_name']..[["/>]]);
+    end
+    table.insert(xml, [[<action application="set" data="error_cdr=1"/>]]);
+    table.insert(xml, [[<action application="set" data="callstart=]]..callstart..[["/>]]);
+    table.insert(xml, [[<action application="set" data="account_id=]]..userinfo['id']..[["/>]]);
+    local parent_id=get_parentid(userinfo['id']);
+    if(parent_id~=nil and parent_id~="") then
+        table.insert(xml, [[<action application="set" data="parent_id=]]..parent_id..[["/>]]);
+    end
+    table.insert(xml, [[<action application="set" data="call_direction=inbound"/>]]);
+    table.insert(xml, [[<action application="playback" data="]]..audio_file..[["/>]]);
+    table.insert(xml, [[<action application="set" data="sip_ignore_remote_cause=true"/>]]);        
+    table.insert(xml, [[<action application="set" data="call_processed=internal"/>]]);
+    table.insert(xml, [[<action application="set" data="effective_destination_number=]]..destination_number..[["/>]]); 
+    table.insert(xml, [[<action application="set" data="last_bridge_hangup_cause=]]..hangup_cause..[["/>]]);        
+    table.insert(xml, [[<action application="hangup" data="]]..hangup_cause..[["/>]]);   
+    table.insert(xml, [[<action application="set" data="sip_ignore_remote_cause=true"/>]]);        
+    table.insert(xml, [[<action application="playback" data="]]..audio_file..[["/>]]);
+    table.insert(xml, [[<action application="hangup" data="]]..hangup_cause..[["/>]]); 
 end
 
 function did_pbx_info(xml,didinfo,userinfo,config,xml_did_rates,callerid_array)
     table.insert(xml, [[<action application="set" data="did_calltype=]]..didinfo['call_type']..[["/>]]);
-	table.insert(xml, [[<action application="set" data="did_extensions=]]..didinfo['extensions']..[["/>]]);
+    table.insert(xml, [[<action application="set" data="did_extensions=]]..didinfo['extensions']..[["/>]]);
     Logger.info("[RINGGROUP] Call Type : "..didinfo['call_type'])
     if(tonumber(userinfo['is_recording']) == 0) then 
-		table.insert(xml, [[<action application="export" data="is_recording=1"/>]]);
-		table.insert(xml, [[<action application="export" data="media_bug_answer_req=true"/>]]);
-		table.insert(xml, [[<action application="export" data="RECORD_STEREO=true"/>]]);
-		table.insert(xml, [[<action application="export" data="record_sample_rate=8000"/>]]);
-		table.insert(xml, [[<action application="export" data="execute_on_answer=record_session $${recordings_dir}/${uuid}.wav"/>]]);
-	end
+        table.insert(xml, [[<action application="export" data="is_recording=1"/>]]);
+        table.insert(xml, [[<action application="export" data="media_bug_answer_req=true"/>]]);
+        table.insert(xml, [[<action application="export" data="RECORD_STEREO=true"/>]]);
+        table.insert(xml, [[<action application="export" data="record_sample_rate=8000"/>]]);
+        table.insert(xml, [[<action application="export" data="execute_on_answer=record_session $${recordings_dir}/${uuid}.wav"/>]]);
+    end
 
     if(tonumber(didinfo['call_type']) == 7)then
         Logger.info("[RINGGROUP] Call Type : Ring Group")
