@@ -139,13 +139,13 @@
      <link href="<?= base_url() ?>assets/css/global-style.css" rel="stylesheet" type="text/css"/>
      <link href="<?php echo base_url(); ?>assets/css/facebox.css" rel="stylesheet" media="all" />	
      <link rel="stylesheet" href="<?php echo base_url(); ?>assets/css/flexigrid.css" type="text/css"/>
-     <link href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css" rel="stylesheet">
+     <link href="<?php echo base_url(); ?>assets/css/bootstrap-glyphicons.css" rel="stylesheet">
      <link rel="stylesheet" href="<?php echo base_url(); ?>assets/css/animate.css" type="text/css"/>
      <link rel="stylesheet" href="<?php echo base_url(); ?>assets/css/style.css" type="text/css"/>
      <link rel="stylesheet" href="<?php echo base_url(); ?>assets/css/sticky_menu.css" type="text/css"/>
      <link rel="stylesheet" href="<?php echo base_url(); ?>assets/css/com-style.css" type="text/css"/>
   <!-- Google Font -->
-  <link href="https://fonts.googleapis.com/css?family=Montserrat:100,100i,200,200i,300,300i,400,400i,500,500i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet"> 
+  <link href="<?php echo base_url(); ?>assets/fonts/webfonts/fonts.css" rel="stylesheet"> 
 
 
      <script src="<?php echo base_url(); ?>assets/js/jquery-1.12.4.js"></script>
@@ -162,7 +162,7 @@
 
 
 
-     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery-browser/0.1.0/jquery.browser.js"></script>
+     <script type="text/javascript" src="<?php echo base_url(); ?>assets/js/jquery.browser.js"></script>
  	 <!--<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
   -->
 

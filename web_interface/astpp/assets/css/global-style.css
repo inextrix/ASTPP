@@ -1,5 +1,4 @@
-﻿@import url(https://fonts.googleapis.com/css?family=Noto+Sans:400,700);
-@import url(https://fonts.googleapis.com/css?family=Roboto:400,500,700);
+﻿@import url(../fonts/webfonts/fonts.css);
 .content_border
 {
 	border:1px solid #e7eaec;}

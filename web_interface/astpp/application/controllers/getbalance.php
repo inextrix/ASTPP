@@ -26,7 +26,7 @@ class Getbalance extends MX_Controller {
 		// Balance lookup by SIP user/account number without login (information leak).
 		// Only allowed from this server. Remove this check if IP phones must query it directly.
 		if (! astpp_internal_request ()) {
-			show_404 ();
+			astpp_not_found ();
 		}
 		$this->load->model ( 'common_model' );
 		$this->load->library ( 'common' );

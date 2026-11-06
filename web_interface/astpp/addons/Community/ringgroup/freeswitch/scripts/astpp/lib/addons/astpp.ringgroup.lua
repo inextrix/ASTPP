@@ -142,7 +142,7 @@ function did_pbx_info(xml,didinfo,userinfo,config,xml_did_rates,callerid_array)
                         params_ring[delay] =0
                     end
                     if(tonumber(final_count) == 0)then
-                        ringgroup_dlr_str = ringgroup_dlr_str .."[sip_invite_params=user=local,sip_h_p-call_type='custom_forward',call_timeout="..params_ring[timeout]..","..group_confirm.."leg_timeout="..params_ring[timeout]..",leg_delay_start="..params_ring[delay].."]".."user/"..params_ring[destination].."@"..params:getHeader("variable_sip_to_host")..":"..params:getHeader("variable_sip_to_port")..separated
+                        ringgroup_dlr_str = ringgroup_dlr_str .."[sip_invite_params=user=local,sip_h_p-call_type='custom_forward',call_timeout="..params_ring[timeout]..","..group_confirm.."leg_timeout="..params_ring[timeout]..",leg_delay_start="..params_ring[delay].."]".."user/"..params_ring[destination].."@"..params:getHeader("variable_sip_to_host")..(params:getHeader("variable_sip_to_port") and ":"..params:getHeader("variable_sip_to_port") or "")..separated
                     end
                 end
             end
