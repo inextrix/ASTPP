@@ -124,12 +124,15 @@ class Form {
 				} else {
 					return true;
 				}
-			} else { 
+			} else {
+			  //Gautam ASTPPCOM-1402 start
+			  if( $this->CI->session->userdata ( 'userlevel_logintype' ) != 0){ 
 				$this->CI->load->library('astpp/permission');
 				$this->CI->session->set_userdata ( 'astpp_errormsg', 'You do not have permission to access this module..!' );
 				$url= $this->CI->session->userdata ( 'userlevel_logintype' ) ==0 ? 'user/user/' : "dashboard/";
-
 				$this->CI->permission->permission_redirect_url($url);
+			  }
+			  //Gautam ASTPPCOM-1402 end
 			}
 		} else {
 			redirect ( base_url () );
