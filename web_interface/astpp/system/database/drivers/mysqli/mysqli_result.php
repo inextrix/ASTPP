@@ -36,7 +36,7 @@ class CI_DB_mysqli_result extends CI_DB_result {
 	 */
 	function num_rows()
 	{
-		return @mysqli_num_rows($this->result_id);
+		return ($this->result_id instanceof mysqli_result) ? mysqli_num_rows($this->result_id) : 0; // PHP 8: write queries (e.g. starting with a comment) give TRUE, not a result; PHP 7 only warned
 	}
 
 	// --------------------------------------------------------------------
@@ -49,7 +49,7 @@ class CI_DB_mysqli_result extends CI_DB_result {
 	 */
 	function num_fields()
 	{
-		return @mysqli_num_fields($this->result_id);
+		return ($this->result_id instanceof mysqli_result) ? mysqli_num_fields($this->result_id) : 0; // PHP 8: write queries (e.g. starting with a comment) give TRUE, not a result; PHP 7 only warned
 	}
 
 	// --------------------------------------------------------------------
@@ -151,7 +151,7 @@ class CI_DB_mysqli_result extends CI_DB_result {
 	 */
 	function _fetch_assoc()
 	{
-		return mysqli_fetch_assoc($this->result_id);
+		return ($this->result_id instanceof mysqli_result) ? mysqli_fetch_assoc($this->result_id) : NULL; // PHP 8: write queries (e.g. starting with a comment) give TRUE, not a result; PHP 7 only warned
 	}
 
 	// --------------------------------------------------------------------
@@ -166,7 +166,7 @@ class CI_DB_mysqli_result extends CI_DB_result {
 	 */
 	function _fetch_object()
 	{
-		return mysqli_fetch_object($this->result_id);
+		return ($this->result_id instanceof mysqli_result) ? mysqli_fetch_object($this->result_id) : NULL; // PHP 8: write queries (e.g. starting with a comment) give TRUE, not a result; PHP 7 only warned
 	}
 
 }

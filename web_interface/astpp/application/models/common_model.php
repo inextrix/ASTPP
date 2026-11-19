@@ -136,7 +136,7 @@ class Common_model extends CI_Model {
 			$amount = str_replace ( ',', '', $amount );
 		}
 		// ASTPPCOM-857 end
-		$cal_amount = ($amount * $to_cur_rate) / $from_cur_rate;
+		$cal_amount = ((float) $amount * $to_cur_rate) / $from_cur_rate; // PHP 8: '' * x is a TypeError
 		if ($format_currency)
 			$cal_amount = $this->format_currency ( $cal_amount );
 		if ($append_currency) {
@@ -169,7 +169,7 @@ class Common_model extends CI_Model {
 			$amount = str_replace ( ',', '', $amount );
 		}
 		// ASTPPCOM-857 end
-		$cal_amount = ($amount * $to_cur_rate) / $from_cur_rate;
+		$cal_amount = ((float) $amount * $to_cur_rate) / $from_cur_rate; // PHP 8: '' * x is a TypeError
 
 		if ($format_currency)
 			$cal_amount = $this->format_currency ( $cal_amount );
@@ -202,7 +202,8 @@ class Common_model extends CI_Model {
 		}
 		$to_currency = ($to_currency == '') ? self::$global_config ['system_config'] ['base_currency'] : $to_currency;
 		if (self::$global_config ['currency_list'] [$from_currency] > 0) { 
-			$cal_amount = ($amount * self::$global_config ['currency_list'] [$to_currency]) / self::$global_config ['currency_list'] [$from_currency];
+			$cal_amount = ((float) $amount * self::$global_config ['currency_list'] [$to_currency]) / // PHP 8: '' * x is a TypeError
+				 self::$global_config ['currency_list'] [$from_currency];
 			// Kinjal ASTPPCOM-1319 Start
 			$cal_amount = str_replace(',','.',$cal_amount);
 			// Kinjal ASTPPCOM-1319 End
@@ -240,7 +241,7 @@ class Common_model extends CI_Model {
 			$amount = str_replace ( ',', '', $amount );
 		}
 		// ASTPPCOM-857 end
-		$cal_amount = ($amount * $to_cur_rate) / $from_cur_rate;
+		$cal_amount = ((float) $amount * $to_cur_rate) / $from_cur_rate; // PHP 8: '' * x is a TypeError
 		if ($format_currency)
 			$cal_amount = $this->format_currency ( $cal_amount );
 		if ($append_currency)

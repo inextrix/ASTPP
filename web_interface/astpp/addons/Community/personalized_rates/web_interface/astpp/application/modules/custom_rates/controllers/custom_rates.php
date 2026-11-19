@@ -334,7 +334,7 @@ class custom_rates extends MX_Controller {
 		$percentage= explode(",",$add_array['percentage']);
 		$trunk_count =count($trunk_id);
 		foreach($trunk_id as $key=>$value){
-			if($value != 0){
+			if((int) $value != 0){ // PHP 8: '' != 0 is true (PHP 7: false), no trunk selected must not insert a routing row
 				$insert_array =array(
 					"routes_id"=>$routes_id,
 					"pricelist_id"=>0,

@@ -134,7 +134,7 @@ class Notifications extends Account
 		if(!empty($like_array)) {
 			$this->db->where($like_array); 
 		}
-		$this->db->order_by('id',DESC);
+		$this->db->order_by('id','DESC'); // PHP 8: undefined constant DESC is an Error
 		if($this->accountinfo['type'] == '1' && $this->postdata['action'] != 'reseller_notifications_list'){
 			$this->db->where('reseller_id', $this->postdata['id']); 
 		}

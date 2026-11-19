@@ -566,7 +566,7 @@ buycost,reseller_products.price,reseller_products.billing_type,(CASE WHEN resell
         }
         $this->postdata['release_no_balance'] = $this->postdata['release_no_balance'] == "0" ? $this->postdata['release_no_balance'] : 1;
         $this->postdata['status'] = $this->postdata['status'] == "1" ? $this->postdata['status'] : 0;
-        $this->postdata['applicable_for'] = $this->postdata['applicable_for'] == "1" ? $this->postdata['applicable_for'] : $this->postdata['applicable_for'] == "0" ? $this->postdata['applicable_for'] : "1" ;
+        $this->postdata['applicable_for'] = $this->postdata['applicable_for'] == "1" ? $this->postdata['applicable_for'] : ($this->postdata['applicable_for'] == "0" ? $this->postdata['applicable_for'] : "1"); // PHP 8: nested ternary needs parentheses
         if($this->postdata['apply_on_rategroups'] != ""){
             $explode_ids= explode(',',$this->postdata['apply_on_rategroups']);
             $this->db->where_in('id',$explode_ids);

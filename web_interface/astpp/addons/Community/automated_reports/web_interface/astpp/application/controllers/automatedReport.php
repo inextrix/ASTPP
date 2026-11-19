@@ -84,7 +84,7 @@ class AutomatedReport extends MX_Controller {
 					$select_where = $json_data_value['select_where'];
 					foreach ($select_where as $select_where_key => $select_where_value) {
 						$where[$select_where_key] = $select_where_value;
-						if (strpos($select_where_value, '_') !== false && !is_array($select_where_value)) {
+						if (!is_array($select_where_value) && strpos($select_where_value, '_') !== false) { // PHP 8: strpos() on an array is a TypeError, check is_array first
 							$explode_key =  explode('_',$select_where_value);
 							// 1 = String, 2 = Integer
 							if($explode_key[1] == 1 ){
@@ -179,7 +179,7 @@ class AutomatedReport extends MX_Controller {
 		$final_array['email']=$accountDetails['account_email'];
 		$final_array['attachment']=$attachment_availalble;
 		$final_array['subject_title']=$accountDetails['report_name'];
-		$final_array['interval_freq_of_email']=$accountDetails['interval_frequency_on'] == 0 ? "Day" : (($accountDetails['interval_frequency_on'] == 1)  ? "Week" : $accountDetails['interval_frequency_on'] == 2 ? "Month" :"Biweekly");
+		$final_array['interval_freq_of_email']=$accountDetails['interval_frequency_on'] == 0 ? "Day" : (($accountDetails['interval_frequency_on'] == 1)  ? "Week" : (($accountDetails['interval_frequency_on'] == 2) ? "Month" : "Biweekly")); // PHP 8: nested ternary needs parentheses (same mapping as common::set_automated_report_status)
 		$final_array['interval_filter_on']='callstart';
 		$final_array['report_interval_days']=$accountDetails['report_interval_days'];
 		$final_array['reseller_id']='0';

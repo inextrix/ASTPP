@@ -277,11 +277,11 @@ class Db_model extends CI_Model {
 		if ($group_by != '') {
 			$this->db->group_by ( $group_by );
 		}
-		if ($start != '' && $end != '') {
+		if ($start != 0 && $end != 0) {
 			$this->db->limit ( $start, $end );
 		}
 
-		if ($start != '' && $end == '') {
+		if ($start != 0 && $end == 0) {
 			$this->db->limit ( $start );
 		}
 
@@ -304,10 +304,10 @@ class Db_model extends CI_Model {
 		if ($group_by != '') {
 			$this->db->group_by ( $group_by );
 		}
-		if ($start != '' && $end != '') {
+		if ($start != 0 && $end != 0) {
 			$this->db->limit ( $start, $end );
 		}
-		if ($start != '' && $end == '') {
+		if ($start != 0 && $end == 0) {
 			$this->db->limit ( $start );
 		}
 		$query = $this->db->get ();
@@ -336,11 +336,11 @@ class Db_model extends CI_Model {
 			$this->db->group_by ( $group_by );
 		}
 
-		if ($start != '' && $end != '') {
+		if ($start != 0 && $end != 0) {
 			$this->db->limit ( $start, $end );
 		}
 
-		if ($start != '' && $end == '') {
+		if ($start != 0 && $end == 0) {
 			$this->db->limit ( $start );
 		}
 
