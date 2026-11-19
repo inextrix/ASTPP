@@ -45,7 +45,7 @@ class ProcessInvoice extends MX_Controller
 	$this->load->model("common_model");
 
 
-	error_reporting("E_ALL");
+	// PHP 8: error_reporting("E_ALL") throws a TypeError (string); the level from index.php applies
 	ini_set("memory_limit", "2048M");
 	ini_set("max_execution_time", "259200");
 

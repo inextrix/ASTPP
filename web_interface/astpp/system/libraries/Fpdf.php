@@ -77,7 +77,7 @@ var $PDFVersion; // PDF version number
 *******************************************************************************/
 function __construct($props = array())
 {
-	 if(count($props) == 3)
+	 if(is_array($props) && count($props) == 3) // PHP 8: count() on a string throws a TypeError
 	 {
 		 list($orientation,$unit,$format) = $props;
 		 $this->initialize($orientation,$unit,$format);
@@ -1116,9 +1116,7 @@ function _dochecks()
 	// Check mbstring overloading
 	if (ini_get('mbstring.func_overload') & 2)
 		$this->Error('mbstring overloading must be disabled');
-	// Ensure runtime magic quotes are disabled
-	if (get_magic_quotes_runtime())
-		@set_magic_quotes_runtime(0);
+	// PHP 8: magic quotes and get_magic_quotes_runtime() no longer exist
 }
 
 function _checkoutput()

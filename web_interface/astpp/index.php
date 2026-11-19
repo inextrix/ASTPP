@@ -20,6 +20,8 @@
 ini_set('display_errors','off'); // errors go to the PHP error log, never to the browser
 ini_set ( "date.timezone", "UTC" );
 define ( 'ENVIRONMENT', 'production' );
+// PHP 8.1+: mysqli throws exceptions by default; CodeIgniter 2 expects FALSE and shows its own DB error page
+mysqli_report ( MYSQLI_REPORT_OFF );
 /*
  * ---------------------------------------------------------------
  * ERROR REPORTING

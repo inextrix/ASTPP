@@ -110,7 +110,7 @@ class User_notifications extends Account
 		}
 		$where = array('accountid' => $this->postdata['id'] );
 		$this->db->where($where);
-		$this->db->order_by('id',DESC);
+		$this->db->order_by('id','DESC'); // PHP 8: undefined constant DESC is an Error
 		$query =$this->db->limit($no_of_records, $start)
 			->select('*')
 			->get ('mail_details');

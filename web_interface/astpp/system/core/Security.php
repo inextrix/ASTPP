@@ -270,7 +270,7 @@ class CI_Security {
 		 */
 		if (is_array($str))
 		{
-			while (list($key) = each($str))
+			foreach (array_keys($str) as $key) // PHP 8: each() was removed
 			{
 				$str[$key] = $this->xss_clean($str[$key]);
 			}

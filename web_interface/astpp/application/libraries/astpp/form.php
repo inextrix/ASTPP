@@ -731,7 +731,7 @@ class Form {
 
 			$logintype = $this->CI->session->userdata('logintype');
 
-			$Actionkey = array_search (gettext('Action'),array_column ( $grid_fields, 0 ) );
+			$Actionkey = array_search (gettext('Action'),array_column ( (array) $grid_fields, 0 ) ); // PHP 8: array_column(null) is a TypeError
 			// if ($Actionkey == '') {
 			// 	$Actionkey = array_search ('action',array_column ( $grid_fields, 0 ) );
 			// }

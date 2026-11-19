@@ -76,7 +76,7 @@ class CSVReader {
 		$i = 0;
 		$flag_data = false;
 		$data_arr [0] = $config_variable;
-		$field_name_arr = array_keys ( $config_variable );
+		$field_name_arr = array_keys ( ( array ) $config_variable ); // PHP 8: array_keys(null) is a TypeError (PHP 7: warning, no fields)
 		foreach ( $p_CSVLines as $line_num => $line ) {
 			$line = trim ( $line );
 			if (! empty ( $line )) {

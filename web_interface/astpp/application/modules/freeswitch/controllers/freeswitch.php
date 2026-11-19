@@ -319,7 +319,7 @@ class Freeswitch extends MX_Controller
         $response = $this->freeswitch_model->reload_freeswitch($command,$id);
         if($response != ""){
             $response_arr = json_decode(json_encode((array) simplexml_load_string(trim($response))),1);
-            if(array_key_exists("registration",$response_arr["registrations"])){
+            if(isset($response_arr["registrations"]["registration"])){ // PHP 8: array_key_exists() on null is a TypeError
                 if(!array_key_exists("0",$response_arr["registrations"]['registration'])){
                     if($response_arr['registrations']['registration']['sip-auth-user'] != ''){
                         array_push($new_array, $response_arr['registrations']['registration']['sip-auth-user']);
@@ -690,7 +690,7 @@ class Freeswitch extends MX_Controller
         $response = $this->freeswitch_model->reload_freeswitch($command,$id);
         if($response != "" ){
            $response_arr = json_decode(json_encode((array) simplexml_load_string(trim($response))),1);
-           if(array_key_exists("0",$response_arr["gateway"]) && $response_arr != ""){
+           if(isset($response_arr["gateway"][0])){ // PHP 8: array_key_exists() on null is a TypeError
                 foreach ($response_arr['gateway'] as $key => $value) {
                     if($value['state'] != 'FAIL_WAIT' && $value['state'] != 'TRYING' && $value['state'] !='FAILED' && $value['state'] !='UNREGED'){
                         array_push($new_array, $value['name']);

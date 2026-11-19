@@ -164,7 +164,7 @@ class Termination_rate extends Account {
 		$start = $this->postdata['start_limit']-1;
 		$limit = $this->postdata['end_limit'];
 		$no_of_records = (int)$limit - (int)$start;
-		$this->db->order_by('id', DESC);
+		$this->db->order_by('id', 'DESC'); // PHP 8: undefined constant DESC is an Error
 		$available_termination_rate = $this->db->limit($no_of_records, $start)
 			-> select('*')
 			->from('outbound_routes')
