@@ -613,7 +613,9 @@ class Freeswitch extends MX_Controller
                     'cell' => array(
                         "<a href='" . base_url() . "freeswitch/livecall_hangup?uuid=" . $value['uuid'] . "' class='btn btn-warning'> Hang Up </button>",
                         // Ashish ASTPPCOM-752
-                        $this->common->convert_GMT_to('', '', $value['created']),
+                        // ASTPPCOM-891 Ashish start
+                        $this->common->convert_GMT_to('', '', $value['created'],'','livecall'),
+                        // ASTPPCOM-891 Ashish end
                         // Ashish 752 End
                         $value['cid_name'] . " " . $value['cid_num'],
                         $value['ip_addr'],

@@ -49,6 +49,7 @@ class Dashboard_model extends CI_Model {
 		return $this->db->get ( 'payments' );
 	}
 	function get_call_statistics($table, $parent_id, $start_date = '', $end_date = '', $group_flag = true) {
+		// ASTPPCOM-891 Ashish start
 		$this->db->select ( "sum(total_calls) as sum,
                            SUM(total_answered_call) as answered,
                            MAX(mcd) AS mcd,
@@ -59,7 +60,8 @@ class Dashboard_model extends CI_Model {
                            sum(debit) as debit,
                            sum(cost) as cost,
                            SUM(total_answered_call) as completed,
-                           DAY(calldate) as day", false );
+                           calldate as day", false );
+						// ASTPPCOM-891 Ashish end
 		$this->db->where ( 'calldate >=', $start_date . " 00:00:00" );
 		$this->db->where ( 'calldate <=', $end_date . " 23:59:59" );
 		$this->db->where ( 'reseller_id', $parent_id );

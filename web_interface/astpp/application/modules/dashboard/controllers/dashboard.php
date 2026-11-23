@@ -93,26 +93,42 @@ class dashboard extends MX_Controller {
 		$month=isset($post['month'])&& $post['month'] >0 ? $post['month']:date("m");
 		$json_data = array();
 		if($post['drop_val'] == "t_week"){
-			$start_date = (date('D')!='Mon') ? date('Y-m-d ',strtotime('last Monday')) : date('Y-m-d');
-			$end_date = date('Y-m-d');
+			// ASTPPCOM-891 Ashish start
+			$start_date = (date('D')!='Mon') ? date('Y-m-d  H:i:s',strtotime('last Monday')) : date('Y-m-d  H:i:s');
+			$end_date = date('Y-m-d H:i:s');
+			$start_date_gmt = (date('D')!='Mon') ? date('Y-m-d',strtotime('last Monday')) : date('Y-m-d');
+			$end_date_gmt = date('Y-m-d');
+			$start_date = $this->common->convert_GMT_new($start_date);
+			$end_date = $this->common->convert_GMT_new($end_date);
+			// ASTPPCOM-891 Ashish end
 		}else{
 			$start_date=date($year.'-'.$month.'-01');
 			$end_day= $year==date("Y") && $month ==date("m") ? date("d") :cal_days_in_month(CAL_GREGORIAN, $month, $year);
 			$gmtoffset=$this->common->get_timezone_offset();
-			$end_date=date($year."-".$month."-".$end_day.' H:i:s');
-			$end_date=date('Y-m-d',strtotime($end_date)+$gmtoffset);
+			// ASTPPCOM-891 Ashish start
+			$end_date =date($year."-".$month."-".$end_day.' H:i:s');
+			$end_date=date('Y-m-d',strtotime($end_date));
+			$start_date_gmt = $start_date;
+			$end_date_gmt =$end_date;
+			$start_date = $this->common->convert_GMT_new($start_date);
+			$end_date = $this->common->convert_GMT_new($end_date);
+			// ASTPPCOM-891 Ashish end
 		}
 		$current_date=(int)date("d");
 		$count=0;
 		$i=0;
-		$begin = new DateTime($start_date);
-		$end = new DateTime($end_date);
+		// ASTPPCOM-891 Ashish start
+		$begin = new DateTime($start_date_gmt);
+		$end = new DateTime($end_date_gmt);
+		// ASTPPCOM-891 Ashish end
 		$end=$end->modify('+1 day');
 		$daterange = new DatePeriod($begin, new DateInterval('P1D'), $end);
 		$records_date=array();
 		$accountinfo=$this->session->userdata('accountinfo');
 		$parent_id= ($accountinfo['type'] == 1) ? $accountinfo['id'] : 0;
-		$customerresult = $this->dashboard_model->get_call_statistics('cdrs_day_by_summary',$parent_id,$start_date,$end_date);
+		// ASTPPCOM-891 Ashish start
+		$customerresult = $this->dashboard_model->get_call_statistics('cdrs_day_by_summary',$parent_id,$start_date_gmt,$end_date_gmt);
+		// ASTPPCOM-891 Ashish end
 		$acc_arr = array();
 		$customer_total_result = array();
 		$customer_total_result['sum'] = '0';
@@ -129,6 +145,9 @@ class dashboard extends MX_Controller {
 		$res_mcd = 0;
 		if($customerresult -> num_rows > 0){
 			foreach ($customerresult->result_array() as $data) {
+				// ASTPPCOM-891 Ashish start
+				$data['day'] = date('d',strtotime($data['day']));
+				// ASTPPCOM-891 Ashish end
 				$acc_arr[$data['day']] = $data;
 				$customer_total_result['sum'] += $data['sum'];
 				$customer_total_result['answered'] += $data['answered'];
@@ -361,10 +380,18 @@ class dashboard extends MX_Controller {
 	
 	
 	function customerReport_calculation(){
-		$today_start_date = date("Y-m-d 00:00:00");
-		$today_end_date = date("Y-m-d 23:59:59");
+		// ASTPPCOM-891 Ashish start
+		$current_date = $this->common->get_current_login_type_timezone();
+		$today_start_date = date($current_date." 00:00:00");
+		$today_end_date = date($current_date." 23:59:59");
+		$today_start_date=$this->common->convert_GMT_new ($today_start_date);
+		$today_end_date=$this->common->convert_GMT_new ($today_end_date);
+		// ASTPPCOM-891 Ashish End
 		$start_date = date('Y-m-01 00:00:00');
 		$end_date = date('Y-m-d H:i:s');
+		// ASTPPCOM-891 Ashish start
+		$end_date=$this->common->convert_GMT_new ($end_date);
+		// ASTPPCOM-891 Ashish End
 		$accountinfo = $this->session->userdata ( 'accountinfo' );
 		if($accountinfo['type'] == '1'){
 			$reseller_id = $accountinfo['id'];
@@ -550,12 +577,18 @@ class dashboard extends MX_Controller {
 	
 	function get_today_result(){
 			$accountinfo = $this->session->userdata ( 'accountinfo' );
+			// ASTPPCOM-891 Ashish start
+			$start_date = $this->common->convert_GMT_new (date("Y-m-d") . " 00:00:00");
+			$end_date = $this->common->convert_GMT_new (date("Y-m-d") . " 23:59:59");
+			// ASTPPCOM-891 Ashish end
 			if($accountinfo['type'] == '1'){
 				$reseller_id = $accountinfo['id'];
 			}else{
 				$reseller_id = "0";
 			}
-			$query_refill = 'Select sum(amount) as today_refill_amount from payment_transaction where date >= "'.date("Y-m-d 00:00:00").'" and date <= "'.date("Y-m-d 23:59:59").'" and reseller_id="'.$reseller_id.'"';
+			// ASTPPCOM-891 Ashish start
+			$query_refill = 'Select sum(amount) as today_refill_amount from payment_transaction where date >= "'.$start_date.'" and date <= "'.$end_date.'" and reseller_id="'.$reseller_id.'"';
+			// ASTPPCOM-891 Ashish end
 			$result_refill = $this->db->query($query_refill);
 			$result_refill = (array) $result_refill->first_row();
 			if($result_refill['today_refill_amount'] == "" OR $result_refill['today_refill_amount'] == NULL){
@@ -563,8 +596,9 @@ class dashboard extends MX_Controller {
 			}else{
 				$result_array['today_refill_amount'] = $this->common_model->calculate_currency( $result_refill['today_refill_amount'] ) ;
 			}
-			
-			$query_order = 'Select count(*) as order_count from orders where order_date <= "'.date("Y-m-d 23:59:59").'" and order_date >= "'.date("Y-m-d 00:00:00").'" and reseller_id="'.$reseller_id.'"';
+			// ASTPPCOM-891 Ashish start
+			$query_order = 'Select count(*) as order_count from orders where order_date <= "'.$end_date.'" and order_date >= "'.$start_date.'" and reseller_id="'.$reseller_id.'"';
+			// ASTPPCOM-891 Ashish end
 			$result_order = $this->db->query($query_order);
 			$count = (array) $result_order->first_row();
 			if($count['order_count'] == "" OR $count['order_count'] == NULL){
@@ -572,8 +606,9 @@ class dashboard extends MX_Controller {
 			}else{
 				$result_array['today_order_count'] = $count['order_count'];
 			}
-			
-			$query = 'Select count(*) as account_count from accounts where creation <= "'.date("Y-m-d 23:59:59").'" and creation >= "'.date("Y-m-d 00:00:00").'" and reseller_id="'.$reseller_id.'" and status="0" and deleted="0"';
+			// ASTPPCOM-891 Ashish start
+			$query = 'Select count(*) as account_count from accounts where creation <= "'.$end_date.'" and creation >= "'.$start_date.'" and reseller_id="'.$reseller_id.'" and status="0" and deleted="0"';
+			// ASTPPCOM-891 Ashish end
 			$result = $this->db->query($query);
 			$count = (array) $result->first_row();
 			if($count['account_count'] == "" OR $count['account_count'] == NULL){
@@ -581,8 +616,9 @@ class dashboard extends MX_Controller {
 			}else{
 				$result_array['today_account_count'] = $count['account_count'];
 			}
-			
-			$query = 'Select SUM(total_calls) as total_calls from cdrs_day_by_summary where calldate <= "'.date("Y-m-d 23:59:59").'" and calldate >= "'.date("Y-m-d 00:00:00").'" and reseller_id="'.$reseller_id.'"';
+			// ASTPPCOM-891 Ashish start
+			$query = 'Select SUM(total_calls) as total_calls from cdrs_day_by_summary where calldate <= "'.$end_date.'" and calldate >= "'.$start_date.'" and reseller_id="'.$reseller_id.'"';
+			// ASTPPCOM-891 Ashish end
 			$result = $this->db->query($query);
 			$count = (array) $result->first_row();
 			if($count['total_calls'] == "" OR $count['total_calls'] == NULL){

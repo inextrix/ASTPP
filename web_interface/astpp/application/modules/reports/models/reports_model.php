@@ -40,8 +40,11 @@ class Reports_model extends CI_Model
         // ASTPPCOM-825 end
         $table_name = 'cdrs';
         if ($this->session->userdata('advance_search_date') == 1) {
-            $where['callstart >= '] = date("Y-m-d") . " 00:00:00";
-            $where['callstart <='] = date("Y-m-d") . " 23:59:59";
+            // ASTPPCOM-891 Ashish start
+            $timezone = $this->common->get_current_login_type_timezone();
+            $where['callstart >= '] =$this->common->convert_GMT_new ( $timezone . " 00:00:00");
+            $where['callstart <='] =$this->common->convert_GMT_new ( $timezone . " 23:59:59");
+            // ASTPPENT-891 Ashish end
         } else {
             if ($this->session->userdata('customerReport_cdrs_year') != '' and $this->session->userdata('customerReport_cdrs_year') != '0') {
                 $table_name = $this->session->userdata('customerReport_cdrs_year');
@@ -110,14 +113,19 @@ class Reports_model extends CI_Model
                     "accountid <>" => $account_data['id']
                 );
                 if ($this->session->userdata('advance_search_date') == 1) {
-                    $where['callstart >= '] = date("Y-m-d") . " 00:00:00";
-                    $where['callstart <='] = date("Y-m-d") . " 23:59:59";
+                    // ASTPPENT-891 Ashish start
+                    $timezone = $this->common->get_current_login_type_timezone();
+                    $where['callstart >= '] =$this->common->convert_GMT_new ( $timezone . " 00:00:00");
+                    $where['callstart <='] =$this->common->convert_GMT_new ( $timezone . " 23:59:59");
+                    // ASTPPENT-891 Ashish end
                 }
             } else {
                 if ($this->session->userdata('advance_search_date') == 1) {
                     $where = array(
-                        'callstart >= ' => date("Y-m-d") . " 00:00:00",
-                        'callstart <=' => date("Y-m-d") . " 23:59:59"
+                        // ASTPPENT-891 Ashish start
+                        'callstart >= ' =>$this->common->convert_GMT_new ( date("Y-m-d") . " 00:00:00"),
+                        'callstart <=' => $this->common->convert_GMT_new (date("Y-m-d") . " 23:59:59")
+                        // ASTPPENT-891 Ashish end
                     );
                 }
             }
@@ -165,8 +173,11 @@ class Reports_model extends CI_Model
 
         if ($this->session->userdata('advance_search') != 1) {
             if ($this->session->userdata('advance_search_date') == 1) {
-                $where['callstart >= '] = date("Y-m-d") . " 00:00:00";
-                $where['callstart <='] = date("Y-m-d") . " 23:59:59";
+                // ASTPPENT-891 Ashish start
+                $timezone = $this->common->get_current_login_type_timezone();
+                $where['callstart >= '] =$this->common->convert_GMT_new ( $timezone . " 00:00:00");
+                $where['callstart <='] =$this->common->convert_GMT_new ( $timezone . " 23:59:59");
+                // ASTPPENT-891 Ashish end
             }
         } else {
             if ($this->session->userdata('providerreport_cdrs_year') != '' and $this->session->userdata('providerreport_cdrs_year') != '0') {

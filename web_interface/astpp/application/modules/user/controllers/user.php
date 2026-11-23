@@ -2822,6 +2822,10 @@ function user_invoice_unpaid_pay()
 function user_get_current_info()
 {
     $account_data = $this->session->userdata("accountinfo");
+    // ASTPPCOM-891 Ashish start
+    $start_date = $this->common->convert_GMT_new (date("Y-m-d") . " 00:00:01");
+	$end_date = $this->common->convert_GMT_new (date("Y-m-d H:i:s"));
+    // ASTPPCOM-891 Ashish end
     $where = array(
         "accountid" => $account_data['id'],
         "order_date >=" => date("Y-m-d 00:00:01"),
@@ -2831,8 +2835,10 @@ function user_get_current_info()
     $result_array['product_count'] = $count_all;
     $where_cdr = array(
         "accountid" => $account_data['id'],
-        "callstart >=" => date("Y-m-d 00:00:01"),
-        "callstart <=" => date("Y-m-d H:i:s")
+        // ASTPPCOM-891 Ashish start
+        "callstart >=" => $start_date,
+        "callstart <=" => $end_date
+        // ASTPPCOM-891 Ashish end
     );
     $count_cdrs = $this->db_model->countQuery("*", "cdrs", $where_cdr);
     $result_array['call_count'] = $count_cdrs;

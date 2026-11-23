@@ -1865,14 +1865,15 @@ class common {
         			$last_id=$this->CI->db->insert_id();
 					return $last_id;
     }
-
-	function convert_GMT_to($select = "", $table = "", $date, $timezone_id = '') {
-
+	// ASTPPCOM-891 Ashish start
+	function convert_GMT_to($select = "", $table = "", $date, $timezone_id = '', $table_key = '') {
+	// ASTPPCOM-891 Ashish end
 		if ($date == '0000-00-00 00:00:00') {
 			return $date;
 		} else {
-
-			return $this->CI->timezone->display_GMT ( $date, 1, $timezone_id );
+			// ASTPPCOM-891 Ashish start
+			return $this->CI->timezone->display_GMT ( $date, 1, $timezone_id , $table_key);
+			// ASTPPCOM-891 Ashish end
 		}
 	}
 	function convert_GMT($date) { 

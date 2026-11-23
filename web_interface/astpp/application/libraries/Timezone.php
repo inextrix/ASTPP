@@ -33,9 +33,13 @@ class Timezone {
 		$account_data = $this->CI->session->userdata ( 'accountinfo' );
 		return $account_data ['timezone_id'];
 	}
-	function display_GMT($currDate, $fulldate = 1, $timezone_id = "") {
+	// ASTPPCOM-891 Ashish start
+	function display_GMT($currDate, $fulldate = 1, $timezone_id = "",$table_key = '') {
+	// ASTPPCOM-891 Ashish end
 		$number = ($timezone_id == "") ? $this->uset_timezone () : $timezone_id;
-		$SERVER_GMT = '0';
+		// ASTPPCOM-891 Ashish start
+		$SERVER_GMT = ($table_key == "livecall") ? $this->get_server_timezone(): '0' ;
+		// ASTPPCOM-891 Ashish end
 		
 		$result = $this->CI->db->query ( "select gmtoffset from timezone where id =" . $number );
 		$timezone_offset = $result->result ();
@@ -63,7 +67,9 @@ class Timezone {
 	}
 	function convert_to_GMT_new($currDate, $fulldate = 1, $timezone_id = '') {
 		$number = ($timezone_id == "") ? $this->uset_timezone () : $timezone_id;
-		$SERVER_GMT = '0';
+		// ASTPPCOM-891 Ashish start
+		$SERVER_GMT = $this->get_server_timezone();
+		// ASTPPCOM-891 Ashish End
 		$result = $this->CI->db->query ( "select gmtoffset,timezone_name from timezone where id =" . $number );
 		$timezone_offset = $result->result ();
 		$USER_GMT = $timezone_offset ['0']->gmtoffset;
@@ -86,7 +92,9 @@ class Timezone {
 	
 	function convert_to_GMT($currDate, $fulldate = 1, $timezone_id = '') {
 		$number = ($timezone_id == "") ? $this->uset_timezone () : $timezone_id;
-		$SERVER_GMT = '0';
+		// ASTPPCOM-891 Ashish start
+		$SERVER_GMT = $this->get_server_timezone();
+		// ASTPPCOM-891 Ashish end
 		$result = $this->CI->db->query ( "select gmtoffset from timezone where id =" . $number );
 		$timezone_offset = $result->result ();
 		$USER_GMT = $timezone_offset ['0']->gmtoffset;
@@ -114,6 +122,17 @@ class Timezone {
         $date = new DateTime("now", new DateTimeZone($timezone_name));
         return $date->format('Y-m-d');
 	}
-
+	// ASTPPCOM-891 Ashish start
+	function get_server_timezone(){
+		$server_time_zone = exec("timedatectl | grep Time");
+		$server_time_zone = explode(":",$server_time_zone);
+		$server_time_zone = explode(" ",$server_time_zone[1]);
+		$result = $this->CI->db->query ( "select gmtoffset from timezone where timezone_name = '".$server_time_zone[1]."'" );
+		$timezone_offset = $result->result ();
+		
+		$SERVER_GMT = $timezone_offset ['0']->gmtoffset;
+		return $SERVER_GMT;
+	}
+	// ASTPPCOM-891 Ashish end
 }
 ?>

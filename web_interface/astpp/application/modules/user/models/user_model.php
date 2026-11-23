@@ -380,8 +380,11 @@ class user_model extends CI_Model
         }
         $table_name = $account_data['type'] != 1 ? 'cdrs' : 'reseller_cdrs';
         if ($this->session->userdata('advance_search_date') == 1) {
-            $where['callstart >= '] = date("Y-m-d") . " 00:00:00";
-            $where['callstart <='] = date("Y-m-d") . " 23:59:59";
+            // ASTPPCOM-891 Ashish start
+            $timezone = $this->common->get_current_login_type_timezone();
+            $where['callstart >= '] = $this->common->convert_GMT_new ( $timezone . " 00:00:00");
+            $where['callstart <='] = $this->common->convert_GMT_new ( $timezone . " 23:59:59");
+            // ASTPPCOM-891 Ashish end
         } else {
             if ($this->session->userdata('cdrs_year') != '' and $this->session->userdata('cdrs_year') != '0') {
                 $table_name = $this->session->userdata('cdrs_year');
