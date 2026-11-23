@@ -41,8 +41,10 @@ class Voice_broadcast extends CI_Controller {
 					$sipdevice_res =(array) $this->db->get_where( "sip_devices", $where1)->first_row();
 					$var = $sipdevice_res['dir_vars'];
 					$dir_vars = (array)json_decode($var);
-					$name = !empty($dir_vars) ? $dir_vars['effective_caller_id_name'] : (!empty($dir_vars) ? $dir_vars['effective_caller_id_number'] : $sipdevice_res['username']);
-					$number = !empty($dir_vars) ? $dir_vars['effective_caller_id_number'] : $sipdevice_res['username'];
+					// ASTPPENT-8299 Ashish start
+					$name = (!empty($dir_vars['effective_caller_id_name']) && $dir_vars['effective_caller_id_name'] != '') ? $dir_vars['effective_caller_id_name'] : $sipdevice_res['username'];
+					$number = (!empty($dir_vars['effective_caller_id_number']) && $dir_vars['effective_caller_id_number'] != '') ? $dir_vars['effective_caller_id_number'] : $sipdevice_res['username'];
+					// ASTPPENT-8299 Ashish end
 					$destination_number = explode(",",$value['destination_number']);
 					$domain = $this->common->get_field_name('value','system',array('name'=>'voice_broadcast_host'));
 					$domain_explode = explode(',',$domain);
@@ -63,7 +65,9 @@ class Voice_broadcast extends CI_Controller {
 					$this->db->update ( "voice_broadcast", array ("status" => 0), array ("id" => $value['id']));
 					$voice_broadcast_port = $this->common->get_field_name('value','system',array('name'=>'voice_broadcast_port'));
 					foreach($destination_number as $dest_number){
-						$originate_str="api originate {sip_h_P-Voice_broadcast=true,ignore_early_media=true,sip_h_P-Accountcode=".$account_res['number'].",sip_h_P-cb_destination=".$dest_number.",sip_h_P-cb_source=".$dest_number.",variable_effective_caller_id_name=".$dest_number.",origination_caller_id_number=".$dest_number.",effective_caller_id_number=".$dest_number.",Caller-Destination-Number=".$dest_number.",Hunt-Orig-Caller-ID-Number=".$dest_number.",Hunt-Callee-ID-Name=".$dest_number.",sip_h_P-Voice_broadcast_type=".$sipdevice_res['username']."}sofia/default/".$dest_number."@".$domain.":".$voice_broadcast_port." &playback(/opt/ASTPP/web_interface/astpp/upload/voice_broadcast/".$value['broadcast'].") xml public ".$number." ".$number." 40";
+						// ASTPPENT-8299 Ashish start
+						$originate_str="api originate {sip_h_P-Voice_broadcast=true,ignore_early_media=true,sip_h_P-Accountcode=".$account_res['number'].",sip_h_P-cb_destination=".$dest_number.",sip_h_P-cb_source=".$dest_number.",variable_effective_caller_id_name=".$name.",variable_effective_caller_id_number=".$number.",origination_caller_id_name=".$name.",origination_caller_id_number=".$number.",effective_caller_id_name=".$name.",effective_caller_id_number=".$number.",Caller-Destination-Number=".$dest_number.",Hunt-Orig-Caller-ID-Number=".$number.",Hunt-Callee-ID-Name=".$name.",sip_h_P-Voice_broadcast_type=".$sipdevice_res['username']."}sofia/default/".$dest_number."@".$domain.":".$voice_broadcast_port." &playback(/opt/ASTPP/web_interface/astpp/upload/voice_broadcast/".$value['broadcast'].") xml public ".$number." ".$number." 40";
+						// ASTPPENT-8299 Ashish end
 						$this->reload_freeswitch($originate_str);
 					}
 					$this->db->update ( "voice_broadcast", array ("status" => 2), array ("id" => $value['id']));
