@@ -36,6 +36,7 @@ function xml_not_found() {
 }
 
 // Build acl xml
+// ASTPPCOM-1321 Ashish start
 function load_acl($logger, $db, $config) {
 	$xml = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n";
 	$xml .= "<document type=\"freeswitch/xml\">\n";
@@ -60,55 +61,6 @@ function load_acl($logger, $db, $config) {
 		$xml .= "       <node type=\"allow\" cidr=\"" . $res_acl_value ['ip'] . "\"/>\n";
 	}
 	
-	// For gateways
-/*	$query = "SELECT * FROM gateways WHERE status=0";
-	$logger->log ( "Sofia Gateway Query : " . $query );
-	$sp_gw = $db->run ( $query );
-	$logger->log ( $sp_gw );
-	
-	foreach ( $sp_gw as $sp_gw_key => $sp_gw_value ) {
-		
-		$sp_gw_settings = json_decode ( $sp_gw_value ['gateway_data'], true );
-		foreach ( $sp_gw_settings as $sp_gw_settings_key => $sp_gw_settings_value ) {
-			if ($sp_gw_settings_value != "" && $sp_gw_settings_key == "proxy") {
-				$tmp_ip_arr = explode ( ":", $sp_gw_settings_value );
-				if (filter_var($tmp_ip_arr [0], FILTER_VALIDATE_IP) || preg_match("/^(?!\-)(?:[a-zA-Z\d\-]{0,62}[a-zA-Z\d]\.){1,126}(?!\d+)[a-zA-Z\d]{1,63}$/", $tmp_ip_arr [0])) {
-                                        if(preg_match("/[a-zA-Z\-]/i", $tmp_ip_arr [0])){
-                                                $ips = gethostbynamel($tmp_ip_arr [0]);
-                                                foreach ($ips as $ip => $value){
-                                                        $tmp_ip_arr [0] = $value;
-                                                }
-                                        }
-					$xml .= "   <node type=\"allow\" cidr=\"" . $tmp_ip_arr [0] . "/32\"/>\n";
-				}
-			}
-		}
-	}*/
-
-	// For opensips
-	if ($config ['opensips'] == '0') {
-		if(preg_match("/[a-zA-Z\-]/i", $config ['opensips_domain'])){
-                        $ips = gethostbynamel($config ['opensips_domain']);
-                        foreach ($ips as $ip => $value){ 
-                                $config ['opensips_domain'] = $value;
-                        }
-                }
-                $xml .= "<node type=\"allow\" cidr=\"" . $config ['opensips_domain'] . "/32\"/>\n";
-                $xml .= "       </list>\n";
-		// For loopback
-                $xml .= "<list name=\"loopback.auto\" default=\"allow\">\n";
-                $xml .= "<node type=\"allow\" cidr=\"" . $config ['opensips_domain'] . "/32\"/>\n";
-                $xml .= "</list>\n";
-		// For event handing
-                $xml .= "<list name=\"event\" default=\"deny\">\n";
-                $xml .= "<node type=\"allow\" cidr=\"" . $config ['opensips_domain'] . "/32\"/>\n";
-	}
-	else{
-                $xml .= "       </list>\n";
-		// For event handing
-                $xml .= "<list name=\"event\" default=\"deny\">\n";
-        }
-	
 	$xml .= "<node type=\"allow\" cidr=\"127.0.0.0/8\"/>\n";
 	$xml .= "</list>\n";
 	$xml .= "           </network-lists>\n";
@@ -118,6 +70,7 @@ function load_acl($logger, $db, $config) {
 	$logger->log ( $xml );
 	return $xml;
 }
+// ASTPPCOM-1321 Ashish end
 
 // Build sofia xml
 function load_sofia($logger, $db, $config) {
