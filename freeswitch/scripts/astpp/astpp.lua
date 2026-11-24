@@ -117,7 +117,7 @@ do
 			return (string.gsub(value, "[^%w%+%*#%-%._@]", ""))
 		end
 		if name_headers[name] then
-			return (string.gsub(value, "[%c'\"\\`;<>&]", ""))
+			return (string.gsub(value, "[%c'\"\\`;<>&%$%{%}]", ""))
 		end
 		return value
 	end
